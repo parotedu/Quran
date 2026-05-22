@@ -599,6 +599,36 @@ document.addEventListener('DOMContentLoaded', () => {
       playIcon.className = 'fa-solid fa-pause text-2xl text-slate-900';
     });
 
+    // Audio Loading Error Auto-Fallback
+    audio.addEventListener('error', () => {
+      const activeSurah = SURAHS[currentIndex];
+      const currentSrc = audio.src || '';
+      
+      // If in local mode and error is on a local file, fallback to online
+      if (currentSourceMode === 'local' && activeSurah.localUrl && (currentSrc.endsWith(activeSurah.localUrl) || currentSrc.includes('/' + activeSurah.localUrl))) {
+        console.warn(`Local file fail or 404. Falling back to online for Surah ${activeSurah.name}`);
+        showToast(`ملف محلي غير متوفر. جاري التشغيل من السحابة...`, 'success');
+        
+        audio.src = activeSurah.onlineUrl;
+        audio.load();
+        if (isPlaying) {
+          audio.play().catch(err => {
+            console.error("Fallback playback failed:", err);
+            pauseAudio();
+          });
+        }
+        
+        // Update UI labels to reflect fallback
+        playerAudioSource.innerText = 'بث سحابي (بديل تلقائي)';
+        playerAudioSource.className = 'flex items-center gap-1 text-yellow-500';
+        playerSourceBadge.innerText = 'سحابي (بديل)';
+        playerSourceBadge.className = 'absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow border bg-yellow-600 border-yellow-400/20 text-white';
+      } else {
+        showToast('خطأ في تشغيل الملف الصوتي. يرجى التحقق من الاتصال بالإنترنت.', 'error');
+        pauseAudio();
+      }
+    });
+
     // Seek slider input (dragging)
     seekSlider.addEventListener('input', () => {
       seekSlider.classList.add('user-dragging');

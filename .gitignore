@@ -1,0 +1,11 @@
+# System files
+.DS_Store
+Quran/.DS_Store
+
+# Ignore large audio files (>95MB) to prevent GitHub push rejections.
+# The player will automatically fall back to stream these from the online CDN.
+Quran/02_البقرة.mp3
+Quran/03_آل_عمران.mp3
+Quran/04_النساء.mp3
+Quran/06_الأنعام.mp3
+Quran/07_الأعراف.mp3
