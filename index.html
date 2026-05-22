@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="منصة صوتية مميزة للاستماع للقرآن الكريم برواية حفص عن عاصم للشيخ محمود خليل الحصري - واجهة سريعة وخفيفة وتعمل مع الشبكات الضعيفة.">
+  <title>منصة القرآن الكريم - الشيخ محمود خليل الحصري</title>
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom CSS Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Tailwind Configuration for colors and font rules -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              950: '#022c22',
+            },
+            amber: {
+              450: '#fbbf24',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Core JavaScript Database & Controls -->
+  <script src="js/surahs.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/player.js" defer></script>
+</head>
+
+<body class="h-full flex flex-col antialiased">
+
+  <!-- Header Section -->
+  <header class="glass-panel mx-4 mt-4 mb-2 rounded-2xl py-3 px-6 flex items-center justify-between z-10">
+    <div class="flex items-center gap-3">
+      <!-- Premium Gold Logo Icon (SVG Calligraphy-like pattern) -->
+      <div
+        class="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-md">
+        <i class="fa-solid fa-book-quran text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-lg lg:text-xl font-bold tracking-tight text-[var(--text-accent)] font-quran">مَنْصَةُ القُرآنِ
+          الكَرِيمِ</h1>
+        <p class="text-xs text-[var(--text-secondary)]">المصحف المرتل - الشيخ محمود خليل الحصري</p>
+      </div>
+    </div>
+
+    <!-- Controls (Source Selector + Theme Toggle) -->
+    <div class="flex items-center gap-3">
+      <!-- Source Selector Toggle -->
+      <div
+        class="hidden sm:flex items-center gap-2 bg-emerald-950/40 rounded-xl p-1 border border-emerald-500/10 text-xs"
+        id="source-toggle-container">
+        <button id="source-local"
+          class="px-3 py-1.5 rounded-lg font-medium transition-all duration-200 bg-amber-500 text-slate-900"
+          title="تشغيل الملفات المحلية المرفقة">
+          <i class="fa-solid fa-folder-open ml-1"></i> محلي
+        </button>
+        <button id="source-online"
+          class="px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          title="البث المباشر من الإنترنت في حال عدم توفر الملفات">
+          <i class="fa-solid fa-cloud-arrow-down ml-1"></i> سحابي
+        </button>
+      </div>
+
+      <!-- Compact Mode Toggle for Small Screens -->
+      <button id="source-compact-toggle"
+        class="sm:hidden w-10 h-10 rounded-xl glass-panel flex items-center justify-center text-amber-500"
+        title="تغيير مصدر الصوت">
+        <i class="fa-solid fa-folder-open text-lg" id="source-compact-icon"></i>
+      </button>
+
+      <!-- Light/Dark Mode Button -->
+      <button id="theme-toggle"
+        class="w-10 h-10 rounded-xl glass-panel flex items-center justify-center transition-all duration-300"
+        title="تبديل الوضع">
+        <i id="theme-icon" class="fas fa-sun text-yellow-400 text-xl"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 px-4 pb-4 overflow-hidden flex flex-col lg:flex-row gap-4">
+
+    <!-- Right Column: Surah Playlist Panel -->
+    <section class="lg:col-span-7 flex-1 lg:max-w-none flex flex-col h-full overflow-hidden order-2 lg:order-1">
+      <div class="glass-panel rounded-3xl p-5 flex flex-col h-full">
+
+        <!-- Search and Filters -->
+        <div class="mb-4">
+          <div class="relative flex items-center">
+            <span class="absolute right-4 text-emerald-500/60">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" id="search-input" placeholder="ابحث برقم السورة، اسمها، أو مكان النزول..."
+              class="w-full py-3 pr-11 pl-4 rounded-2xl text-sm custom-input" autocomplete="off">
+            <span id="search-clear" class="absolute left-4 text-gray-400 cursor-pointer hidden hover:text-red-500">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- Playlist Tabs & Stats -->
+        <div class="flex items-center justify-between mb-4 border-b border-emerald-500/10 pb-3">
+          <div class="flex gap-2">
+            <button id="tab-all"
+              class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              جميع السور
+              <span id="all-count" class="mr-1 text-xs bg-amber-500/20 px-2 py-0.5 rounded-full">114</span>
+            </button>
+            <button id="tab-favorites"
+              class="px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/5">
+              المفضلة
+              <span id="fav-count" class="mr-1 text-xs bg-emerald-500/10 px-2 py-0.5 rounded-full">0</span>
+            </button>
+          </div>
+          <div class="text-xs text-[var(--text-secondary)] flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span> محلي: <span id="stat-local"
+              class="font-bold">0</span>
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 ml-1"></span> سحابي: <span id="stat-online"
+              class="font-bold">0</span>
+          </div>
+        </div>
+
+        <!-- Surah Grid/List Container -->
+        <div class="flex-1 overflow-y-auto playlist-scroll pr-1" id="playlist-container">
+          <!-- Playlist cards will be generated by JS dynamically -->
+          <div class="flex flex-col items-center justify-center py-20 text-center text-slate-500">
+            <i class="fa-solid fa-circle-notch animate-spin text-4xl mb-4 text-amber-500"></i>
+            <p class="text-sm">جاري تحميل قائمة السور المباركة...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Left Column: Audio Player Panel -->
+    <section class="lg:w-[420px] flex-shrink-0 flex flex-col h-fit lg:h-full justify-between order-1 lg:order-2">
+      <div
+        class="glass-panel player-glow rounded-3xl p-6 flex flex-col justify-between h-full relative overflow-hidden">
+        <!-- SVG Islamic Arch/Calligraphy background pattern for Premium look -->
+        <div class="absolute -top-12 -left-12 w-48 h-48 opacity-[0.03] text-amber-500 pointer-events-none">
+          <svg viewBox="0 0 100 100" fill="currentColor">
+            <path d="M50 0 C60 20, 80 40, 100 50 C80 60, 60 80, 50 100 C40 80, 20 60, 0 50 C20 40, 40 20, 50 0 Z">
+            </path>
+          </svg>
+        </div>
+        <div class="absolute -bottom-16 -right-16 w-64 h-64 opacity-[0.02] text-amber-500 pointer-events-none">
+          <svg viewBox="0 0 100 100" fill="currentColor">
+            <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="5 5">
+            </circle>
+            <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="1" fill="none"></circle>
+          </svg>
+        </div>
+
+        <div class="w-full flex flex-col items-center text-center">
+          <!-- Artwork / Disc Animation -->
+          <div
+            class="relative w-40 h-40 lg:w-48 lg:h-48 rounded-full border-4 border-amber-500/20 p-2 shadow-2xl mb-5 flex items-center justify-center bg-emerald-950/40">
+            <!-- Mandala Rotating design -->
+            <div id="artwork-mandala"
+              class="w-full h-full rounded-full bg-cover bg-center flex items-center justify-center relative spin-slow spin-paused overflow-hidden">
+              <!-- Golden Islamic Mandala SVG -->
+              <svg viewBox="0 0 200 200" class="w-full h-full text-amber-500/20" fill="currentColor">
+                <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-dasharray="8,4"></circle>
+                <circle cx="100" cy="100" r="75" fill="none" stroke="currentColor" stroke-width="1"></circle>
+                <!-- Octagonal star design -->
+                <polygon points="100,20 125,75 180,100 125,125 100,180 75,125 20,100 75,75" fill="none"
+                  stroke="currentColor" stroke-width="2"></polygon>
+                <polygon points="100,35 118,78 165,100 118,122 100,165 82,122 35,100 82,78" fill="none"
+                  stroke="currentColor" stroke-width="1" opacity="0.7"></polygon>
+                <!-- Inner circle -->
+                <circle cx="100" cy="100" r="40" fill="currentColor" opacity="0.15"></circle>
+                <circle cx="100" cy="100" r="15" fill="none" stroke="currentColor" stroke-width="2"></circle>
+              </svg>
+              <!-- Center Icon -->
+              <div
+                class="absolute w-12 h-12 rounded-full bg-emerald-900 border-2 border-amber-500/50 flex items-center justify-center text-amber-500 shadow-lg">
+                <i class="fa-solid fa-microphone text-lg" id="mic-icon"></i>
+              </div>
+            </div>
+
+            <!-- Floating Mode Indicator Badge -->
+            <span id="player-source-badge"
+              class="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow border border-emerald-400/20">
+              محلي
+            </span>
+          </div>
+
+          <!-- Playing Surah Details -->
+          <div class="mb-4 w-full">
+            <span
+              class="text-xs font-semibold px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/15"
+              id="player-surah-number">
+              السورة 1
+            </span>
+            <!-- Calligraphy Name Display -->
+            <h2 class="text-3xl lg:text-4xl font-bold mt-3 font-quran text-[var(--text-primary)]"
+              id="player-surah-name">
+              الفاتحة
+            </h2>
+            <p class="text-sm text-[var(--text-secondary)] mt-1" id="player-surah-english">
+              Al-Fatihah
+            </p>
+
+            <div class="flex items-center justify-center gap-3 mt-3 text-xs text-[var(--text-secondary)]">
+              <span id="player-revelation" class="flex items-center gap-1">
+                <i class="fa-solid fa-kaaba"></i> مكية
+              </span>
+              <span class="text-emerald-500/30">|</span>
+              <span id="player-verses" class="flex items-center gap-1">
+                <i class="fa-solid fa-list-ol"></i> 7 آيات
+              </span>
+              <span class="text-emerald-500/30">|</span>
+              <span id="player-audio-source" class="flex items-center gap-1 text-emerald-500">
+                <i class="fa-solid fa-file-audio"></i> ملف محلي
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visualizer Waves Panel -->
+        <div class="w-full flex justify-center items-end gap-1 h-10 mb-5 visualizer-paused" id="wave-visualizer">
+          <div class="w-1.5 h-8 bg-emerald-500 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-emerald-400 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-amber-400 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-amber-500 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-amber-400 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-emerald-400 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-emerald-500 rounded-full visualizer-bar"></div>
+          <div class="w-1.5 h-8 bg-emerald-600 rounded-full visualizer-bar"></div>
+        </div>
+
+        <!-- Audio Seek Slider & Duration -->
+        <div class="w-full mb-6">
+          <input type="range" id="seek-slider" class="range-slider" value="0" min="0" max="100" disabled>
+          <div class="flex justify-between text-xs text-[var(--text-secondary)] mt-2 font-medium">
+            <span id="current-time">00:00</span>
+            <span id="total-duration">00:00</span>
+          </div>
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="w-full flex items-center justify-between gap-2 mb-6">
+          <!-- Shuffle Button -->
+          <button id="btn-shuffle"
+            class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-amber-500 hover:bg-emerald-500/5 transition-all"
+            title="عشوائي">
+            <i class="fa-solid fa-shuffle"></i>
+          </button>
+
+          <!-- Previous Button -->
+          <button id="btn-prev"
+            class="w-12 h-12 rounded-full flex items-center justify-center text-[var(--text-primary)] hover:text-amber-500 hover:bg-emerald-500/5 transition-all text-lg"
+            title="السورة السابقة">
+            <i class="fa-solid fa-backward-step"></i>
+          </button>
+
+          <!-- Play / Pause Button with Pulsing Shadow -->
+          <button id="btn-play-pause"
+            class="w-16 h-16 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 flex items-center justify-center transition-all duration-300 transform active:scale-95 shadow-lg border-4 border-emerald-950/20"
+            title="تشغيل / إيقاف">
+            <i class="fa-solid fa-play text-2xl mr-1" id="play-icon"></i>
+          </button>
+
+          <!-- Next Button -->
+          <button id="btn-next"
+            class="w-12 h-12 rounded-full flex items-center justify-center text-[var(--text-primary)] hover:text-amber-500 hover:bg-emerald-500/5 transition-all text-lg"
+            title="السورة التالية">
+            <i class="fa-solid fa-forward-step"></i>
+          </button>
+
+          <!-- Repeat Button -->
+          <button id="btn-repeat"
+            class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:text-amber-500 hover:bg-emerald-500/5 transition-all"
+            title="تكرار الكل">
+            <i class="fa-solid fa-repeat"></i>
+          </button>
+        </div>
+
+        <!-- Playback Speed, Volume and Actions Bar -->
+        <div class="w-full grid grid-cols-2 gap-4 border-t border-emerald-500/10 pt-4">
+          <!-- Playback Speed Dropdown/Selector -->
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-[var(--text-secondary)] font-semibold">سرعة القراءة</label>
+            <div class="relative">
+              <select id="speed-select"
+                class="w-full text-xs py-2 pr-3 pl-8 rounded-xl custom-input appearance-none cursor-pointer">
+                <option value="0.5">0.5x بطيء</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1.0x طبيعي</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x سريع</option>
+              </select>
+              <span
+                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none">
+                <i class="fa-solid fa-chevron-down"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- Volume Controller -->
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-[var(--text-secondary)] font-semibold flex justify-between">
+              <span>مستوى الصوت</span>
+              <span id="volume-val">100%</span>
+            </label>
+            <div class="flex items-center gap-2 py-1">
+              <button id="btn-mute" class="text-xs text-[var(--text-secondary)] hover:text-amber-500" title="كتم الصوت">
+                <i class="fa-solid fa-volume-high" id="volume-icon"></i>
+              </button>
+              <input type="range" id="volume-slider" class="range-slider flex-1" value="100" min="0" max="100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Extra Actions (Favorite, Share, Download) -->
+        <div
+          class="w-full flex items-center justify-between border-t border-emerald-500/10 pt-4 mt-4 text-xs text-[var(--text-secondary)]">
+          <button id="btn-player-fav"
+            class="flex items-center gap-1.5 hover:text-red-500 transition-colors py-1 px-2 rounded-lg hover:bg-emerald-500/5">
+            <i class="fa-regular fa-heart" id="player-fav-icon"></i> <span>أضف للمفضلة</span>
+          </button>
+
+          <button id="btn-download"
+            class="flex items-center gap-1.5 hover:text-amber-500 transition-colors py-1 px-2 rounded-lg hover:bg-emerald-500/5"
+            title="تحميل ملف السورة للاستماع دون اتصال">
+            <i class="fa-solid fa-circle-down"></i> <span>تحميل السورة</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- HTML5 Audio Element -->
+  <audio id="main-audio"></audio>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+</body>
+
+</html>
