@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
-    content="منصة صوتية مميزة للاستماع للقرآن الكريم برواية حفص عن عاصم للشيخ محمود خليل الحصري - واجهة سريعة وخفيفة وتعمل مع الشبكات الضعيفة.">
-  <title>منصة القرآن الكريم - الشيخ محمود خليل الحصري</title>
+    content="منصة صوتية مميزة للاستماع للقرآن الكريم برواية حفص عن عاصم لمجموعة من مشاهير القراء - واجهة سريعة وخفيفة وتعمل مع الشبكات الضعيفة.">
+  <title>منصة القرآن الكريم</title>
   <!-- Tailwind CSS Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Custom CSS Styles -->
@@ -47,36 +47,26 @@
         <i class="fa-solid fa-book-quran text-xl"></i>
       </div>
       <div>
-        <h1 class="text-lg lg:text-xl font-bold tracking-tight text-[var(--text-accent)] font-quran">مَنْصَةُ القُرآنِ
-          الكَرِيمِ</h1>
-        <p class="text-xs text-[var(--text-secondary)]">المصحف المرتل - الشيخ محمود خليل الحصري</p>
+        <h1 class="text-lg lg:text-xl font-bold tracking-tight text-[var(--text-accent)] font-quran">مَنْصَةُ القُرآنِ الكَرِيمِ</h1>
+        <p class="text-xs text-[var(--text-secondary)]" id="app-subtitle">المصحف المرتل - الشيخ محمود خليل الحصري</p>
       </div>
     </div>
 
     <!-- Controls (Source Selector + Theme Toggle) -->
     <div class="flex items-center gap-3">
-      <!-- Source Selector Toggle -->
-      <div
-        class="hidden sm:flex items-center gap-2 bg-emerald-950/40 rounded-xl p-1 border border-emerald-500/10 text-xs"
-        id="source-toggle-container">
-        <button id="source-local"
-          class="px-3 py-1.5 rounded-lg font-medium transition-all duration-200 bg-amber-500 text-slate-900"
-          title="تشغيل الملفات المحلية المرفقة">
-          <i class="fa-solid fa-folder-open ml-1"></i> محلي
-        </button>
-        <button id="source-online"
-          class="px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-          title="البث المباشر من الإنترنت في حال عدم توفر الملفات">
-          <i class="fa-solid fa-cloud-arrow-down ml-1"></i> سحابي
-        </button>
+      <!-- Reciter Selector Dropdown -->
+      <div class="flex items-center gap-2 bg-emerald-950/40 rounded-xl p-1.5 border border-emerald-500/10 text-xs">
+        <label for="reciter-select" class="text-[var(--text-secondary)] font-medium mr-1 select-none hidden md:inline">القارئ:</label>
+        <div class="relative">
+          <select id="reciter-select"
+            class="bg-transparent text-amber-400 font-bold py-1 pr-1 pl-7 rounded-lg transition-all duration-200 outline-none appearance-none cursor-pointer text-xs">
+            <!-- Will be populated dynamically in JS -->
+          </select>
+          <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-amber-500 text-[10px] pointer-events-none">
+            <i class="fa-solid fa-chevron-down"></i>
+          </span>
+        </div>
       </div>
-
-      <!-- Compact Mode Toggle for Small Screens -->
-      <button id="source-compact-toggle"
-        class="sm:hidden w-10 h-10 rounded-xl glass-panel flex items-center justify-center text-amber-500"
-        title="تغيير مصدر الصوت">
-        <i class="fa-solid fa-folder-open text-lg" id="source-compact-icon"></i>
-      </button>
 
       <!-- Light/Dark Mode Button -->
       <button id="theme-toggle"
@@ -123,10 +113,7 @@
             </button>
           </div>
           <div class="text-xs text-[var(--text-secondary)] flex items-center gap-2">
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span> محلي: <span id="stat-local"
-              class="font-bold">0</span>
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 ml-1"></span> سحابي: <span id="stat-online"
-              class="font-bold">0</span>
+            <span>عدد السور:</span> <span class="font-bold text-amber-500">114</span>
           </div>
         </div>
 
@@ -188,10 +175,10 @@
               </div>
             </div>
 
-            <!-- Floating Mode Indicator Badge -->
+            <!-- Floating Active Reciter Badge -->
             <span id="player-source-badge"
-              class="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow border border-emerald-400/20">
-              محلي
+              class="absolute top-2 left-2 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow border border-amber-400/20">
+              الحصري
             </span>
           </div>
 
@@ -220,8 +207,8 @@
                 <i class="fa-solid fa-list-ol"></i> 7 آيات
               </span>
               <span class="text-emerald-500/30">|</span>
-              <span id="player-audio-source" class="flex items-center gap-1 text-emerald-500">
-                <i class="fa-solid fa-file-audio"></i> ملف محلي
+              <span id="player-audio-source" class="flex items-center gap-1 text-amber-500 font-bold">
+                <i class="fa-solid fa-microphone"></i> الشيخ محمود خليل الحصري
               </span>
             </div>
           </div>

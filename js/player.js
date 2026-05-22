@@ -9,8 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabFavorites = document.getElementById('tab-favorites');
   const allCount = document.getElementById('all-count');
   const favCount = document.getElementById('fav-count');
-  const statLocal = document.getElementById('stat-local');
-  const statOnline = document.getElementById('stat-online');
+  
+  // Header Elements
+  const reciterSelect = document.getElementById('reciter-select');
+  const appSubtitle = document.getElementById('app-subtitle');
   
   // Player Panel Elements
   const playerSurahNumber = document.getElementById('player-surah-number');
@@ -44,12 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPlayerFav = document.getElementById('btn-player-fav');
   const playerFavIcon = document.getElementById('player-fav-icon');
   const btnDownload = document.getElementById('btn-download');
-  
-  // Global Source Selector Elements
-  const sourceLocal = document.getElementById('source-local');
-  const sourceOnline = document.getElementById('source-online');
-  const sourceCompactToggle = document.getElementById('source-compact-toggle');
-  const sourceCompactIcon = document.getElementById('source-compact-icon');
 
   // Player State variables
   let currentSurahList = [...SURAHS];
@@ -58,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentTab = 'all'; // 'all' or 'favorites'
   let searchQuery = '';
   let favorites = JSON.parse(localStorage.getItem('quran_favorites')) || [];
-  let currentSourceMode = localStorage.getItem('quran_source_mode') || 'local'; // 'local' or 'online'
+  let currentReciterId = localStorage.getItem('quran_reciter') || 'hussary';
   
   // Playback mode: 'repeat-all' (default), 'repeat-one', 'shuffle'
   let repeatMode = localStorage.getItem('quran_repeat_mode') || 'repeat-all';
@@ -68,12 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initPlayer();
 
   function initPlayer() {
-    // 1. Setup global statistics
+    // 1. Populate Reciter Selector Dropdown
+    populateRecitersDropdown();
+    
+    // 2. Setup global statistics
     updateStatistics();
     
-    // 2. Set current source toggle buttons visual state
-    updateSourceSelectorUI();
-
     // 3. Render playlist
     renderPlaylist();
 
@@ -95,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (idx !== -1) {
         currentIndex = idx;
         loadSurah(SURAHS[currentIndex], false); // Load but don't play immediately
-        // Wait a bit to scroll into view
+        // Scroll into view
         setTimeout(() => scrollToActiveCard(), 500);
       }
     } else {
@@ -107,30 +103,35 @@ document.addEventListener('DOMContentLoaded', () => {
     attachEventListeners();
   }
 
-  // --- Statistics ---
-  function updateStatistics() {
-    const localCount = SURAHS.filter(s => s.localUrl !== null).length;
-    const onlineCount = SURAHS.length - localCount;
+  // --- Populate Reciter Selector ---
+  function populateRecitersDropdown() {
+    if (!reciterSelect) return;
+    reciterSelect.innerHTML = '';
     
-    if (statLocal) statLocal.innerText = localCount;
-    if (statOnline) statOnline.innerText = onlineCount;
-    if (allCount) allCount.innerText = SURAHS.length;
-    if (favCount) favCount.innerText = favorites.length;
+    RECITERS.forEach(reciter => {
+      const option = document.createElement('option');
+      option.value = reciter.id;
+      option.innerText = reciter.name;
+      option.className = 'bg-emerald-950 text-white';
+      if (reciter.id === currentReciterId) {
+        option.selected = true;
+      }
+      reciterSelect.appendChild(option);
+    });
+
+    updateHeaderSubtitle();
   }
 
-  // --- Source Selection State UI ---
-  function updateSourceSelectorUI() {
-    if (currentSourceMode === 'local') {
-      sourceLocal.className = 'px-3 py-1.5 rounded-lg font-medium transition-all duration-200 bg-amber-500 text-slate-900';
-      sourceOnline.className = 'px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)]';
-      sourceCompactIcon.className = 'fa-solid fa-folder-open text-lg';
-      sourceCompactToggle.setAttribute('title', 'وضع التشغيل: محلي');
-    } else {
-      sourceOnline.className = 'px-3 py-1.5 rounded-lg font-medium transition-all duration-200 bg-amber-500 text-slate-900';
-      sourceLocal.className = 'px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)]';
-      sourceCompactIcon.className = 'fa-solid fa-cloud text-lg';
-      sourceCompactToggle.setAttribute('title', 'وضع التشغيل: سحابي');
-    }
+  function updateHeaderSubtitle() {
+    if (!appSubtitle) return;
+    const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
+    appSubtitle.innerText = `المصحف المرتل - ${reciter.name}`;
+  }
+
+  // --- Statistics ---
+  function updateStatistics() {
+    if (allCount) allCount.innerText = SURAHS.length;
+    if (favCount) favCount.innerText = favorites.length;
   }
 
   // --- Normalizing Arabic for Smart Search ---
@@ -200,22 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currentSurahList.forEach((surah, index) => {
       const isFav = favorites.includes(surah.id);
       const isCurrent = SURAHS[currentIndex].id === surah.id;
-      
-      // Determine file source icon and text for card
-      let sourceIcon = 'fa-folder-open text-emerald-500';
-      let sourceText = 'محلي';
-      let badgeBg = 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
-
-      if (currentSourceMode === 'online') {
-        sourceIcon = 'fa-cloud text-amber-500';
-        sourceText = 'سحابي';
-        badgeBg = 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
-      } else if (surah.localUrl === null) {
-        // Local mode but file is missing
-        sourceIcon = 'fa-cloud-arrow-down text-yellow-500';
-        sourceText = 'سحابة (بديل)';
-        badgeBg = 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20';
-      }
 
       const card = document.createElement('div');
       card.className = `surah-card p-4 rounded-2xl flex items-center justify-between cursor-pointer mb-3 animate-slide-in ${isCurrent ? 'active' : ''}`;
@@ -244,12 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- Source mode badge -->
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${badgeBg}">
-            <i class="fa-solid ${sourceIcon}"></i>
-            <span class="hidden sm:inline">${sourceText}</span>
-          </span>
-
           <!-- Actions: Favorite Button -->
           <button class="btn-fav-toggle w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors" data-id="${surah.id}">
             <i class="${isFav ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart'}"></i>
@@ -259,7 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Card click event
       card.addEventListener('click', (e) => {
-        // Prevent trigger if clicked on the heart button
         if (e.target.closest('.btn-fav-toggle')) return;
         
         const mainIndex = SURAHS.findIndex(s => s.id === surah.id);
@@ -281,28 +259,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Load Surah ---
   function loadSurah(surah, shouldPlay = true) {
-    // 1. Get correct audio URL based on source mode and availability
-    let audioUrl = surah.localUrl;
-    let badgeText = 'محلي';
-    let badgeStyle = 'bg-emerald-600 border-emerald-400/20 text-white';
-    let sourceLabelText = 'ملف محلي مخزن';
-    let sourceLabelClass = 'text-emerald-500';
-
-    if (currentSourceMode === 'online') {
-      audioUrl = surah.onlineUrl;
-      badgeText = 'سحابي';
-      badgeStyle = 'bg-amber-600 border-amber-400/20 text-white';
-      sourceLabelText = 'بث سحابي مباشر';
-      sourceLabelClass = 'text-amber-500';
-    } else if (surah.localUrl === null) {
-      // Local mode but file is missing -> fallback to online
-      audioUrl = surah.onlineUrl;
-      badgeText = 'سحابي (بديل)';
-      badgeStyle = 'bg-yellow-600 border-yellow-400/20 text-white';
-      sourceLabelText = 'بث سحابي (بديل)';
-      sourceLabelClass = 'text-yellow-500';
-    }
-
+    const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
+    const paddedId = surah.id.toString().padStart(3, '0');
+    
+    // Construct dynamic CDN url
+    const audioUrl = `https://download.quranicaudio.com/quran/${reciter.slug}${paddedId}.mp3`;
     audio.src = audioUrl;
     
     // Set playback speed
@@ -329,11 +290,11 @@ document.addEventListener('DOMContentLoaded', () => {
       playerRevelation.innerHTML = '<i class="fa-solid fa-mosque text-emerald-500"></i> مدنية';
     }
 
-    playerAudioSource.innerText = sourceLabelText;
-    playerAudioSource.className = `flex items-center gap-1 ${sourceLabelClass}`;
+    playerAudioSource.innerText = reciter.name;
+    playerAudioSource.className = 'flex items-center gap-1 text-amber-500 font-bold';
     
-    playerSourceBadge.innerText = badgeText;
-    playerSourceBadge.className = `absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow border ${badgeStyle}`;
+    playerSourceBadge.innerText = reciter.shortName;
+    playerSourceBadge.className = 'absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow border bg-amber-600 border-amber-400/20 text-white';
 
     // Update Favorite Heart Icon on Player Bar
     if (favorites.includes(surah.id)) {
@@ -401,11 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('quran_favorites', JSON.stringify(favorites));
     updateStatistics();
     
-    // Re-render only favorites tab if active, or just refresh to keep icons updated
     if (currentTab === 'favorites') {
       renderPlaylist();
     } else {
-      // Just update the card's heart icon without full re-render for performance
       const card = document.querySelector(`.surah-card[data-id="${id}"]`);
       if (card) {
         const heartBtn = card.querySelector('.btn-fav-toggle i');
@@ -416,7 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // If currently loaded surah is the toggled one, update the main player icon
     if (SURAHS[currentIndex].id === id) {
       if (favorites.includes(id)) {
         playerFavIcon.className = 'fa-solid fa-heart text-red-500';
@@ -493,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Playback Configuration UI Sync ---
   function updatePlaybackControlsUI() {
-    // Shuffle
     if (isShuffle) {
       btnShuffle.classList.add('text-amber-500');
       btnShuffle.classList.remove('text-[var(--text-secondary)]');
@@ -504,12 +461,11 @@ document.addEventListener('DOMContentLoaded', () => {
       btnShuffle.setAttribute('title', 'تشغيل عشوائي');
     }
 
-    // Repeat mode icon
     const repeatIcon = btnRepeat.querySelector('i');
     if (repeatMode === 'repeat-one') {
       btnRepeat.classList.add('text-amber-500');
       btnRepeat.classList.remove('text-[var(--text-secondary)]');
-      repeatIcon.className = 'fa-solid fa-repeat-1 fa-repeat'; // standard repeat one
+      repeatIcon.className = 'fa-solid fa-repeat-1 fa-repeat';
       btnRepeat.setAttribute('title', 'تكرار السورة الحالية');
     } else if (repeatMode === 'repeat-all') {
       btnRepeat.classList.add('text-amber-500');
@@ -599,34 +555,10 @@ document.addEventListener('DOMContentLoaded', () => {
       playIcon.className = 'fa-solid fa-pause text-2xl text-slate-900';
     });
 
-    // Audio Loading Error Auto-Fallback
+    // Audio Loading Error Handler
     audio.addEventListener('error', () => {
-      const activeSurah = SURAHS[currentIndex];
-      const currentSrc = audio.src || '';
-      
-      // If in local mode and error is on a local file, fallback to online
-      if (currentSourceMode === 'local' && activeSurah.localUrl && (currentSrc.endsWith(activeSurah.localUrl) || currentSrc.includes('/' + activeSurah.localUrl))) {
-        console.warn(`Local file fail or 404. Falling back to online for Surah ${activeSurah.name}`);
-        showToast(`ملف محلي غير متوفر. جاري التشغيل من السحابة...`, 'success');
-        
-        audio.src = activeSurah.onlineUrl;
-        audio.load();
-        if (isPlaying) {
-          audio.play().catch(err => {
-            console.error("Fallback playback failed:", err);
-            pauseAudio();
-          });
-        }
-        
-        // Update UI labels to reflect fallback
-        playerAudioSource.innerText = 'بث سحابي (بديل تلقائي)';
-        playerAudioSource.className = 'flex items-center gap-1 text-yellow-500';
-        playerSourceBadge.innerText = 'سحابي (بديل)';
-        playerSourceBadge.className = 'absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full shadow border bg-yellow-600 border-yellow-400/20 text-white';
-      } else {
-        showToast('خطأ في تشغيل الملف الصوتي. يرجى التحقق من الاتصال بالإنترنت.', 'error');
-        pauseAudio();
-      }
+      showToast('خطأ في تشغيل الملف الصوتي. يرجى التحقق من الاتصال بالإنترنت.', 'error');
+      pauseAudio();
     });
 
     // Seek slider input (dragging)
@@ -681,11 +613,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (repeatMode === 'repeat-all') {
         nextSurah();
       } else {
-        // none
         if (currentIndex < SURAHS.length - 1) {
           nextSurah();
         } else {
-          pauseAudio(); // reached the end of Quran
+          pauseAudio();
           audio.currentTime = 0;
         }
       }
@@ -732,55 +663,23 @@ document.addEventListener('DOMContentLoaded', () => {
       renderPlaylist();
     });
 
-    // Source Mode Toggling: Local
-    sourceLocal.addEventListener('click', () => {
-      if (currentSourceMode === 'local') return;
-      currentSourceMode = 'local';
-      localStorage.setItem('quran_source_mode', 'local');
-      
-      updateSourceSelectorUI();
-      renderPlaylist();
-      
-      // Reload current surah from new local source without interrupting if possible, 
-      // but to ensure source changes, we re-load.
-      const currentPos = audio.currentTime;
-      loadSurah(SURAHS[currentIndex], isPlaying);
-      audio.currentTime = currentPos;
-      
-      showToast('تم التحويل لتشغيل الملفات المحلية');
-    });
-
-    // Source Mode Toggling: Online
-    sourceOnline.addEventListener('click', () => {
-      if (currentSourceMode === 'online') return;
-      currentSourceMode = 'online';
-      localStorage.setItem('quran_source_mode', 'online');
-      
-      updateSourceSelectorUI();
-      renderPlaylist();
-      
-      const currentPos = audio.currentTime;
-      loadSurah(SURAHS[currentIndex], isPlaying);
-      audio.currentTime = currentPos;
-      
-      showToast('تم التحويل للبث السحابي المباشر');
-    });
-
-    // Compact Source Toggle (For mobile screen layout)
-    sourceCompactToggle.addEventListener('click', () => {
-      const newSource = currentSourceMode === 'local' ? 'online' : 'local';
-      currentSourceMode = newSource;
-      localStorage.setItem('quran_source_mode', newSource);
-      
-      updateSourceSelectorUI();
-      renderPlaylist();
-      
-      const currentPos = audio.currentTime;
-      loadSurah(SURAHS[currentIndex], isPlaying);
-      audio.currentTime = currentPos;
-      
-      showToast(newSource === 'local' ? 'وضع التشغيل: محلي' : 'وضع التشغيل: سحابي');
-    });
+    // Reciter Selector Dropdown change
+    if (reciterSelect) {
+      reciterSelect.addEventListener('change', () => {
+        currentReciterId = reciterSelect.value;
+        localStorage.setItem('quran_reciter', currentReciterId);
+        
+        updateHeaderSubtitle();
+        
+        // Reload current surah with active reciter
+        const currentPos = audio.currentTime;
+        loadSurah(SURAHS[currentIndex], isPlaying);
+        audio.currentTime = currentPos;
+        
+        const reciter = RECITERS.find(r => r.id === currentReciterId);
+        showToast(`تم تغيير القارئ إلى ${reciter.name}`);
+      });
+    }
 
     // Favorite button on Player Bar
     btnPlayerFav.addEventListener('click', () => {
@@ -788,7 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Share Button: Copy shareable link
-    // We create a shareable URL containing ?surah=ID
     const btnShare = document.createElement('button');
     btnShare.id = 'btn-share';
     btnShare.className = 'flex items-center gap-1.5 hover:text-amber-500 transition-colors py-1 px-2 rounded-lg hover:bg-emerald-500/5';
@@ -811,12 +709,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Download Mp3 Button click
     btnDownload.addEventListener('click', () => {
       const surah = SURAHS[currentIndex];
-      let url = surah.localUrl;
-      if (currentSourceMode === 'online' || surah.localUrl === null) {
-        url = surah.onlineUrl;
-      }
+      const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
+      const paddedId = surah.id.toString().padStart(3, '0');
+      const url = `https://download.quranicaudio.com/quran/${reciter.slug}${paddedId}.mp3`;
       
-      // Open in a new tab to let browser handle the file download or playback download
       window.open(url, '_blank');
       showToast(`جاري تحويلك لتحميل سورة ${surah.name}...`);
     });
@@ -839,7 +735,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     container.appendChild(toast);
     
-    // Auto remove toast
     setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(-10px)';
