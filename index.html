@@ -18,6 +18,9 @@
     tailwind.config = {
       theme: {
         extend: {
+          screens: {
+            'xs': '400px',
+          },
           colors: {
             emerald: {
               950: '#022c22',
@@ -39,7 +42,7 @@
 <body class="h-full flex flex-col antialiased">
 
   <!-- Header Section -->
-  <header class="glass-panel mx-4 mt-4 mb-2 rounded-2xl py-3 px-6 flex items-center justify-between z-10">
+  <header class="glass-panel mx-4 mt-4 mb-2 rounded-2xl py-3 px-4 sm:px-6 flex items-center justify-between z-10">
     <div class="flex items-center gap-3">
       <!-- Premium Gold Logo Icon (SVG Calligraphy-like pattern) -->
       <div
@@ -48,21 +51,21 @@
       </div>
       <div>
         <h1 class="text-lg lg:text-xl font-bold tracking-tight text-[var(--text-accent)] font-quran">مَنْصَةُ القُرآنِ الكَرِيمِ</h1>
-        <p class="text-xs text-[var(--text-secondary)]" id="app-subtitle">المصحف المرتل - الشيخ محمود خليل الحصري</p>
+        <p class="text-xs text-[var(--text-secondary)] hidden sm:block" id="app-subtitle">المصحف المرتل - الشيخ محمود خليل الحصري</p>
       </div>
     </div>
 
-    <!-- Controls (Source Selector + Theme Toggle) -->
+    <!-- Controls (Reciter Selector + Theme Toggle) -->
     <div class="flex items-center gap-3">
       <!-- Reciter Selector Dropdown -->
-      <div class="flex items-center gap-2 bg-emerald-950/40 rounded-xl p-1.5 border border-emerald-500/10 text-xs">
+      <div class="flex items-center gap-1.5 bg-emerald-950/40 rounded-xl p-1.5 border border-emerald-500/10 text-xs">
         <label for="reciter-select" class="text-[var(--text-secondary)] font-medium mr-1 select-none hidden md:inline">القارئ:</label>
         <div class="relative">
           <select id="reciter-select"
-            class="bg-transparent text-amber-400 font-bold py-1 pr-1 pl-7 rounded-lg transition-all duration-200 outline-none appearance-none cursor-pointer text-xs">
+            class="bg-transparent text-amber-400 font-bold py-1 pr-1 pl-6 rounded-lg transition-all duration-200 outline-none appearance-none cursor-pointer text-xs max-w-[100px] xs:max-w-[140px] sm:max-w-[180px] md:max-w-none truncate">
             <!-- Will be populated dynamically in JS -->
           </select>
-          <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-amber-500 text-[10px] pointer-events-none">
+          <span class="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-amber-500 text-[10px] pointer-events-none">
             <i class="fa-solid fa-chevron-down"></i>
           </span>
         </div>
