@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const playlistContainer = document.getElementById('playlist-container');
   const searchInput = document.getElementById('search-input');
   const searchClear = document.getElementById('search-clear');
+  const searchInputMobile = document.getElementById('search-input-mobile');
+  const searchClearMobile = document.getElementById('search-clear-mobile');
   const tabAll = document.getElementById('tab-all');
   const tabFavorites = document.getElementById('tab-favorites');
   const allCount = document.getElementById('all-count');
@@ -623,24 +625,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Search Box input
-    searchInput.addEventListener('input', (e) => {
+    const handleSearchInput = (e) => {
       searchQuery = e.target.value;
+      
+      // Sync input values
+      if (searchInput) searchInput.value = searchQuery;
+      if (searchInputMobile) searchInputMobile.value = searchQuery;
+      
+      // Sync clear buttons
       if (searchQuery) {
-        searchClear.classList.remove('hidden');
+        if (searchClear) searchClear.classList.remove('hidden');
+        if (searchClearMobile) searchClearMobile.classList.remove('hidden');
       } else {
-        searchClear.classList.add('hidden');
+        if (searchClear) searchClear.classList.add('hidden');
+        if (searchClearMobile) searchClearMobile.classList.add('hidden');
       }
       renderPlaylist();
-    });
+    };
+
+    if (searchInput) searchInput.addEventListener('input', handleSearchInput);
+    if (searchInputMobile) searchInputMobile.addEventListener('input', handleSearchInput);
 
     // Clear search
-    searchClear.addEventListener('click', () => {
-      searchInput.value = '';
+    const handleSearchClear = () => {
+      if (searchInput) searchInput.value = '';
+      if (searchInputMobile) searchInputMobile.value = '';
       searchQuery = '';
-      searchClear.classList.add('hidden');
+      
+      if (searchClear) searchClear.classList.add('hidden');
+      if (searchClearMobile) searchClearMobile.classList.add('hidden');
+      
       renderPlaylist();
-      searchInput.focus();
-    });
+      
+      // Focus the active element that was clicked
+      if (searchInputMobile && window.innerWidth < 1024) {
+        searchInputMobile.focus();
+      } else if (searchInput) {
+        searchInput.focus();
+      }
+    };
+
+    if (searchClear) searchClear.addEventListener('click', handleSearchClear);
+    if (searchClearMobile) searchClearMobile.addEventListener('click', handleSearchClear);
 
     // Tabs switching
     tabAll.addEventListener('click', () => {
