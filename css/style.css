@@ -1,26 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
 
 /* Color Variables */
 :root {
   --font-arabic: 'Amiri', serif;
+  --font-quran: 'Amiri Quran', 'Amiri', serif;
   --font-sans: 'Cairo', sans-serif;
   
   /* Deep Spiritual Dark Theme (Default) */
   --bg-primary: radial-gradient(circle at top, #064e3b 0%, #022c22 40%, #0b1511 100%);
-  --panel-bg: rgba(6, 78, 59, 0.15);
-  --panel-border: rgba(251, 191, 36, 0.15);
+  --panel-bg: rgba(6, 78, 59, 0.2);
+  --panel-border: rgba(251, 191, 36, 0.18);
   --text-primary: #f3f4f6;
   --text-secondary: #9ca3af;
   --text-accent: #fbbf24; /* Amber Gold */
   --text-accent-hover: #f59e0b;
-  --card-bg: rgba(2, 44, 34, 0.4);
-  --card-bg-hover: rgba(4, 120, 87, 0.25);
-  --card-active: rgba(4, 120, 87, 0.4);
+  --card-bg: rgba(2, 44, 34, 0.45);
+  --card-bg-hover: rgba(4, 120, 87, 0.3);
+  --card-active: rgba(4, 120, 87, 0.45);
   --glow-color: rgba(251, 191, 36, 0.45);
   --slider-track: rgba(251, 191, 36, 0.2);
   --scrollbar-thumb: #d97706;
   --scrollbar-track: rgba(2, 44, 34, 0.5);
-  --input-bg: rgba(11, 21, 17, 0.6);
+  --input-bg: rgba(11, 21, 17, 0.65);
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 [data-theme="light"] {
@@ -255,12 +257,111 @@ body {
   outline: none;
 }
 
-/* TV specific styling updates */
+/* --- Mushaf & Quran Reader Styles --- */
+.font-quran-text {
+  font-family: var(--font-quran);
+  letter-spacing: 0.01em;
+}
+
+.mushaf-container {
+  line-height: 2.4;
+  text-align: justify;
+  text-align-last: center;
+  word-spacing: 0.1em;
+  font-size: var(--mushaf-font-size, 1.45rem);
+}
+
+.surah-frame {
+  background: radial-gradient(circle at center, rgba(251, 191, 36, 0.12) 0%, rgba(6, 78, 59, 0.35) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .surah-frame {
+  background: radial-gradient(circle at center, rgba(4, 120, 87, 0.08) 0%, rgba(255, 255, 255, 0.9) 100%);
+  border: 1px solid rgba(4, 120, 87, 0.25);
+}
+
+.basmala-banner {
+  font-family: var(--font-quran);
+  color: var(--text-accent);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+}
+
+.ayah-text {
+  display: inline;
+  transition: background-color 0.2s ease;
+}
+
+.ayah-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  margin: 0 0.4rem;
+  padding: 0 0.2rem;
+  border-radius: 9999px;
+  border: 1.5px solid var(--text-accent);
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--text-accent);
+  font-family: var(--font-arabic);
+  font-size: 0.85em;
+  font-weight: 700;
+  user-select: none;
+  vertical-align: middle;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.ayah-badge:hover {
+  background: var(--text-accent);
+  color: #022c22;
+  transform: scale(1.15);
+}
+
+/* --- Floating Bottom Mini-Player Bar --- */
+.mini-player-bar {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: rgba(2, 44, 34, 0.92);
+  border-top: 1px solid rgba(251, 191, 36, 0.28);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.45);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+[data-theme="light"] .mini-player-bar {
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid rgba(4, 120, 87, 0.22);
+  box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.09);
+}
+
+/* Safe area padding for mobile iPhones */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 5rem);
+}
+
+.pb-safe-mini {
+  padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 1.25rem);
+}
+
+/* Focus states for Keyboard & TV Remote accessibility */
+:focus-visible {
+  outline: 2.5px solid var(--text-accent) !important;
+  outline-offset: 3px !important;
+}
+
+/* TV & Ultra-wide screen specific enhancements */
 @media (min-width: 1920px) {
   body {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+  }
+  .mushaf-container {
+    font-size: 1.85rem !important;
+    line-height: 2.6;
   }
   .playlist-scroll {
-    max-height: 70vh;
+    max-height: 72vh;
   }
 }
+
