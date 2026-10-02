@@ -5,91 +5,167 @@ const RECITERS = [
     "name": "الشيخ محمود خليل الحصري",
     "englishName": "Mahmoud Khalil Al-Husary",
     "slug": "mahmood_khaleel_al-husaree/",
-    "shortName": "الحصري"
+    "serverUrl": "https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/",
+    "shortName": "الحصري",
+    "complete": true
+  },
+  {
+    "id": "naina",
+    "name": "الشيخ أحمد نعينع",
+    "englishName": "Ahmad Naina",
+    "slug": "ahmad_nu/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/ahmad-naina/r1/",
+    "fallbackServerUrl": "https://server11.mp3quran.net/ahmad_nu/",
+    "shortName": "أحمد نعينع",
+    "complete": true
+  },
+  {
+    "id": "shaban",
+    "name": "الشيخ شعبان الصياد",
+    "englishName": "Shaban Al-Sayyad",
+    "slug": "shaban/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/shaban-sayyad/r1/",
+    "fallbackServerUrl": "https://server11.mp3quran.net/shaban/",
+    "shortName": "شعبان الصياد",
+    "complete": false,
+    "availableSurahs": [2,3,4,5,6,7,9,10,11,12,13,16,17,19,20,21,22,24,26,27,28,29,32,33,35,38,40,41,42,43,45,46,47,52,53,54,59,60,67,68,69,77,78,79,80,81,82,87,88,89,90,91,92,94,95,96,97,98,99,100,101,102,103,104,105]
+  },
+  {
+    "id": "hatem",
+    "name": "الشيخ حاتم فريد الواعر",
+    "englishName": "Hatem Farid Al-Waer",
+    "slug": "hatem/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/hatem-waer/r1/",
+    "fallbackServerUrl": "https://server11.mp3quran.net/hatem/",
+    "shortName": "حاتم فريد",
+    "complete": true
+  },
+  {
+    "id": "zawawi",
+    "name": "الشيخ عبد الرحمن الزواوي",
+    "englishName": "Abdulrahman Al-Zawawi",
+    "slug": "abdulrahman-al-zawawi/",
+    "serverUrl": "https://media.way2quran.com/abdulrahman-al-zawawi/hafs-an-asim/",
+    "shortName": "الزواوي",
+    "complete": true
+  },
+  {
+    "id": "shaashai",
+    "name": "الشيخ إبراهيم الشعشاعي",
+    "englishName": "Ibrahim Al-Sha'sha'i",
+    "slug": "ibrahim-al-shashae/",
+    "serverUrl": "https://media.way2quran.com/ibrahim-al-shashae/hafs-an-asim/",
+    "shortName": "إبراهيم الشعشاعي",
+    "complete": false,
+    "availableSurahs": [1, 3, 10, 11, 16, 18, 19, 23, 24, 35, 37, 40, 55, 59, 62, 66, 69, 75, 76, 82, 86, 87, 88, 89, 92, 93, 94, 95, 96, 97, 98, 110, 112, 113, 114]
   },
   {
     "id": "minshawi_murattal",
     "name": "الشيخ محمد صديق المنشاوي (مرتل)",
     "englishName": "Muhammad Siddiq al-Minshawi (Murattal)",
     "slug": "muhammad_siddeeq_al-minshaawee/",
-    "shortName": "المنشاوي"
+    "serverUrl": "https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/",
+    "shortName": "المنشاوي",
+    "complete": true
   },
   {
     "id": "minshawi_mujawwad",
     "name": "الشيخ محمد صديق المنشاوي (مجود)",
     "englishName": "Muhammad Siddiq al-Minshawi (Mujawwad)",
     "slug": "minshawi_mujawwad/",
-    "shortName": "المنشاوي (مجود)"
+    "serverUrl": "https://download.quranicaudio.com/quran/minshawi_mujawwad/",
+    "shortName": "المنشاوي (مجود)",
+    "complete": true
   },
   {
     "id": "abdulbasit_murattal",
     "name": "الشيخ عبد الباسط عبد الصمد (مرتل)",
     "englishName": "AbdulBaset AbdulSamad (Murattal)",
     "slug": "abdul_basit_murattal/",
-    "shortName": "عبد الباسط"
+    "serverUrl": "https://download.quranicaudio.com/quran/abdul_basit_murattal/",
+    "shortName": "عبد الباسط",
+    "complete": true
   },
   {
     "id": "abdulbasit_mujawwad",
     "name": "الشيخ عبد الباسط عبد الصمد (مجود)",
     "englishName": "AbdulBaset AbdulSamad (Mujawwad)",
     "slug": "abdulbaset_mujawwad/",
-    "shortName": "عبد الباسط (مجود)"
+    "serverUrl": "https://download.quranicaudio.com/quran/abdulbaset_mujawwad/",
+    "shortName": "عبد الباسط (مجود)",
+    "complete": true
   },
   {
     "id": "alafasy",
     "name": "الشيخ مشاري راشد العفاسي",
     "englishName": "Mishari Rashid al-`Afasy",
     "slug": "mishaari_raashid_al_3afaasee/",
-    "shortName": "العفاسي"
+    "serverUrl": "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/",
+    "shortName": "العفاسي",
+    "complete": true
   },
   {
     "id": "maher",
     "name": "الشيخ ماهر المعيقلي",
     "englishName": "Maher al-Muaiqly",
     "slug": "maher_256/",
-    "shortName": "المعيقلي"
+    "serverUrl": "https://download.quranicaudio.com/quran/maher_256/",
+    "shortName": "المعيقلي",
+    "complete": true
   },
   {
     "id": "shatri",
     "name": "الشيخ أبو بكر الشاطري",
     "englishName": "Abu Bakr al-Shatri",
     "slug": "abu_bakr_ash-shaatree/",
-    "shortName": "الشاطري"
+    "serverUrl": "https://download.quranicaudio.com/quran/abu_bakr_ash-shaatree/",
+    "shortName": "الشاطري",
+    "complete": true
   },
   {
     "id": "sudais",
     "name": "الشيخ عبد الرحمن السديس",
     "englishName": "Abdur-Rahman as-Sudais",
     "slug": "abdurrahmaan_as-sudays/",
-    "shortName": "السديس"
+    "serverUrl": "https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/",
+    "shortName": "السديس",
+    "complete": true
   },
   {
     "id": "shuraym",
     "name": "الشيخ سعود الشريم",
     "englishName": "Sa`ud ash-Shuraym",
     "slug": "sa3ood_al-shuraym/",
-    "shortName": "الشريم"
+    "serverUrl": "https://download.quranicaudio.com/quran/sa3ood_al-shuraym/",
+    "shortName": "الشريم",
+    "complete": true
   },
   {
     "id": "ghamdi",
     "name": "الشيخ سعد الغامدي",
     "englishName": "Saad al-Ghamdi",
     "slug": "sa3d_al-ghaamidi/complete/",
-    "shortName": "الغامدي"
+    "serverUrl": "https://download.quranicaudio.com/quran/sa3d_al-ghaamidi/complete/",
+    "shortName": "الغامدي",
+    "complete": true
   },
   {
     "id": "ajmy",
     "name": "الشيخ أحمد بن علي العجمي",
     "englishName": "Ahmed al-Ajmy",
     "slug": "ahmed_ibn_3ali_al-3ajamy/",
-    "shortName": "العجمي"
+    "serverUrl": "https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/",
+    "shortName": "العجمي",
+    "complete": true
   },
   {
     "id": "dussary",
     "name": "الشيخ ياسر الدوسري",
     "englishName": "Yasser ad-Dussary",
     "slug": "yasser_ad-dussary/",
-    "shortName": "الدوسري"
+    "serverUrl": "https://download.quranicaudio.com/quran/yasser_ad-dussary/",
+    "shortName": "الدوسري",
+    "complete": true
   }
 ];
 
