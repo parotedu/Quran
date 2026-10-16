@@ -20,13 +20,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const appSubtitle = document.getElementById('app-subtitle');
   const brandLogo = document.getElementById('brand-logo');
   
-  // Navigation Tabs
+  // Navigation Tabs (Unified across Desktop & Mobile)
   const navBtnPlayer = document.getElementById('nav-btn-player');
   const navBtnMushaf = document.getElementById('nav-btn-mushaf');
+  const navBtnSpiritual = document.getElementById('nav-btn-spiritual');
   const navBtnPlaylist = document.getElementById('nav-btn-playlist');
-  const desktopTabPlayer = document.getElementById('desktop-tab-player');
-  const desktopTabMushaf = document.getElementById('desktop-tab-mushaf');
-  const desktopCurrentSurahIndicator = document.getElementById('desktop-current-surah-indicator');
+  const spiritualView = document.getElementById('spiritual-view');
+
+  // V2 Elements (Segmented Search Mode, Player Corner Pills, Modals, Single Ayah Audio)
+  const ayahSingleAudio = document.getElementById('ayah-single-audio');
+  const searchTabSurahs = document.getElementById('search-tab-surahs');
+  const searchTabAyahs = document.getElementById('search-tab-ayahs');
+  const btnHeaderRadio = document.getElementById('btn-header-radio');
+  const btnPlayerRadio = document.getElementById('btn-player-radio');
+  const playerRadioLabel = document.getElementById('player-radio-label');
+  const btnSleepAmbience = document.getElementById('btn-sleep-ambience');
+  const sleepTimerBadge = document.getElementById('sleep-timer-badge');
+  const btnAbLoop = document.getElementById('btn-ab-loop');
+  const abLoopLabel = document.getElementById('ab-loop-label');
+  const mushafBtnGotoBookmark = document.getElementById('mushaf-btn-goto-bookmark');
+
+  // Smart Memorization & Live Reciter Ayah Hover Elements
+  const btnPlayerMemorize = document.getElementById('btn-player-memorize');
+  const btnDockMemorize = document.getElementById('btn-dock-memorize');
+  const btnToggleMemorizeMode = document.getElementById('btn-toggle-memorize-mode');
+  const memorizeStatusDot = document.getElementById('memorize-status-dot');
+  const memorizeModeLabel = document.getElementById('memorize-mode-label');
+  const memorizeLiveAyahBadge = document.getElementById('memorize-live-ayah-badge');
+  const memorizeLiveAyahText = document.getElementById('memorize-live-ayah-text');
+  const memorizeRepeatSelect = document.getElementById('memorize-repeat-select');
+  const btnMemorizeBlur = document.getElementById('btn-memorize-blur');
+  const btnMemorizeOpenStudio = document.getElementById('btn-memorize-open-studio');
 
   // Player Panel Elements
   const playerView = document.getElementById('player-view');
@@ -107,18 +131,49 @@ document.addEventListener('DOMContentLoaded', () => {
   let isPlaying = false;
   let currentTab = 'all'; // 'all', 'favorites', 'makki', 'madani'
   let searchQuery = '';
+  let searchMode = 'surahs'; // 'surahs' | 'ayahs'
+  let ayahSearchTimer = null;
   let favorites = JSON.parse(localStorage.getItem('quran_favorites')) || [];
   let currentReciterId = localStorage.getItem('quran_reciter') || 'hussary';
-  let currentView = 'player'; // 'player', 'mushaf', 'playlist'
+  let currentView = 'player'; // 'player', 'mushaf', 'spiritual', 'playlist'
   
   // Playback mode: 'repeat-all' (default), 'repeat-one', 'none'
   let repeatMode = localStorage.getItem('quran_repeat_mode') || 'repeat-all';
   let isShuffle = localStorage.getItem('quran_shuffle_mode') === 'true';
 
-  // Mushaf Cache and Zoom state
+  // Mushaf Cache, Zoom, and Bookmark state
   let mushafCache = {};
+  let tafsirCache = {};
   let currentMushafSurahId = 1;
   let mushafFontSize = parseInt(localStorage.getItem('quran_mushaf_font_size')) || 100;
+  let khatmaBookmark = JSON.parse(localStorage.getItem('quran_khatma_bookmark')) || null;
+  let listenedSurahs = JSON.parse(localStorage.getItem('quran_listened_surahs')) || [];
+  let listeningSeconds = parseInt(localStorage.getItem('quran_listening_seconds')) || 0;
+
+  // V2 Audio & Studio State
+  let isRadioMode = false;
+  let activeRadioStation = null;
+  let abLoopState = 'off'; // 'off' | 'A' | 'AB'
+  let abLoopA = 0;
+  let abLoopB = 0;
+  let sleepTimerMode = null; // null | 'end' | number (minutes)
+  let sleepRemainingSec = 0;
+  let sleepIntervalId = null;
+
+  // Smart Memorization & Live Reciter Ayah Hover State
+  let isMemorizationMode = localStorage.getItem('quran_memorize_mode') === 'true';
+  let isMemorizeBlur = false;
+  let memorizeRepeatTarget = 1; // 1 | 2 | 3 | 5 | 99 (infinite)
+  let currentAyahRepeatCount = 1;
+  let activeHoverAyahNum = null;
+  let surahTimestampsCache = {};
+
+  // Web Audio API Nature Ambience State
+  let audioCtx = null;
+  let ambienceMode = 'none'; // 'none' | 'rain' | 'breeze' | 'night'
+  let ambienceGainNode = null;
+  let ambienceSourceNodes = [];
+  let ambienceVolume = 0.25;
 
   // --- Initial Setup ---
   init();
@@ -166,10 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 8. Attach Event Listeners & Shortcuts
     attachEventListeners();
 
-    // 9. Setup Media Session for iOS/Android Lock Screen & Background Playback
+    // 9. Initialize V2.0 Features (Spiritual Hub, Modals, Ambience, Radio, Studio, Memorization Hover)
+    initV2Features();
+
+    // 10. Setup Media Session for iOS/Android Lock Screen & Background Playback
     setupMediaSessionHandlers();
 
-    // 10. Initial View Responsive Configuration
+    // 11. Initial View Responsive Configuration
     handleResize();
     window.addEventListener('resize', handleResize);
   }
@@ -182,15 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentView === 'playlist') {
         currentView = 'player';
       }
-      if (currentView === 'mushaf') {
-        playerView.classList.add('hidden');
-        mushafView.classList.remove('hidden');
-        miniPlayer.classList.remove('hidden');
-      } else {
-        playerView.classList.remove('hidden');
-        mushafView.classList.add('hidden');
-        miniPlayer.classList.add('hidden');
-      }
+      switchView(currentView, false);
     } else {
       switchView(currentView, false);
     }
@@ -200,55 +250,50 @@ document.addEventListener('DOMContentLoaded', () => {
     currentView = targetView;
     const isDesktop = window.innerWidth >= 1024;
 
+    const tabInactive = 'nav-tab-btn flex-1 md:flex-initial px-2.5 xs:px-3.5 py-1.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
+    const tabActive = 'nav-tab-btn flex-1 md:flex-initial px-2.5 xs:px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30';
+
+    if (navBtnPlayer) navBtnPlayer.className = tabInactive;
+    if (navBtnMushaf) navBtnMushaf.className = tabInactive;
+    if (navBtnSpiritual) navBtnSpiritual.className = tabInactive;
+    if (navBtnPlaylist) navBtnPlaylist.className = tabInactive + ' lg:hidden';
+
+    playerView.classList.add('hidden');
+    mushafView.classList.add('hidden');
+    if (spiritualView) spiritualView.classList.add('hidden');
+
     if (isDesktop) {
       playlistSection.classList.remove('hidden');
-      if (targetView === 'mushaf') {
-        playerView.classList.add('hidden');
-        mushafView.classList.remove('hidden');
-        miniPlayer.classList.remove('hidden');
-
-        desktopTabPlayer.className = 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
-        desktopTabMushaf.className = 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30';
-        loadSurahMushaf(SURAHS[currentIndex].id);
-      } else {
-        mushafView.classList.add('hidden');
-        playerView.classList.remove('hidden');
-        miniPlayer.classList.add('hidden');
-
-        desktopTabMushaf.className = 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
-        desktopTabPlayer.className = 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30';
-      }
     } else {
-      const tabInactive = 'nav-tab-btn flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
-      const tabActive = 'nav-tab-btn flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30';
+      playlistSection.classList.add('hidden');
+    }
 
-      navBtnPlayer.className = tabInactive;
-      navBtnMushaf.className = tabInactive;
-      if (navBtnPlaylist) navBtnPlaylist.className = tabInactive + ' lg:hidden';
-
-      if (targetView === 'player') {
-        navBtnPlayer.className = tabActive;
-        playerView.classList.remove('hidden');
-        mushafView.classList.add('hidden');
-        playlistSection.classList.add('hidden');
-        miniPlayer.classList.add('hidden');
-        if (shouldScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetView === 'mushaf') {
-        navBtnMushaf.className = tabActive;
-        playerView.classList.add('hidden');
-        mushafView.classList.remove('hidden');
-        playlistSection.classList.add('hidden');
-        miniPlayer.classList.remove('hidden');
-        loadSurahMushaf(SURAHS[currentIndex].id);
-        if (shouldScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetView === 'playlist') {
-        if (navBtnPlaylist) navBtnPlaylist.className = tabActive + ' lg:hidden';
-        playerView.classList.add('hidden');
-        mushafView.classList.add('hidden');
-        playlistSection.classList.remove('hidden');
-        miniPlayer.classList.remove('hidden');
-        if (shouldScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (targetView === 'mushaf') {
+      if (navBtnMushaf) navBtnMushaf.className = tabActive;
+      mushafView.classList.remove('hidden');
+      miniPlayer.classList.remove('hidden');
+      loadSurahMushaf(SURAHS[currentIndex].id);
+      if (isMemorizationMode) {
+        loadSurahTimestamps(SURAHS[currentIndex].id);
+        setTimeout(() => updateLiveMushafAyahHover(), 120);
       }
+    } else if (targetView === 'spiritual') {
+      if (navBtnSpiritual) navBtnSpiritual.className = tabActive;
+      if (spiritualView) spiritualView.classList.remove('hidden');
+      miniPlayer.classList.remove('hidden');
+      updateKhatmaDashboard();
+    } else if (targetView === 'playlist' && !isDesktop) {
+      if (navBtnPlaylist) navBtnPlaylist.className = tabActive + ' lg:hidden';
+      playlistSection.classList.remove('hidden');
+      miniPlayer.classList.remove('hidden');
+    } else {
+      if (navBtnPlayer) navBtnPlayer.className = tabActive;
+      playerView.classList.remove('hidden');
+      miniPlayer.classList.add('hidden');
+    }
+
+    if (!isDesktop && shouldScroll) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -478,6 +523,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Load Surah into Player ---
   function loadSurah(surah, shouldPlay = true) {
+    isRadioMode = false;
+    activeRadioStation = null;
+    if (playerRadioLabel) playerRadioLabel.innerText = 'إذاعة مباشرة';
+    resetAbLoop(false);
+
     const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
     const audioInfo = getSurahAudioUrl(reciter, surah.id);
     
@@ -531,9 +581,11 @@ document.addEventListener('DOMContentLoaded', () => {
       btnPlayerFav.querySelector('span').innerText = 'المفضلة';
     }
 
-    // Update Desktop Header Indicator
-    if (desktopCurrentSurahIndicator) {
-      desktopCurrentSurahIndicator.innerText = `سورة ${surah.name} - ${surah.versesCount} آية`;
+    // Reset Live Ayah Hover tracking for new Surah
+    activeHoverAyahNum = null;
+    currentAyahRepeatCount = 1;
+    if (isMemorizationMode) {
+      loadSurahTimestamps(surah.id);
     }
 
     // Synchronize Mini Player UI
@@ -625,6 +677,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Audio Play / Pause Execution ---
   function playAudio() {
+    // Pause single ayah audio if playing
+    if (ayahSingleAudio && !ayahSingleAudio.paused) {
+      ayahSingleAudio.pause();
+    }
     isPlaying = true;
     const playPromise = audio.play();
     
@@ -690,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Mushaf Reading Mode Logic ---
-  function loadSurahMushaf(surahId) {
+  function loadSurahMushaf(surahId, targetAyahToScroll = null) {
     currentMushafSurahId = surahId;
     const surah = SURAHS.find(s => s.id === surahId) || SURAHS[0];
     
@@ -713,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check Memory Cache
     if (mushafCache[surahId]) {
-      renderMushafVerses(mushafCache[surahId]);
+      renderMushafVerses(mushafCache[surahId], targetAyahToScroll);
       return;
     }
 
@@ -723,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const parsed = JSON.parse(localData);
         mushafCache[surahId] = parsed;
-        renderMushafVerses(parsed);
+        renderMushafVerses(parsed, targetAyahToScroll);
         return;
       } catch (e) {}
     }
@@ -752,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
             localStorage.setItem(`quran_mushaf_${surahId}`, JSON.stringify(json.data));
           } catch (e) {}
-          renderMushafVerses(json.data);
+          renderMushafVerses(json.data, targetAyahToScroll);
         } else {
           throw new Error('Malformed Quran data');
         }
@@ -772,13 +828,14 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         const retryBtn = document.getElementById('btn-retry-mushaf');
         if (retryBtn) {
-          retryBtn.addEventListener('click', () => loadSurahMushaf(surahId));
+          retryBtn.addEventListener('click', () => loadSurahMushaf(surahId, targetAyahToScroll));
         }
       });
   }
 
-  function renderMushafVerses(surahData) {
+  function renderMushafVerses(surahData, targetAyahToScroll = null) {
     const ayahs = surahData.ayahs || [];
+    const surahObj = SURAHS.find(s => s.id === surahData.number) || { name: surahData.name };
     let html = '';
     
     ayahs.forEach(ayah => {
@@ -787,28 +844,59 @@ document.addEventListener('DOMContentLoaded', () => {
       if (surahData.number !== 1 && ayah.numberInSurah === 1) {
         text = text.replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/, '').trim();
       }
+      const isBookmarked = khatmaBookmark && khatmaBookmark.surahId === surahData.number && khatmaBookmark.ayahNum === ayah.numberInSurah;
+      const bookmarkClass = isBookmarked ? 'ayah-bookmarked' : '';
       
-      html += `<span class="ayah-text" data-ayah="${ayah.numberInSurah}" title="انقر لنسخ الآية الكريمة">${text}</span><span class="ayah-badge" data-ayah="${ayah.numberInSurah}" title="آية رقم ${ayah.numberInSurah}">﴿${toArabicNumerals(ayah.numberInSurah)}﴾</span> `;
+      html += `<span class="ayah-text ${bookmarkClass}" id="mushaf-ayah-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="انقر لفتح استوديو الآية (أو للانتقال إليها في وضع التحفيظ)">${text}</span><span class="ayah-badge" id="mushaf-badge-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="آية رقم ${ayah.numberInSurah}">﴿${toArabicNumerals(ayah.numberInSurah)}﴾</span> `;
     });
 
     mushafContent.innerHTML = html;
-    mushafScrollArea.scrollTop = 0;
+    if (targetAyahToScroll) {
+      setTimeout(() => {
+        const targetEl = document.getElementById(`mushaf-ayah-${targetAyahToScroll}`);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetEl.classList.add('ayah-playing-active');
+          setTimeout(() => targetEl.classList.remove('ayah-playing-active'), 2500);
+        }
+      }, 150);
+    } else if (!isMemorizationMode) {
+      mushafScrollArea.scrollTop = 0;
+    }
 
-    // Attach Click-to-Copy Listener on Ayahs
+    // Attach Interactive Ayah Studio / Memorization Seek Listener on Ayahs
     mushafContent.querySelectorAll('.ayah-text, .ayah-badge').forEach(elem => {
       elem.addEventListener('click', () => {
         const ayahNum = parseInt(elem.getAttribute('data-ayah'));
+        const globalNum = parseInt(elem.getAttribute('data-global'));
         const ayahObj = ayahs.find(a => a.numberInSurah === ayahNum);
-        if (ayahObj && navigator.clipboard) {
-          const copyText = `﴿${ayahObj.text}﴾ [سورة ${surahData.name}: ${ayahNum}]`;
-          navigator.clipboard.writeText(copyText).then(() => {
-            showToast(`تم نسخ الآية الكريمة (${ayahNum})`);
-          }).catch(() => {
-            showToast(`آية ${ayahNum}`);
-          });
+        if (!ayahObj) return;
+
+        let cleanText = ayahObj.text;
+        if (surahData.number !== 1 && ayahObj.numberInSurah === 1) {
+          cleanText = cleanText.replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/, '').trim();
+        }
+        currentStudioContext = {
+          surahId: surahData.number,
+          surahName: surahObj.name,
+          ayahNum,
+          globalAyah: globalNum,
+          text: cleanText
+        };
+
+        if (isMemorizationMode) {
+          seekReciterToAyah(surahData.number, ayahNum);
+        } else {
+          openAyahStudio(surahData.number, surahObj.name, ayahNum, globalNum, cleanText);
         }
       });
     });
+
+    // If Memorization Mode is active, sync live hover highlight immediately
+    if (isMemorizationMode) {
+      loadSurahTimestamps(surahData.number);
+      setTimeout(() => updateLiveMushafAyahHover(true), 80);
+    }
   }
 
   function toArabicNumerals(num) {
@@ -982,16 +1070,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Attach All Event Listeners ---
   function attachEventListeners() {
-    // 1. Navigation Mode Tabs
+    // 1. Navigation Mode Tabs (Unified across Desktop & Mobile)
     navBtnPlayer.addEventListener('click', () => switchView('player'));
     navBtnMushaf.addEventListener('click', () => switchView('mushaf'));
+    if (navBtnSpiritual) navBtnSpiritual.addEventListener('click', () => switchView('spiritual'));
     if (navBtnPlaylist) navBtnPlaylist.addEventListener('click', () => switchView('playlist'));
-    
-    desktopTabPlayer.addEventListener('click', () => switchView('player'));
-    desktopTabMushaf.addEventListener('click', () => switchView('mushaf'));
     
     btnReadInMushaf.addEventListener('click', () => switchView('mushaf'));
     brandLogo.addEventListener('click', () => switchView('player'));
+
+    // Quick Sunnah Surah Pills (Al-Kahf 18, Al-Mulk 67, Ya-Sin 36)
+    document.querySelectorAll('.btn-quick-surah').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = parseInt(btn.getAttribute('data-quick-surah'));
+        const idx = SURAHS.findIndex(s => s.id === sid);
+        if (idx !== -1) {
+          currentIndex = idx;
+          loadSurah(SURAHS[currentIndex], true);
+          scrollToActiveCard();
+          showToast(`تشغيل سورة ${SURAHS[currentIndex].name}`);
+        }
+      });
+    });
 
     // 2. Play / Pause Click
     btnPlayPause.addEventListener('click', () => {
@@ -1057,6 +1157,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 7. Audio Event Handlers
     audio.addEventListener('loadedmetadata', () => {
+      if (isRadioMode) {
+        seekSlider.disabled = true;
+        totalDurationLabel.innerText = 'بث مباشر';
+        return;
+      }
       const dur = Math.floor(audio.duration);
       seekSlider.max = dur;
       seekSlider.disabled = false;
@@ -1067,10 +1172,36 @@ document.addEventListener('DOMContentLoaded', () => {
         miniSeekSlider.disabled = false;
         miniTotalDuration.innerText = formatTime(audio.duration);
       }
+
+      if (isMemorizationMode && currentView === 'mushaf') {
+        updateLiveMushafAyahHover();
+      }
     });
 
+    let lastRecordedSec = -1;
     audio.addEventListener('timeupdate', () => {
       const cur = Math.floor(audio.currentTime);
+
+      // V2: Track listening analytics every 5 seconds
+      if (isPlaying && cur !== lastRecordedSec && cur % 5 === 0) {
+        lastRecordedSec = cur;
+        listeningSeconds += 5;
+        localStorage.setItem('quran_listening_seconds', listeningSeconds);
+      }
+
+      // V2: A-B Memorization Loop Check
+      if (abLoopState === 'AB' && abLoopB > abLoopA && audio.currentTime >= abLoopB) {
+        audio.currentTime = abLoopA;
+        return;
+      }
+
+      if (isRadioMode) {
+        currentTimeLabel.innerText = formatTime(cur);
+        totalDurationLabel.innerText = 'مباشر 🔴';
+        if (miniTimeDisplay) miniTimeDisplay.innerText = 'بث إذاعي مباشر 24/7';
+        return;
+      }
+
       const formatted = formatTime(cur);
       const dur = audio.duration || 1;
       const progressPercent = Math.min(100, Math.max(0, (audio.currentTime / dur) * 100));
@@ -1090,18 +1221,21 @@ document.addEventListener('DOMContentLoaded', () => {
         miniProgressFill.style.width = `${progressPercent}%`;
       }
 
+      // V2+: Live Reciter Ayah Hover in Mushaf when Memorization Mode is active
+      if (isMemorizationMode && currentView === 'mushaf') {
+        updateLiveMushafAyahHover();
+      }
+
       // Sync Lock Screen position scrubber
       if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
-        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+        if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
           try {
             navigator.mediaSession.setPositionState({
               duration: audio.duration,
               playbackRate: audio.playbackRate,
               position: Math.min(audio.currentTime, audio.duration)
             });
-          } catch (e) {
-            // Transient duration/position discrepancies safely caught
-          }
+          } catch (e) {}
         }
       }
     });
@@ -1121,6 +1255,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 8. Resilient Fallback on Audio Error
     audio.addEventListener('error', () => {
+      if (isRadioMode) {
+        showToast('تعذر الاتصال بالبث المباشر حالياً، جاري العودة للمشغل.', 'error');
+        loadSurah(SURAHS[currentIndex], false);
+        return;
+      }
       const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
       if (reciter.id !== 'hussary') {
         const fallbackReciter = RECITERS.find(r => r.id === 'hussary');
@@ -1204,6 +1343,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 12. Audio Ended Event
     audio.addEventListener('ended', () => {
+      // Record Surah completion for Khatma tracker
+      const completedId = SURAHS[currentIndex].id;
+      if (!listenedSurahs.includes(completedId)) {
+        listenedSurahs.push(completedId);
+        localStorage.setItem('quran_listened_surahs', JSON.stringify(listenedSurahs));
+        updateKhatmaDashboard();
+      }
+
+      // Check if Sleep Timer is set to "end of surah"
+      if (sleepTimerMode === 'end') {
+        setSleepTimer(0);
+        pauseAudio();
+        setNatureAmbience('none');
+        showToast('انتهت السورة وتم إيقاف المشغل تلقائياً حسب مؤقت النوم 🌙');
+        return;
+      }
+
       if (repeatMode === 'repeat-one') {
         audio.currentTime = 0;
         playAudio();
@@ -1219,7 +1375,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 13. Search Input
+    // 13. Search Input & Segmented 2-Tab Search Mode (Surahs vs Full Quran Verses)
+    const setSearchMode = (mode) => {
+      searchMode = mode;
+      const activeSearchTabClass = 'flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition-all bg-amber-500 text-slate-900 shadow flex items-center justify-center gap-1.5';
+      const inactiveSearchTabClass = 'flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-semibold transition-all text-[var(--text-secondary)] hover:text-amber-400 flex items-center justify-center gap-1.5';
+
+      if (mode === 'ayahs') {
+        if (searchTabAyahs) searchTabAyahs.className = activeSearchTabClass;
+        if (searchTabSurahs) searchTabSurahs.className = inactiveSearchTabClass;
+        searchInput.placeholder = 'اكتب كلمة للبحث في آيات القرآن الكريم كاملاً (مثل: الصبر، السكينة)...';
+        showToast('تم تفعيل البحث الشامل في آيات القرآن الكريم (6236 آية)');
+        if (searchQuery.trim().length >= 2) {
+          performFullQuranAyahSearch(searchQuery.trim());
+        }
+      } else {
+        if (searchTabSurahs) searchTabSurahs.className = activeSearchTabClass;
+        if (searchTabAyahs) searchTabAyahs.className = inactiveSearchTabClass;
+        searchInput.placeholder = 'ابحث باسم السورة أو رقمها...';
+        renderPlaylist();
+      }
+    };
+
+    if (searchTabSurahs) searchTabSurahs.addEventListener('click', () => setSearchMode('surahs'));
+    if (searchTabAyahs) searchTabAyahs.addEventListener('click', () => setSearchMode('ayahs'));
+
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
       if (searchQuery) {
@@ -1227,7 +1407,19 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         searchClear.classList.add('hidden');
       }
-      renderPlaylist();
+
+      if (searchMode === 'ayahs') {
+        clearTimeout(ayahSearchTimer);
+        if (searchQuery.trim().length < 2) {
+          renderPlaylist();
+          return;
+        }
+        ayahSearchTimer = setTimeout(() => {
+          performFullQuranAyahSearch(searchQuery.trim());
+        }, 400);
+      } else {
+        renderPlaylist();
+      }
     });
 
     searchClear.addEventListener('click', () => {
@@ -1255,9 +1447,9 @@ document.addEventListener('DOMContentLoaded', () => {
         filterTabs.forEach(f => {
           if (!f.elem) return;
           if (f.id === currentTab) {
-            f.elem.className = 'filter-tab px-3 py-1.5 rounded-xl font-semibold transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0';
+            f.elem.className = 'filter-tab px-2.5 py-1.5 rounded-xl font-semibold transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0';
           } else {
-            f.elem.className = 'filter-tab px-3 py-1.5 rounded-xl font-semibold transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/10 flex-shrink-0';
+            f.elem.className = 'filter-tab px-2.5 py-1.5 rounded-xl font-semibold transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/10 flex-shrink-0';
           }
         });
 
@@ -1394,6 +1586,1250 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
       }
     });
+  }
+
+  // ==========================================================================
+  // V2.0 ENGINE: AYAH STUDIO, A-B LOOP, SLEEP/AMBIENCE, LIVE RADIO & SPIRITUAL HUB
+  // ==========================================================================
+  let currentStudioContext = null;
+
+  function initV2Features() {
+    window.showPlatformToast = showToast;
+
+    // 1. Jump to Khatma Bookmark buttons
+    const handleJumpToBookmark = () => {
+      if (!khatmaBookmark) {
+        showToast('لم تقم بحفظ فاصل قراءة بعد. انقر على أي آية في المصحف ثم اختر (وصلت إلى هنا).', 'info');
+        switchView('mushaf');
+        return;
+      }
+      const idx = SURAHS.findIndex(s => s.id === khatmaBookmark.surahId);
+      if (idx !== -1) {
+        currentIndex = idx;
+        loadSurah(SURAHS[currentIndex], isPlaying);
+      }
+      switchView('mushaf');
+      loadSurahMushaf(khatmaBookmark.surahId, khatmaBookmark.ayahNum);
+      showToast(`تم الانتقال إلى فاصل الختمة: سورة ${khatmaBookmark.surahName} - الآية ${khatmaBookmark.ayahNum}`);
+    };
+
+    if (mushafBtnGotoBookmark) mushafBtnGotoBookmark.addEventListener('click', handleJumpToBookmark);
+    const spBtnJumpBookmark = document.getElementById('sp-btn-jump-bookmark');
+    if (spBtnJumpBookmark) spBtnJumpBookmark.addEventListener('click', handleJumpToBookmark);
+
+    // 2. A-B Memorization Loop Button
+    if (btnAbLoop) {
+      btnAbLoop.addEventListener('click', cycleAbLoop);
+    }
+
+    // 3. Sleep Timer & Nature Ambience Modal
+    const sleepModal = document.getElementById('sleep-ambience-modal');
+    const btnCloseSleepModal = document.getElementById('btn-close-sleep-modal');
+    if (btnSleepAmbience && sleepModal) {
+      btnSleepAmbience.addEventListener('click', () => sleepModal.classList.remove('hidden'));
+    }
+    if (btnCloseSleepModal && sleepModal) {
+      btnCloseSleepModal.addEventListener('click', () => sleepModal.classList.add('hidden'));
+      sleepModal.addEventListener('click', (e) => {
+        if (e.target === sleepModal) sleepModal.classList.add('hidden');
+      });
+    }
+
+    document.querySelectorAll('.sleep-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-sleep-min');
+        setSleepTimer(val === 'end' ? 'end' : parseInt(val));
+      });
+    });
+
+    document.querySelectorAll('.ambience-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-ambience');
+        setNatureAmbience(type);
+        document.querySelectorAll('.ambience-opt-btn').forEach(b => {
+          if (b.getAttribute('data-ambience') === type) {
+            b.className = 'ambience-opt-btn py-2 px-1 rounded-xl bg-amber-500/20 border border-amber-500/35 text-amber-400 font-bold text-center transition-all';
+          } else {
+            b.className = 'ambience-opt-btn py-2 px-1 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-[var(--text-secondary)] hover:text-amber-400 font-semibold text-center transition-all';
+          }
+        });
+      });
+    });
+
+    const ambVolSlider = document.getElementById('ambience-volume-slider');
+    const ambVolVal = document.getElementById('ambience-volume-val');
+    if (ambVolSlider) {
+      ambVolSlider.addEventListener('input', () => {
+        ambienceVolume = parseInt(ambVolSlider.value) / 100;
+        if (ambVolVal) ambVolVal.innerText = `${ambVolSlider.value}%`;
+        if (ambienceGainNode && audioCtx) {
+          ambienceGainNode.gain.setTargetAtTime(ambienceVolume * 0.25, audioCtx.currentTime, 0.1);
+        }
+      });
+    }
+
+    // 4. 24/7 Live Quran Radio Modal
+    const radioModal = document.getElementById('radio-modal');
+    const btnCloseRadioModal = document.getElementById('btn-close-radio-modal');
+    const openRadio = () => {
+      renderRadioStations();
+      if (radioModal) radioModal.classList.remove('hidden');
+    };
+    if (btnHeaderRadio) btnHeaderRadio.addEventListener('click', openRadio);
+    if (btnPlayerRadio) btnPlayerRadio.addEventListener('click', openRadio);
+    if (btnCloseRadioModal && radioModal) {
+      btnCloseRadioModal.addEventListener('click', () => radioModal.classList.add('hidden'));
+      radioModal.addEventListener('click', (e) => {
+        if (e.target === radioModal) radioModal.classList.add('hidden');
+      });
+    }
+
+    // 5. Interactive Ayah Studio Modal Events
+    const studioModal = document.getElementById('ayah-studio-modal');
+    const btnCloseStudio = document.getElementById('btn-close-ayah-studio');
+    if (btnCloseStudio && studioModal) {
+      btnCloseStudio.addEventListener('click', closeAyahStudio);
+      studioModal.addEventListener('click', (e) => {
+        if (e.target === studioModal) closeAyahStudio();
+      });
+    }
+
+    const studioBtnPlay = document.getElementById('studio-btn-play-ayah');
+    if (studioBtnPlay) {
+      studioBtnPlay.addEventListener('click', () => {
+        if (!currentStudioContext) return;
+        toggleSingleAyahAudio(currentStudioContext.globalAyah);
+      });
+    }
+
+    const studioBtnBookmark = document.getElementById('studio-btn-bookmark');
+    if (studioBtnBookmark) {
+      studioBtnBookmark.addEventListener('click', () => {
+        if (!currentStudioContext) return;
+        khatmaBookmark = {
+          surahId: currentStudioContext.surahId,
+          surahName: currentStudioContext.surahName,
+          ayahNum: currentStudioContext.ayahNum,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('quran_khatma_bookmark', JSON.stringify(khatmaBookmark));
+        updateKhatmaDashboard();
+        // Refresh highlight in Mushaf
+        document.querySelectorAll('.ayah-text').forEach(el => el.classList.remove('ayah-bookmarked'));
+        const activeEl = document.getElementById(`mushaf-ayah-${currentStudioContext.ayahNum}`);
+        if (activeEl) activeEl.classList.add('ayah-bookmarked');
+        showToast(`تم حفظ فاصل الختمة عند سورة ${currentStudioContext.surahName} - الآية ${currentStudioContext.ayahNum} 🔖`);
+      });
+    }
+
+    const studioBtnCopy = document.getElementById('studio-btn-copy');
+    if (studioBtnCopy) {
+      studioBtnCopy.addEventListener('click', () => {
+        if (!currentStudioContext) return;
+        const tafsirText = document.getElementById('studio-tafsir-box')?.innerText || '';
+        const payload = `﴿${currentStudioContext.text}﴾ [سورة ${currentStudioContext.surahName}: ${currentStudioContext.ayahNum}]\n\nالتفسير: ${tafsirText}`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(payload).then(() => {
+            showToast('تم نسخ الآية الكريمة مع تفسيرها');
+          });
+        }
+      });
+    }
+
+    const studioBtnCard = document.getElementById('studio-btn-download-card');
+    if (studioBtnCard) {
+      studioBtnCard.addEventListener('click', () => {
+        if (!currentStudioContext) return;
+        generateAyahImageCard(currentStudioContext.surahName, currentStudioContext.ayahNum, currentStudioContext.text);
+      });
+    }
+
+    document.querySelectorAll('.tafsir-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!currentStudioContext) return;
+        const edition = btn.getAttribute('data-tafsir');
+        document.querySelectorAll('.tafsir-tab-btn').forEach(b => {
+          if (b.getAttribute('data-tafsir') === edition) {
+            b.className = 'tafsir-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+          } else {
+            b.className = 'tafsir-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40';
+          }
+        });
+        fetchAyahTafsir(currentStudioContext.surahId, currentStudioContext.ayahNum, edition);
+      });
+    });
+
+    // Single Ayah Audio Ended Handler
+    if (ayahSingleAudio) {
+      ayahSingleAudio.addEventListener('ended', () => {
+        const repeatCheck = document.getElementById('studio-repeat-ayah');
+        if (repeatCheck && repeatCheck.checked) {
+          ayahSingleAudio.currentTime = 0;
+          ayahSingleAudio.play().catch(() => {});
+        } else {
+          const icon = document.getElementById('studio-play-icon');
+          const lbl = document.getElementById('studio-play-label');
+          if (icon) icon.className = 'fa-solid fa-play';
+          if (lbl) lbl.innerText = 'استماع للآية';
+        }
+      });
+    }
+
+    // 6. Smart Memorization Mode & Live Reciter Ayah Hover Controls
+    const activateMemorizationInMushaf = () => {
+      isMemorizationMode = true;
+      localStorage.setItem('quran_memorize_mode', 'true');
+      updateMemorizationModeUI();
+      switchView('mushaf');
+      if (!isPlaying && !isRadioMode) {
+        playAudio();
+      }
+      showToast('تم تفعيل وضع التحفيظ والتتبع الحي للآيات مع القارئ ✨');
+    };
+
+    if (btnPlayerMemorize) {
+      btnPlayerMemorize.addEventListener('click', activateMemorizationInMushaf);
+    }
+    if (btnDockMemorize) {
+      btnDockMemorize.addEventListener('click', activateMemorizationInMushaf);
+    }
+
+    if (btnToggleMemorizeMode) {
+      btnToggleMemorizeMode.addEventListener('click', () => {
+        isMemorizationMode = !isMemorizationMode;
+        localStorage.setItem('quran_memorize_mode', isMemorizationMode ? 'true' : 'false');
+        updateMemorizationModeUI();
+        if (isMemorizationMode) {
+          showToast('تم تفعيل وضع التحفيظ — سيتم عمل Hover وتتبع تلقائي للآية التي يقرؤها الشيخ 🎯');
+          if (!isPlaying && !isRadioMode) {
+            playAudio();
+          }
+        } else {
+          showToast('تم إيقاف وضع التحفيظ والتتبع الحي للآيات', 'info');
+        }
+      });
+    }
+
+    if (memorizeRepeatSelect) {
+      memorizeRepeatSelect.addEventListener('change', () => {
+        memorizeRepeatTarget = parseInt(memorizeRepeatSelect.value) || 1;
+        currentAyahRepeatCount = 1;
+        if (!isMemorizationMode && memorizeRepeatTarget > 1) {
+          isMemorizationMode = true;
+          localStorage.setItem('quran_memorize_mode', 'true');
+          updateMemorizationModeUI();
+        }
+        const label = memorizeRepeatTarget === 99 ? 'تكرار مستمر للآية' : `${memorizeRepeatTarget} مرات لكل آية`;
+        showToast(`تم ضبط تكرار التحفيظ: ${label}`);
+      });
+    }
+
+    if (btnMemorizeBlur) {
+      btnMemorizeBlur.addEventListener('click', () => {
+        isMemorizeBlur = !isMemorizeBlur;
+        if (isMemorizeBlur) {
+          if (!isMemorizationMode) {
+            isMemorizationMode = true;
+            localStorage.setItem('quran_memorize_mode', 'true');
+            updateMemorizationModeUI();
+          }
+          mushafContent.classList.add('mushaf-memorize-blur');
+          btnMemorizeBlur.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500 text-slate-900 font-bold text-[11px] flex items-center gap-1.5 transition-all shadow';
+          showToast('تم تفعيل اختبار الحفظ (تمويه النص) — الآية التي يتلوها القارئ أو تلمسها تظهر بوضوح ✨');
+        } else {
+          mushafContent.classList.remove('mushaf-memorize-blur');
+          btnMemorizeBlur.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-950/70 border border-emerald-500/20 text-[var(--text-secondary)] hover:text-amber-400 font-semibold text-[11px] flex items-center gap-1.5 transition-all';
+          showToast('تم إظهار نص المصحف بالكامل', 'info');
+        }
+      });
+    }
+
+    if (btnMemorizeOpenStudio) {
+      btnMemorizeOpenStudio.addEventListener('click', () => {
+        const surahData = mushafCache[currentMushafSurahId];
+        if (!surahData || !surahData.ayahs) return;
+        const targetNum = activeHoverAyahNum || 1;
+        const ayahObj = surahData.ayahs.find(a => a.numberInSurah === targetNum) || surahData.ayahs[0];
+        if (ayahObj) {
+          const surahObj = SURAHS.find(s => s.id === surahData.number) || { name: surahData.name };
+          let cleanText = ayahObj.text;
+          if (surahData.number !== 1 && ayahObj.numberInSurah === 1) {
+            cleanText = cleanText.replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/, '').trim();
+          }
+          openAyahStudio(surahData.number, surahObj.name, ayahObj.numberInSurah, ayahObj.number, cleanText);
+        }
+      });
+    }
+
+    updateMemorizationModeUI();
+
+    // 7. Initialize Spiritual Companion Hub (Mood Compass, Azkar, Sebha, Khatma)
+    initSpiritualCompanionHub();
+  }
+
+  // --- Smart Memorization & Live Reciter Ayah Hover Engine ---
+  function getQdcReciterId(reciterId) {
+    const map = {
+      hussary: 6,
+      minshawi: 9,
+      minshawi_mojawwad: 8,
+      abdulbasit: 2,
+      abdulbasit_mojawwad: 1,
+      alafasy: 7,
+      sudais: 3
+    };
+    return map[reciterId] || 6;
+  }
+
+  function loadSurahTimestamps(surahId) {
+    const qdcId = getQdcReciterId(currentReciterId);
+    const cacheKey = `${qdcId}_${surahId}`;
+    if (surahTimestampsCache[cacheKey]) return;
+
+    const stored = localStorage.getItem(`quran_ts_${cacheKey}`);
+    if (stored) {
+      try {
+        surahTimestampsCache[cacheKey] = JSON.parse(stored);
+        return;
+      } catch (e) {}
+    }
+
+    fetch(`https://api.quran.com/api/v4/chapter_recitations/${qdcId}/${surahId}?segments=false`)
+      .then(res => res.json())
+      .then(json => {
+        const tsList = json && json.audio_file && json.audio_file.timestamps;
+        if (Array.isArray(tsList) && tsList.length > 0) {
+          const totalMs = tsList[tsList.length - 1].timestamp_to || 1;
+          const normalized = tsList.map((ts, idx) => {
+            const ayahNum = parseInt((ts.verse_key || '').split(':')[1]) || (idx + 1);
+            return {
+              ayahNum,
+              startRatio: idx === 0 ? 0 : Math.max(0, ts.timestamp_from / totalMs),
+              endRatio: Math.min(1, ts.timestamp_to / totalMs)
+            };
+          });
+          surahTimestampsCache[cacheKey] = normalized;
+          try {
+            localStorage.setItem(`quran_ts_${cacheKey}`, JSON.stringify(normalized));
+          } catch (e) {}
+          if (isMemorizationMode && currentView === 'mushaf') {
+            updateLiveMushafAyahHover();
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
+  function getSurahVerseRatios(surahId) {
+    const qdcId = getQdcReciterId(currentReciterId);
+    const cacheKey = `${qdcId}_${surahId}`;
+    if (surahTimestampsCache[cacheKey] && surahTimestampsCache[cacheKey].length > 0) {
+      return surahTimestampsCache[cacheKey];
+    }
+
+    // Instant proportional fallback based on Uthmani verse character lengths
+    const surahData = mushafCache[surahId];
+    if (!surahData || !Array.isArray(surahData.ayahs) || surahData.ayahs.length === 0) {
+      return [];
+    }
+    const ayahs = surahData.ayahs;
+    const weights = ayahs.map(a => Math.max(18, (a.text || '').length + 14));
+    const totalWeight = weights.reduce((acc, w) => acc + w, 0) || 1;
+    let cumulative = 0;
+    return ayahs.map((a, idx) => {
+      const startRatio = cumulative / totalWeight;
+      cumulative += weights[idx];
+      const endRatio = cumulative / totalWeight;
+      return {
+        ayahNum: a.numberInSurah,
+        startRatio,
+        endRatio
+      };
+    });
+  }
+
+  function clearLiveMushafAyahHover() {
+    if (!mushafContent) return;
+    mushafContent.querySelectorAll('.ayah-live-reading-hover').forEach(el => {
+      el.classList.remove('ayah-live-reading-hover');
+    });
+    mushafContent.querySelectorAll('.ayah-badge-live').forEach(el => {
+      el.classList.remove('ayah-badge-live');
+    });
+  }
+
+  function updateMemorizationModeUI() {
+    if (isMemorizationMode) {
+      if (memorizeStatusDot) {
+        memorizeStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+      }
+      if (memorizeModeLabel) {
+        memorizeModeLabel.innerText = 'وضع التحفيظ والتتبع الحي: مفعل';
+      }
+      if (btnToggleMemorizeMode) {
+        btnToggleMemorizeMode.className = 'px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-xs flex items-center gap-2 transition-all shadow-md';
+      }
+      if (memorizeLiveAyahBadge) {
+        memorizeLiveAyahBadge.classList.remove('hidden');
+        memorizeLiveAyahBadge.classList.add('flex');
+      }
+      if (btnMemorizeOpenStudio) {
+        btnMemorizeOpenStudio.classList.remove('hidden');
+        btnMemorizeOpenStudio.classList.add('flex');
+      }
+      if (btnPlayerMemorize) {
+        btnPlayerMemorize.classList.add('border-amber-400', 'bg-amber-500/20');
+      }
+      if (btnDockMemorize) {
+        btnDockMemorize.classList.add('border-amber-400', 'bg-amber-500/20');
+      }
+      loadSurahTimestamps(SURAHS[currentIndex].id);
+      if (currentView === 'mushaf') {
+        setTimeout(() => updateLiveMushafAyahHover(true), 60);
+      }
+    } else {
+      if (memorizeStatusDot) {
+        memorizeStatusDot.className = 'w-2 h-2 rounded-full bg-slate-500 transition-all';
+      }
+      if (memorizeModeLabel) {
+        memorizeModeLabel.innerText = 'تفعيل وضع التحفيظ والتتبع الحي';
+      }
+      if (btnToggleMemorizeMode) {
+        btnToggleMemorizeMode.className = 'px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-500/25 text-[var(--text-secondary)] hover:text-amber-400 font-bold text-xs flex items-center gap-2 transition-all shadow-sm';
+      }
+      if (memorizeLiveAyahBadge) {
+        memorizeLiveAyahBadge.classList.add('hidden');
+        memorizeLiveAyahBadge.classList.remove('flex');
+      }
+      if (btnMemorizeOpenStudio) {
+        btnMemorizeOpenStudio.classList.add('hidden');
+        btnMemorizeOpenStudio.classList.remove('flex');
+      }
+      if (btnPlayerMemorize) {
+        btnPlayerMemorize.classList.remove('border-amber-400', 'bg-amber-500/20');
+      }
+      if (btnDockMemorize) {
+        btnDockMemorize.classList.remove('border-amber-400', 'bg-amber-500/20');
+      }
+      clearLiveMushafAyahHover();
+      if (isMemorizeBlur && mushafContent) {
+        isMemorizeBlur = false;
+        mushafContent.classList.remove('mushaf-memorize-blur');
+        if (btnMemorizeBlur) {
+          btnMemorizeBlur.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-950/70 border border-emerald-500/20 text-[var(--text-secondary)] hover:text-amber-400 font-semibold text-[11px] flex items-center gap-1.5 transition-all';
+        }
+      }
+    }
+  }
+
+  function updateLiveMushafAyahHover(forceScroll = false) {
+    if (!isMemorizationMode || currentView !== 'mushaf' || isRadioMode) return;
+    const playingSurah = SURAHS[currentIndex];
+    if (!playingSurah || currentMushafSurahId !== playingSurah.id) return;
+
+    const ratios = getSurahVerseRatios(playingSurah.id);
+    if (!ratios || ratios.length === 0) return;
+
+    let targetAyahNum = 1;
+    const dur = audio.duration;
+    if (dur && !isNaN(dur) && isFinite(dur) && dur > 0) {
+      const progressRatio = Math.min(1, Math.max(0, audio.currentTime / dur));
+      const matched = ratios.find(r => progressRatio >= r.startRatio && progressRatio <= r.endRatio) || ratios[ratios.length - 1];
+      if (matched) {
+        targetAyahNum = matched.ayahNum;
+      }
+
+      // Per-Ayah Repetition Check when moving from activeHoverAyahNum to the next Ayah
+      const isDragging = seekSlider && seekSlider.classList.contains('user-dragging');
+      if (
+        !isDragging &&
+        isPlaying &&
+        memorizeRepeatTarget > 1 &&
+        activeHoverAyahNum !== null &&
+        targetAyahNum === activeHoverAyahNum + 1
+      ) {
+        if (memorizeRepeatTarget === 99 || currentAyahRepeatCount < memorizeRepeatTarget) {
+          const prevRatioObj = ratios.find(r => r.ayahNum === activeHoverAyahNum);
+          if (prevRatioObj) {
+            if (memorizeRepeatTarget !== 99) {
+              currentAyahRepeatCount++;
+            }
+            audio.currentTime = Math.max(0, prevRatioObj.startRatio * dur + 0.05);
+            targetAyahNum = activeHoverAyahNum;
+          }
+        } else {
+          currentAyahRepeatCount = 1;
+        }
+      } else if (activeHoverAyahNum !== null && targetAyahNum !== activeHoverAyahNum) {
+        currentAyahRepeatCount = 1;
+      }
+    }
+
+    const ayahEl = document.getElementById(`mushaf-ayah-${targetAyahNum}`);
+    const badgeEl = document.getElementById(`mushaf-badge-${targetAyahNum}`);
+    if (!ayahEl) return;
+
+    const changedAyah = activeHoverAyahNum !== targetAyahNum || !ayahEl.classList.contains('ayah-live-reading-hover');
+    if (changedAyah) {
+      clearLiveMushafAyahHover();
+      ayahEl.classList.add('ayah-live-reading-hover');
+      if (badgeEl) badgeEl.classList.add('ayah-badge-live');
+      activeHoverAyahNum = targetAyahNum;
+
+      if (forceScroll || isPlaying) {
+        ayahEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    if (memorizeLiveAyahText) {
+      const repeatSuffix = memorizeRepeatTarget > 1
+        ? ` • تكرار (${memorizeRepeatTarget === 99 ? '∞' : `${currentAyahRepeatCount}/${memorizeRepeatTarget}`})`
+        : '';
+      memorizeLiveAyahText.innerText = `${isPlaying ? '🔊 القارئ يتلو الآن:' : '🎯 الآية المحددة:'} آية ${targetAyahNum} من ${playingSurah.versesCount}${repeatSuffix}`;
+    }
+  }
+
+  function seekReciterToAyah(surahId, ayahNum) {
+    const idx = SURAHS.findIndex(s => s.id === surahId);
+    if (idx !== -1 && currentIndex !== idx) {
+      currentIndex = idx;
+      loadSurah(SURAHS[currentIndex], true);
+    }
+
+    const ratios = getSurahVerseRatios(surahId);
+    const targetRatioObj = ratios.find(r => r.ayahNum === ayahNum);
+    activeHoverAyahNum = ayahNum;
+    currentAyahRepeatCount = 1;
+
+    const applySeek = () => {
+      if (targetRatioObj && audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        audio.currentTime = Math.max(0, targetRatioObj.startRatio * audio.duration + 0.05);
+      }
+      if (!isPlaying) {
+        playAudio();
+      }
+      updateLiveMushafAyahHover(true);
+    };
+
+    if (audio.readyState >= 1 && audio.duration) {
+      applySeek();
+    } else {
+      const onMeta = () => {
+        audio.removeEventListener('loadedmetadata', onMeta);
+        applySeek();
+      };
+      audio.addEventListener('loadedmetadata', onMeta);
+      if (!isPlaying) playAudio();
+      updateLiveMushafAyahHover(true);
+    }
+
+    showToast(`انتقال القارئ لتلاوة الآية (${ayahNum}) — اضغط "تفسير الآية" بالأعلى لعرض التفسير 🎯`);
+  }
+
+  // --- Full-Text Quran Ayah Search ---
+  function performFullQuranAyahSearch(query) {
+    playlistContainer.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-14 text-center text-slate-400">
+        <i class="fa-solid fa-circle-notch animate-spin text-2xl mb-2 text-amber-500"></i>
+        <p class="text-xs">جاري البحث في آيات القرآن الكريم عن "${query}"...</p>
+      </div>
+    `;
+
+    fetch(`https://api.alquran.cloud/v1/search/${encodeURIComponent(query)}/all/quran-simple-clean`)
+      .then(res => res.json())
+      .then(json => {
+        const matches = (json && json.data && json.data.matches) ? json.data.matches : [];
+        if (matches.length === 0) {
+          playlistContainer.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-center text-slate-400 glass-panel rounded-2xl p-4">
+              <i class="fa-solid fa-book-open text-3xl mb-2 text-amber-500/60"></i>
+              <p class="text-xs font-bold mb-1">لم يتم العثور على آيات مطابقة لـ "${query}"</p>
+              <p class="text-[11px] text-slate-400">جرب كتابة كلمة مفردة بدون تشكيل مثل: الصبر، الجنة، السكينة</p>
+            </div>
+          `;
+          return;
+        }
+
+        playlistContainer.innerHTML = `<div class="mb-2 px-2 text-[11px] text-amber-400 font-bold">تم العثور على ${matches.length} آية قرآنية (تُعرض أول 40 نتيجة):</div>`;
+        matches.slice(0, 40).forEach(m => {
+          const surahNum = m.surah.number;
+          const surahObj = SURAHS.find(s => s.id === surahNum) || { id: surahNum, name: m.surah.name };
+          const card = document.createElement('div');
+          card.className = 'surah-card p-3 rounded-2xl mb-2 cursor-pointer space-y-1.5';
+          card.innerHTML = `
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-bold text-amber-400">سورة ${surahObj.name} • الآية ${m.numberInSurah}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">فتح في المصحف</span>
+            </div>
+            <p class="font-quran-text text-sm text-[var(--text-primary)] leading-relaxed">${m.text}</p>
+          `;
+          card.addEventListener('click', () => {
+            const idx = SURAHS.findIndex(s => s.id === surahNum);
+            if (idx !== -1) {
+              currentIndex = idx;
+              loadSurah(SURAHS[currentIndex], isPlaying);
+            }
+            switchView('mushaf');
+            loadSurahMushaf(surahNum, m.numberInSurah);
+          });
+          playlistContainer.appendChild(card);
+        });
+      })
+      .catch(() => {
+        playlistContainer.innerHTML = `
+          <div class="p-4 text-center text-xs text-slate-400">تعذر إجراء البحث في الآيات حالياً.</div>
+        `;
+      });
+  }
+
+  // --- Interactive Ayah Studio Functions ---
+  function openAyahStudio(surahId, surahName, ayahNum, globalAyah, text) {
+    currentStudioContext = { surahId, surahName, ayahNum, globalAyah, text };
+    const modal = document.getElementById('ayah-studio-modal');
+    if (!modal) return;
+
+    document.getElementById('studio-ayah-badge').innerText = ayahNum;
+    document.getElementById('studio-surah-title').innerText = `سورة ${surahName} - الآية ${ayahNum}`;
+    document.getElementById('studio-ayah-text').innerText = `﴿ ${text} ﴾`;
+
+    const icon = document.getElementById('studio-play-icon');
+    const lbl = document.getElementById('studio-play-label');
+    if (icon) icon.className = 'fa-solid fa-play';
+    if (lbl) lbl.innerText = 'استماع للآية';
+
+    modal.classList.remove('hidden');
+
+    // Reset active tafsir tab to ar.muyassar
+    document.querySelectorAll('.tafsir-tab-btn').forEach(b => {
+      if (b.getAttribute('data-tafsir') === 'ar.muyassar') {
+        b.className = 'tafsir-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+      } else {
+        b.className = 'tafsir-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40';
+      }
+    });
+
+    fetchAyahTafsir(surahId, ayahNum, 'ar.muyassar');
+  }
+
+  function closeAyahStudio() {
+    const modal = document.getElementById('ayah-studio-modal');
+    if (modal) modal.classList.add('hidden');
+    if (ayahSingleAudio && !ayahSingleAudio.paused) {
+      ayahSingleAudio.pause();
+    }
+  }
+
+  function fetchAyahTafsir(surahId, ayahNum, edition = 'ar.muyassar') {
+    const box = document.getElementById('studio-tafsir-box');
+    if (!box) return;
+    const key = `${surahId}:${ayahNum}:${edition}`;
+    if (tafsirCache[key]) {
+      box.innerText = tafsirCache[key];
+      box.dir = edition.startsWith('en') ? 'ltr' : 'rtl';
+      return;
+    }
+
+    box.innerHTML = `<span class="text-slate-400 text-xs"><i class="fa-solid fa-circle-notch animate-spin ml-1 text-amber-400"></i> جاري جلب التفسير...</span>`;
+    fetch(`https://api.alquran.cloud/v1/ayah/${surahId}:${ayahNum}/${edition}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json && json.data && json.data.text) {
+          tafsirCache[key] = json.data.text;
+          box.dir = edition.startsWith('en') ? 'ltr' : 'rtl';
+          box.innerText = json.data.text;
+        } else {
+          box.innerText = 'التفسير غير متوفر حالياً.';
+        }
+      })
+      .catch(() => {
+        box.innerText = 'تعذر تحميل التفسير، يرجى التحقق من الاتصال بالإنترنت.';
+      });
+  }
+
+  function toggleSingleAyahAudio(globalAyah) {
+    if (!ayahSingleAudio || !globalAyah) return;
+    const icon = document.getElementById('studio-play-icon');
+    const lbl = document.getElementById('studio-play-label');
+    const targetUrl = `https://cdn.islamic.network/quran/audio/128/ar.husary/${globalAyah}.mp3`;
+
+    if (!ayahSingleAudio.paused && ayahSingleAudio.src === targetUrl) {
+      ayahSingleAudio.pause();
+      if (icon) icon.className = 'fa-solid fa-play';
+      if (lbl) lbl.innerText = 'استماع للآية';
+      return;
+    }
+
+    if (isPlaying) pauseAudio();
+    ayahSingleAudio.src = targetUrl;
+    ayahSingleAudio.play().then(() => {
+      if (icon) icon.className = 'fa-solid fa-pause';
+      if (lbl) lbl.innerText = 'إيقاف الآية';
+    }).catch(() => {
+      showToast('تعذر تشغيل صوت الآية المنفردة حالياً', 'error');
+    });
+  }
+
+  // --- High-Resolution Social Ayah Image Card Generator (HTML5 Canvas) ---
+  function generateAyahImageCard(surahName, ayahNum, ayahText) {
+    showToast('جاري تصميم البطاقة القرآنية بدقة عالية...');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Luxury Royal Emerald & Gold Radial Gradient Background
+    const grad = ctx.createRadialGradient(540, 540, 80, 540, 540, 760);
+    grad.addColorStop(0, '#064e3b');
+    grad.addColorStop(0.6, '#022c22');
+    grad.addColorStop(1, '#011510');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // 2. Ornamental Double Golden Borders
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.55)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(48, 48, 984, 984);
+
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.25)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(64, 64, 952, 952);
+
+    // 3. Top Header Banner
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.font = 'bold 38px Amiri, serif';
+    ctx.fillText(`سُورَةُ ${surahName} • الآيَة ${toArabicNumerals(ayahNum)}`, 540, 150);
+
+    // Basmala
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.75)';
+    ctx.font = '32px Amiri, serif';
+    ctx.fillText('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', 540, 220);
+
+    // 4. Word-Wrapped Quranic Ayah Text in Center
+    ctx.fillStyle = '#f8fafc';
+    const fontSize = ayahText.length > 260 ? 36 : ayahText.length > 140 ? 44 : 52;
+    ctx.font = `bold ${fontSize}px Amiri, serif`;
+
+    const words = (`﴿ ${ayahText} ﴾`).split(' ');
+    const lines = [];
+    let currentLine = '';
+    const maxWidth = 860;
+
+    words.forEach(word => {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    });
+    if (currentLine) lines.push(currentLine);
+
+    const lineHeight = fontSize * 1.75;
+    const totalTextHeight = lines.length * lineHeight;
+    let startY = Math.max(320, 560 - (totalTextHeight / 2));
+
+    lines.forEach((line, idx) => {
+      ctx.fillText(line, 540, startY + idx * lineHeight);
+    });
+
+    // 5. Footer Signature
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.8)';
+    ctx.font = 'bold 28px Cairo, sans-serif';
+    ctx.fillText('مَنْصَةُ القُرآنِ الكَرِيمِ', 540, 965);
+
+    // Trigger PNG Download
+    const link = document.createElement('a');
+    link.download = `quran-surah-${surahName}-ayah-${ayahNum}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // --- A-B Memorization Loop Logic ---
+  function cycleAbLoop() {
+    if (isRadioMode) {
+      showToast('تكرار الحفظ (أ-ب) متاح أثناء تشغيل السور فقط', 'info');
+      return;
+    }
+    if (abLoopState === 'off') {
+      abLoopA = audio.currentTime;
+      abLoopState = 'A';
+      if (abLoopLabel) abLoopLabel.innerText = `أ: ${formatTime(abLoopA)} (حدد ب)`;
+      btnAbLoop.classList.add('border-amber-400', 'text-amber-400');
+      showToast(`تم تحديد بداية المقطع (أ) عند ${formatTime(abLoopA)} — انقر مرة أخرى لتحديد النهاية (ب)`);
+    } else if (abLoopState === 'A') {
+      if (audio.currentTime <= abLoopA + 1) {
+        showToast('يرجى الانتظار ثوانٍ بعد النقطة (أ) لتحديد نهاية المقطع (ب)', 'info');
+        return;
+      }
+      abLoopB = audio.currentTime;
+      abLoopState = 'AB';
+      if (abLoopLabel) abLoopLabel.innerText = `تكرار (${formatTime(abLoopA)}-${formatTime(abLoopB)})`;
+      audio.currentTime = abLoopA;
+      showToast(`تم تفعيل تكرار المقطع للحفظ من ${formatTime(abLoopA)} إلى ${formatTime(abLoopB)}`);
+    } else {
+      resetAbLoop(true);
+    }
+  }
+
+  function resetAbLoop(notify = false) {
+    abLoopState = 'off';
+    abLoopA = 0;
+    abLoopB = 0;
+    if (abLoopLabel) abLoopLabel.innerText = 'تحفيظ أ-ب';
+    if (btnAbLoop) btnAbLoop.classList.remove('border-amber-400', 'text-amber-400');
+    if (notify) showToast('تم إيقاف تكرار المقطع (أ-ب)');
+  }
+
+  // --- Smart Sleep Timer with Smooth Volume Fade-Out ---
+  function setSleepTimer(mode) {
+    if (sleepIntervalId) {
+      clearInterval(sleepIntervalId);
+      sleepIntervalId = null;
+    }
+    const statusEl = document.getElementById('sleep-modal-status');
+
+    if (!mode || mode === 0) {
+      sleepTimerMode = null;
+      sleepRemainingSec = 0;
+      if (sleepTimerBadge) sleepTimerBadge.innerText = 'مؤقت / سكينة';
+      if (statusEl) statusEl.innerText = 'غير مفعل';
+      const savedVol = parseInt(localStorage.getItem('quran_volume') || '85') / 100;
+      audio.volume = savedVol;
+      showToast('تم إيقاف مؤقت النوم');
+      return;
+    }
+
+    if (mode === 'end') {
+      sleepTimerMode = 'end';
+      if (sleepTimerBadge) sleepTimerBadge.innerText = 'نهاية السورة 🌙';
+      if (statusEl) statusEl.innerText = 'يتوقف بنهاية السورة';
+      showToast('سيتم إيقاف التلاوة تلقائياً فور انتهاء السورة الحالية 🌙');
+      return;
+    }
+
+    sleepTimerMode = mode;
+    sleepRemainingSec = mode * 60;
+    const savedUserVol = audio.volume || 0.85;
+
+    const updateTimerLabels = () => {
+      const m = Math.floor(sleepRemainingSec / 60);
+      const s = (sleepRemainingSec % 60).toString().padStart(2, '0');
+      if (sleepTimerBadge) sleepTimerBadge.innerText = `${m}:${s} 🌙`;
+      if (statusEl) statusEl.innerText = `متبقي ${m}:${s}`;
+    };
+    updateTimerLabels();
+    showToast(`تم ضبط مؤقت النوم على ${mode} دقيقة مع خفض تدريجي للصوت 🌙`);
+
+    sleepIntervalId = setInterval(() => {
+      sleepRemainingSec--;
+      if (sleepRemainingSec <= 10 && sleepRemainingSec > 0) {
+        // Gentle 10-second audio fade-out
+        audio.volume = Math.max(0.02, (sleepRemainingSec / 10) * savedUserVol);
+      }
+      if (sleepRemainingSec <= 0) {
+        clearInterval(sleepIntervalId);
+        sleepIntervalId = null;
+        sleepTimerMode = null;
+        pauseAudio();
+        setNatureAmbience('none');
+        audio.volume = savedUserVol;
+        if (sleepTimerBadge) sleepTimerBadge.innerText = 'مؤقت / سكينة';
+        if (statusEl) statusEl.innerText = 'انتهى المؤقت';
+        showToast('تصبحون على خير وطمأنينة — تم إيقاف المشغل تلقائياً 🌙');
+      } else {
+        updateTimerLabels();
+      }
+    }, 1000);
+  }
+
+  // --- Zero-Bandwidth Procedural Web Audio API Nature Ambience Generator ---
+  function stopAmbienceNodes() {
+    ambienceSourceNodes.forEach(node => {
+      try { node.stop(); } catch (e) {}
+      try { node.disconnect(); } catch (e) {}
+    });
+    ambienceSourceNodes = [];
+  }
+
+  function setNatureAmbience(type) {
+    ambienceMode = type;
+    stopAmbienceNodes();
+
+    if (type === 'none') {
+      return;
+    }
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      showToast('متصفحك لا يدعم توليد أصوات الطبيعة تلقائياً', 'error');
+      return;
+    }
+    if (!audioCtx) {
+      audioCtx = new AudioContextClass();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    // Create 4-second looping pink/brown noise buffer (0 KB internet bandwidth!)
+    const bufferSize = audioCtx.sampleRate * 4;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
+      b6 = white * 0.115926;
+    }
+
+    const whiteNoise = audioCtx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+
+    const filter = audioCtx.createBiquadFilter();
+    ambienceGainNode = audioCtx.createGain();
+    ambienceGainNode.gain.value = ambienceVolume * 0.25;
+
+    if (type === 'rain') {
+      filter.type = 'bandpass';
+      filter.frequency.value = 1100;
+      filter.Q.value = 0.65;
+      showToast('تم تشغيل خلفية صوت المطر الهادئ 🌧️ (بدون استهلاك إنترنت)');
+    } else if (type === 'breeze') {
+      filter.type = 'lowpass';
+      filter.frequency.value = 420;
+      // Slow LFO modulation for natural wind swell
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      lfo.frequency.value = 0.14;
+      lfoGain.gain.value = 220;
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      lfo.start();
+      ambienceSourceNodes.push(lfo);
+      showToast('تم تشغيل خلفية نسيم الفجر الهادئ 🍃');
+    } else if (type === 'night') {
+      filter.type = 'lowpass';
+      filter.frequency.value = 240;
+      showToast('تم تشغيل خلفية سكون الليل العميق 🌌');
+    }
+
+    whiteNoise.connect(filter);
+    filter.connect(ambienceGainNode);
+    ambienceGainNode.connect(audioCtx.destination);
+    whiteNoise.start();
+    ambienceSourceNodes.push(whiteNoise);
+  }
+
+  // --- 24/7 Live Quran Radio Broadcast ---
+  function renderRadioStations() {
+    const list = document.getElementById('radio-stations-list');
+    if (!list || typeof RADIO_STATIONS === 'undefined') return;
+    list.innerHTML = '';
+
+    RADIO_STATIONS.forEach(st => {
+      const isCurrentRadio = isRadioMode && activeRadioStation && activeRadioStation.id === st.id;
+      const item = document.createElement('div');
+      item.className = `surah-card p-3.5 rounded-2xl flex items-center justify-between cursor-pointer ${isCurrentRadio ? 'active' : ''}`;
+      item.innerHTML = `
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+            <i class="fa-solid fa-tower-broadcast ${isCurrentRadio && isPlaying ? 'animate-pulse' : ''}"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h5 class="font-bold text-xs sm:text-sm text-[var(--text-primary)] font-quran truncate">${st.name}</h5>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">${st.badge}</span>
+            </div>
+            <p class="text-[11px] text-[var(--text-secondary)] truncate mt-0.5">${st.subtitle}</p>
+          </div>
+        </div>
+        <button class="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-900 font-bold text-xs flex-shrink-0">
+          ${isCurrentRadio && isPlaying ? 'يعمل الآن' : 'تشغيل البث'}
+        </button>
+      `;
+      item.addEventListener('click', () => {
+        playRadioStation(st);
+        const modal = document.getElementById('radio-modal');
+        if (modal) modal.classList.add('hidden');
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function playRadioStation(station) {
+    isRadioMode = true;
+    activeRadioStation = station;
+    resetAbLoop(false);
+
+    audio.src = station.url;
+    audio.playbackRate = 1.0;
+    audio.load();
+
+    playerSurahNumber.innerText = 'بث مباشر 🔴';
+    playerSurahName.innerText = station.name;
+    playerSurahEnglish.innerText = 'Live Quran Radio 24/7';
+    playerRevelation.innerHTML = '<i class="fa-solid fa-tower-broadcast text-red-400"></i> بث مباشر على مدار الساعة';
+    playerVerses.innerHTML = `<i class="fa-solid fa-signal text-emerald-400"></i> جودة عالية`;
+    playerAudioSource.innerHTML = `<i class="fa-solid fa-radio"></i> ${station.subtitle}`;
+    playerSourceBadge.innerText = station.badge;
+    if (playerRadioLabel) playerRadioLabel.innerText = station.badge;
+
+    if (miniSurahName) miniSurahName.innerText = station.name;
+    if (miniReciterName) miniReciterName.innerText = 'بث مباشر';
+
+    updateMediaSession({ name: station.name }, { name: station.subtitle });
+    playAudio();
+    switchView('player');
+    showToast(`تم الاتصال بـ ${station.name} 🔴`);
+  }
+
+  // --- Spiritual Companion Hub (Khatma, Mood Compass, Azkar, Sebha) ---
+  function initSpiritualCompanionHub() {
+    updateKhatmaDashboard();
+
+    // Sub-tabs navigation inside #spiritual-view
+    const spTabs = [
+      { btn: document.getElementById('sp-tab-compass'), panel: document.getElementById('sp-panel-compass') },
+      { btn: document.getElementById('sp-tab-azkar'), panel: document.getElementById('sp-panel-azkar') },
+      { btn: document.getElementById('sp-tab-sebha'), panel: document.getElementById('sp-panel-sebha') }
+    ];
+
+    spTabs.forEach(({ btn, panel }) => {
+      if (!btn || !panel) return;
+      btn.addEventListener('click', () => {
+        spTabs.forEach(t => {
+          if (!t.btn || !t.panel) return;
+          t.panel.classList.add('hidden');
+          t.btn.className = 'sp-subtab px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40 border border-emerald-500/15 flex-shrink-0';
+        });
+        panel.classList.remove('hidden');
+        btn.className = 'sp-subtab px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0';
+      });
+    });
+
+    // 1. Render Mood Compass
+    if (typeof MOOD_COMPASS !== 'undefined') {
+      const moodGrid = document.getElementById('mood-buttons-grid');
+      if (moodGrid) {
+        moodGrid.innerHTML = '';
+        MOOD_COMPASS.forEach((mood, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `mood-pill-btn p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
+            idx === 0
+              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow'
+              : 'bg-emerald-950/40 text-[var(--text-secondary)] border-emerald-500/15 hover:text-amber-400'
+          }`;
+          btn.innerHTML = `<i class="${mood.icon} text-base"></i><span class="truncate">${mood.title}</span>`;
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.mood-pill-btn').forEach(b => {
+              b.className = 'mood-pill-btn p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all bg-emerald-950/40 text-[var(--text-secondary)] border-emerald-500/15 hover:text-amber-400';
+            });
+            btn.className = 'mood-pill-btn p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all bg-amber-500/20 text-amber-400 border-amber-500/40 shadow';
+            renderMoodVerses(mood);
+          });
+          moodGrid.appendChild(btn);
+        });
+        renderMoodVerses(MOOD_COMPASS[0]);
+      }
+    }
+
+    // 2. Render Interactive Azkar
+    if (typeof AZKAR_DATA !== 'undefined') {
+      let currentAzkarCat = 'morning';
+      document.querySelectorAll('.azkar-cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentAzkarCat = btn.getAttribute('data-azkar-cat');
+          document.querySelectorAll('.azkar-cat-btn').forEach(b => {
+            if (b.getAttribute('data-azkar-cat') === currentAzkarCat) {
+              b.className = 'azkar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            } else {
+              b.className = 'azkar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold text-[var(--text-secondary)] bg-emerald-950/50 border border-emerald-500/15';
+            }
+          });
+          renderAzkarList(currentAzkarCat);
+        });
+      });
+
+      const resetAzkarBtn = document.getElementById('btn-reset-azkar');
+      if (resetAzkarBtn) {
+        resetAzkarBtn.addEventListener('click', () => {
+          renderAzkarList(currentAzkarCat);
+          showToast('تمت إعادة ضبط عدادات الأذكار');
+        });
+      }
+      renderAzkarList('morning');
+    }
+
+    // 3. Initialize Digital Sebha
+    initDigitalSebha();
+  }
+
+  function updateKhatmaDashboard() {
+    const surahsCountEl = document.getElementById('khatma-surahs-count');
+    const minutesCountEl = document.getElementById('khatma-minutes-count');
+    const bookmarkEl = document.getElementById('khatma-bookmark-display');
+    const progressFill = document.getElementById('khatma-progress-fill');
+    const mushafBookmarkBtnText = document.getElementById('mushaf-bookmark-btn-text');
+
+    if (surahsCountEl) surahsCountEl.innerText = `${listenedSurahs.length} / 114`;
+    if (minutesCountEl) minutesCountEl.innerText = `${Math.max(1, Math.floor(listeningSeconds / 60))} دقيقة`;
+
+    if (khatmaBookmark) {
+      if (bookmarkEl) {
+        bookmarkEl.innerText = `فاصل الختمة المحفوظ: سورة ${khatmaBookmark.surahName} • الآية ${khatmaBookmark.ayahNum}`;
+      }
+      if (mushafBookmarkBtnText) {
+        mushafBookmarkBtnText.innerText = `${khatmaBookmark.surahName}: ${khatmaBookmark.ayahNum}`;
+      }
+    }
+
+    if (progressFill) {
+      const pct = Math.max(2, Math.min(100, Math.round((listenedSurahs.length / 114) * 100)));
+      progressFill.style.width = `${pct}%`;
+    }
+  }
+
+  function renderMoodVerses(mood) {
+    const container = document.getElementById('mood-verses-container');
+    if (!container || !mood) return;
+    container.innerHTML = '';
+
+    mood.verses.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'surah-frame rounded-2xl p-4 space-y-2.5';
+      card.innerHTML = `
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs font-bold text-amber-400">سورة ${v.surahName} • الآية ${v.ayahNum}</span>
+          <div class="flex items-center gap-1.5">
+            <button class="btn-mood-play px-2.5 py-1 rounded-xl bg-amber-500 text-slate-900 font-bold text-[11px] flex items-center gap-1 hover:bg-amber-400 transition-all">
+              <i class="fa-solid fa-play text-[10px]"></i> استماع للآية
+            </button>
+            <button class="btn-mood-mushaf px-2.5 py-1 rounded-xl bg-emerald-950/60 border border-emerald-500/25 text-emerald-300 text-[11px] font-semibold hover:bg-emerald-500/20 transition-all">
+              فتح في المصحف
+            </button>
+            <button class="btn-mood-card px-2.5 py-1 rounded-xl bg-emerald-950/60 border border-amber-500/25 text-amber-300 text-[11px] font-semibold hover:bg-amber-500/20 transition-all" title="تحميل بطاقة مصورة">
+              <i class="fa-solid fa-image"></i>
+            </button>
+          </div>
+        </div>
+        <p class="font-quran-text text-lg sm:text-xl text-[var(--text-primary)] leading-loose">﴿ ${v.text} ﴾</p>
+        <p class="text-xs text-[var(--text-secondary)] bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/15">
+          <i class="fa-solid fa-lightbulb text-amber-400 ml-1"></i> ${v.reflection}
+        </p>
+      `;
+
+      card.querySelector('.btn-mood-play').addEventListener('click', () => {
+        toggleSingleAyahAudio(v.globalAyah);
+        showToast(`استماع للآية ${v.ayahNum} من سورة ${v.surahName}`);
+      });
+
+      card.querySelector('.btn-mood-mushaf').addEventListener('click', () => {
+        const idx = SURAHS.findIndex(s => s.id === v.surahId);
+        if (idx !== -1) {
+          currentIndex = idx;
+          loadSurah(SURAHS[currentIndex], isPlaying);
+        }
+        switchView('mushaf');
+        loadSurahMushaf(v.surahId, v.ayahNum);
+      });
+
+      card.querySelector('.btn-mood-card').addEventListener('click', () => {
+        generateAyahImageCard(v.surahName, v.ayahNum, v.text);
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  function renderAzkarList(category) {
+    const container = document.getElementById('azkar-cards-container');
+    if (!container || !AZKAR_DATA[category]) return;
+    container.innerHTML = '';
+
+    AZKAR_DATA[category].forEach(z => {
+      let remaining = z.count;
+      const card = document.createElement('div');
+      card.className = 'surah-card p-3.5 sm:p-4 rounded-2xl cursor-pointer select-none transition-all space-y-2';
+      card.innerHTML = `
+        <p class="font-quran-text text-base sm:text-lg text-[var(--text-primary)] leading-relaxed">${z.text}</p>
+        <div class="flex items-center justify-between pt-2 border-t border-emerald-500/10 text-xs">
+          <span class="text-[11px] text-[var(--text-secondary)]"><i class="fa-solid fa-star text-amber-400 ml-1"></i>${z.virtue}</span>
+          <span class="azkar-counter-badge px-3 py-1 rounded-xl bg-amber-500 text-slate-900 font-bold text-xs min-w-[75px] text-center">
+            التكرار: ${remaining}
+          </span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        if (remaining <= 0) return;
+        remaining--;
+        const badge = card.querySelector('.azkar-counter-badge');
+        if (remaining === 0) {
+          card.classList.add('azkar-card-completed');
+          badge.className = 'azkar-counter-badge px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-xs min-w-[75px] text-center';
+          badge.innerHTML = '<i class="fa-solid fa-check ml-1"></i> اكتمل';
+        } else {
+          badge.innerText = `المتبقي: ${remaining}`;
+        }
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  function initDigitalSebha() {
+    const select = document.getElementById('sebha-phrase-select');
+    const tapBtn = document.getElementById('sebha-tap-btn');
+    const curEl = document.getElementById('sebha-current-count');
+    const totEl = document.getElementById('sebha-total-count');
+    const resetBtn = document.getElementById('sebha-reset-btn');
+    if (!select || !tapBtn || typeof TASBEEH_PHRASES === 'undefined') return;
+
+    select.innerHTML = '';
+    TASBEEH_PHRASES.forEach((p, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.innerText = p;
+      opt.className = 'bg-emerald-950 text-white';
+      select.appendChild(opt);
+    });
+
+    let currentCount = 0;
+    let totalCount = parseInt(localStorage.getItem('quran_sebha_total')) || 0;
+    if (totEl) totEl.innerText = totalCount;
+
+    tapBtn.addEventListener('click', () => {
+      currentCount++;
+      totalCount++;
+      if (curEl) curEl.innerText = currentCount;
+      if (totEl) totEl.innerText = totalCount;
+      localStorage.setItem('quran_sebha_total', totalCount);
+      if (navigator.vibrate) {
+        navigator.vibrate(currentCount % 33 === 0 ? [40, 60, 40] : 12);
+      }
+      if (currentCount % 33 === 0) {
+        showToast(`ما شاء الله! أتممت ${currentCount} تسبيحة في هذه الدورة ✨`);
+      }
+    });
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        currentCount = 0;
+        if (curEl) curEl.innerText = '0';
+        showToast('تم تصفير عداد الدورة الحالية');
+      });
+    }
   }
 
   // --- Toast Notification Helper ---

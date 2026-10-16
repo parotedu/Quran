@@ -1,33 +1,54 @@
-// Theme management for Quran platform
+// Multi-Theme Royal System for Quran Platform V2.0
 document.addEventListener('DOMContentLoaded', () => {
   const themeToggleBtn = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
-  
-  // Default to dark theme if not saved, to showcase the premium dark green look
+
+  const themesOrder = ['dark', 'kaaba', 'quds', 'light'];
+  const themeMeta = {
+    dark: {
+      name: 'الزمرد الملكي',
+      icon: 'fa-solid fa-gem text-emerald-400 text-base sm:text-lg transition-all duration-300'
+    },
+    kaaba: {
+      name: 'الكعبة المذهبة (OLED)',
+      icon: 'fa-solid fa-kaaba text-amber-400 text-base sm:text-lg transition-all duration-300'
+    },
+    quds: {
+      name: 'ليالي القدس',
+      icon: 'fa-solid fa-moon text-sky-400 text-base sm:text-lg transition-all duration-300'
+    },
+    light: {
+      name: 'الرقّ العثماني (نهاري)',
+      icon: 'fa-solid fa-sun text-amber-600 text-base sm:text-lg transition-all duration-300'
+    }
+  };
+
   const savedTheme = localStorage.getItem('theme') || 'dark';
-  setTheme(savedTheme);
-  
+  setTheme(themesOrder.includes(savedTheme) ? savedTheme : 'dark', false);
+
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      setTheme(newTheme);
+      const idx = themesOrder.indexOf(currentTheme);
+      const nextTheme = themesOrder[(idx + 1) % themesOrder.length];
+      setTheme(nextTheme, true);
     });
   }
-  
-  function setTheme(theme) {
+
+  function setTheme(theme, notify = false) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    
-    // Update icon class (Sun for dark mode to toggle to light, Moon for light mode)
+
+    const meta = themeMeta[theme] || themeMeta.dark;
     if (themeIcon) {
-      if (theme === 'dark') {
-        themeIcon.className = 'fas fa-sun text-yellow-400 text-xl transition-all duration-300 transform hover:scale-110';
-        themeToggleBtn.setAttribute('title', 'الوضع المضيء');
-      } else {
-        themeIcon.className = 'fas fa-moon text-slate-700 text-xl transition-all duration-300 transform hover:scale-110';
-        themeToggleBtn.setAttribute('title', 'الوضع المظلم');
-      }
+      themeIcon.className = meta.icon;
+    }
+    if (themeToggleBtn) {
+      themeToggleBtn.setAttribute('title', `المظهر الحالي: ${meta.name} (انقر للتبديل)`);
+    }
+
+    if (notify && window.showPlatformToast) {
+      window.showPlatformToast(`تم تفعيل مظهر: ${meta.name}`, 'info');
     }
   }
 });

@@ -52,6 +52,50 @@
   --mushaf-paper-bg: rgba(255, 255, 255, 0.92);
 }
 
+[data-theme="kaaba"] {
+  /* Kaaba Kiswah Pitch Black & Royal Gold Theme */
+  --bg-primary: radial-gradient(circle at 50% 0%, #1c1917 0%, #09090b 45%, #000000 100%);
+  --panel-bg: rgba(18, 18, 20, 0.72);
+  --panel-border: rgba(251, 191, 36, 0.24);
+  --panel-border-glow: rgba(251, 191, 36, 0.5);
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-accent: #fbbf24;
+  --text-accent-hover: #f59e0b;
+  --text-gold-gradient: linear-gradient(135deg, #fef08a 0%, #fbbf24 50%, #b45309 100%);
+  --card-bg: rgba(24, 24, 27, 0.65);
+  --card-bg-hover: rgba(39, 39, 42, 0.75);
+  --card-active: rgba(69, 26, 3, 0.55);
+  --glow-color: rgba(251, 191, 36, 0.4);
+  --slider-track: rgba(251, 191, 36, 0.2);
+  --scrollbar-thumb: #fbbf24;
+  --scrollbar-track: rgba(24, 24, 27, 0.7);
+  --input-bg: rgba(9, 9, 11, 0.85);
+  --mushaf-paper-bg: rgba(15, 15, 18, 0.85);
+}
+
+[data-theme="quds"] {
+  /* Al-Quds Midnight Sapphire & Warm Gold Theme */
+  --bg-primary: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 45%, #020617 100%);
+  --panel-bg: rgba(15, 23, 42, 0.62);
+  --panel-border: rgba(56, 189, 248, 0.18);
+  --panel-border-glow: rgba(251, 191, 36, 0.4);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-accent: #38bdf8;
+  --text-accent-hover: #fbbf24;
+  --text-gold-gradient: linear-gradient(135deg, #e0f2fe 0%, #38bdf8 50%, #fbbf24 100%);
+  --card-bg: rgba(15, 23, 42, 0.55);
+  --card-bg-hover: rgba(30, 41, 59, 0.65);
+  --card-active: rgba(3, 105, 161, 0.35);
+  --glow-color: rgba(56, 189, 248, 0.3);
+  --slider-track: rgba(56, 189, 248, 0.2);
+  --scrollbar-thumb: #38bdf8;
+  --scrollbar-track: rgba(15, 23, 42, 0.6);
+  --input-bg: rgba(2, 6, 23, 0.75);
+  --mushaf-paper-bg: rgba(15, 23, 42, 0.65);
+}
+
 /* ==========================================================================
    GLOBAL RESET & TYPOGRAPHY
    ========================================================================== */
@@ -488,6 +532,111 @@ body {
   .player-disc-container {
     width: 60px !important;
     height: 60px !important;
+  }
+}
+
+/* ==========================================================================
+   V2.0 ENHANCEMENTS: BOOKMARKS, MODALS, SEBHA, & SPIRITUAL HUB
+   ========================================================================== */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.ayah-bookmarked {
+  background: rgba(251, 191, 36, 0.22) !important;
+  color: var(--text-accent) !important;
+  border-bottom: 2px dashed var(--text-accent);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+}
+
+.ayah-playing-active {
+  background: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+  border-radius: 8px;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+}
+
+/* Live Reciter Ayah Hover Effect in Memorization Mode */
+.ayah-live-reading-hover {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.28) 0%, rgba(16, 185, 129, 0.22) 100%) !important;
+  color: var(--text-accent) !important;
+  border-radius: 10px;
+  padding: 3px 8px !important;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  outline: 1.5px solid rgba(251, 191, 36, 0.55);
+  box-shadow: 0 4px 18px rgba(251, 191, 36, 0.28);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] .ayah-live-reading-hover {
+  background: linear-gradient(90deg, rgba(4, 120, 87, 0.18) 0%, rgba(217, 119, 6, 0.2) 100%) !important;
+  color: #064e3b !important;
+  outline: 1.5px solid rgba(4, 120, 87, 0.45);
+  box-shadow: 0 4px 15px rgba(4, 120, 87, 0.18);
+}
+
+.ayah-badge-live {
+  background: var(--text-accent) !important;
+  color: #022c22 !important;
+  transform: scale(1.22);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.75) !important;
+}
+
+/* Memorization Self-Test Blur Mode (Unblurs on Hover or when Reciter reads the Ayah) */
+.mushaf-memorize-blur .ayah-text:not(.ayah-live-reading-hover):not(:hover) {
+  filter: blur(5px);
+  opacity: 0.45;
+  user-select: none;
+}
+
+.v2-modal-backdrop {
+  background: rgba(1, 15, 11, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sebha-ring-btn {
+  background: radial-gradient(circle at 30% 30%, rgba(251, 191, 36, 0.25), rgba(6, 78, 59, 0.6));
+  border: 3px solid rgba(251, 191, 36, 0.45);
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.2), inset 0 0 20px rgba(251, 191, 36, 0.15);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sebha-ring-btn:active {
+  transform: scale(0.93);
+  border-color: #fbbf24;
+  box-shadow: 0 0 45px rgba(251, 191, 36, 0.55), inset 0 0 25px rgba(251, 191, 36, 0.35);
+}
+
+.azkar-card-completed {
+  opacity: 0.6;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  background: rgba(6, 78, 59, 0.2) !important;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: livePulse 1.5s infinite;
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
 
