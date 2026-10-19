@@ -723,12 +723,29 @@ body {
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
   }
 
-  /* Ensure bottom elements in scroll containers never get covered by floating navigator */
+  /* Player view bottom clearance so bottom buttons sit cleanly above mobile glass nav */
+  #player-view {
+    padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 72px) !important;
+  }
+
+  /* Ensure bottom elements in scroll containers never get covered by floating navigator or mini player */
   #mushaf-scroll-area,
   #playlist-container,
   #spiritual-scroll-body {
-    padding-bottom: 145px !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 165px) !important;
   }
+}
+
+/* Basmala Live Reading Hover Banner */
+.basmala-banner.ayah-live-reading-hover {
+  display: inline-block;
+  padding: 6px 24px !important;
+  border-radius: 20px;
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.32) 0%, rgba(16, 185, 129, 0.25) 100%) !important;
+  outline: 2px solid rgba(251, 191, 36, 0.65);
+  box-shadow: 0 4px 24px rgba(251, 191, 36, 0.38);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sebha-quick-pill {

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const audio = document.getElementById('main-audio');
   const playlistContainer = document.getElementById('playlist-container');
   const playlistSection = document.getElementById('playlist-section');
+  const contentSection = document.getElementById('content-section');
   const searchInput = document.getElementById('search-input');
   const searchClear = document.getElementById('search-clear');
   const allCount = document.getElementById('all-count');
@@ -268,14 +269,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isDesktop) {
       playlistSection.classList.remove('hidden');
+      if (contentSection) contentSection.classList.remove('hidden');
     } else {
-      playlistSection.classList.add('hidden');
+      if (targetView === 'playlist') {
+        if (contentSection) contentSection.classList.add('hidden');
+        playlistSection.classList.remove('hidden');
+      } else {
+        if (contentSection) contentSection.classList.remove('hidden');
+        playlistSection.classList.add('hidden');
+      }
     }
+
+    // Mini Player is only shown on other tabs if audio has been started/played
+    const shouldShowMini = (isPlaying || (audio.currentTime > 0 && !audio.paused) || isRadioMode) && targetView !== 'player';
 
     if (targetView === 'mushaf') {
       if (navBtnMushaf) navBtnMushaf.className = tabActive;
       mushafView.classList.remove('hidden');
-      miniPlayer.classList.remove('hidden');
+      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       loadSurahMushaf(SURAHS[currentIndex].id);
       if (isMemorizationMode) {
         loadSurahTimestamps(SURAHS[currentIndex].id);
@@ -284,12 +295,17 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (targetView === 'spiritual') {
       if (navBtnSpiritual) navBtnSpiritual.className = tabActive;
       if (spiritualView) spiritualView.classList.remove('hidden');
-      miniPlayer.classList.remove('hidden');
+      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       updateKhatmaDashboard();
+      // Auto-collapse khatma card on mobile when in Sebha panel to focus 100% on Sebha
+      const khatmaCard = document.getElementById('khatma-dashboard-card');
+      const sebhaPanel = document.getElementById('sp-panel-sebha');
+      if (khatmaCard && sebhaPanel && !sebhaPanel.classList.contains('hidden') && window.innerWidth < 1024) {
+        khatmaCard.classList.add('hidden');
+      }
     } else if (targetView === 'playlist' && !isDesktop) {
       if (navBtnPlaylist) navBtnPlaylist.className = tabActive + ' lg:hidden';
-      playlistSection.classList.remove('hidden');
-      miniPlayer.classList.remove('hidden');
+      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
     } else {
       if (navBtnPlayer) navBtnPlayer.className = tabActive;
       playerView.classList.remove('hidden');
@@ -718,6 +734,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-pause text-sm sm:text-base text-slate-900';
         if (miniIcon) miniIcon.className = 'fa-solid fa-volume-high text-xs text-amber-400 animate-pulse';
         if (mushafPlayIcon) mushafPlayIcon.className = 'fa-solid fa-pause';
+        if (currentView !== 'player' && miniPlayer) {
+          miniPlayer.classList.remove('hidden');
+        }
 
         // Animations
         artworkMandala.classList.remove('spin-paused');
@@ -781,8 +800,10 @@ document.addEventListener('DOMContentLoaded', () => {
     mushafSurahMeta.innerText = `${surah.versesCount} آيات • الجزء ${Math.ceil(surah.id / 4.2) || 1} • ترتيب النزول ${surah.id}`;
     if (mushafSurahSelect) mushafSurahSelect.value = surah.id;
     
-    // Basmala visibility (Surah 9 At-Tawbah does NOT have Basmala)
-    if (surah.id === 9) {
+    // Basmala visibility:
+    // Surah 1 (Al-Fatihah) has Basmala as Ayah 1, so hide top banner to prevent duplicate
+    // Surah 9 (At-Tawbah) does NOT have Basmala
+    if (surah.id === 1 || surah.id === 9) {
       mushafBasmala.classList.add('hidden');
     } else {
       mushafBasmala.classList.remove('hidden');
@@ -1550,6 +1571,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    if (mushafBasmala) {
+      mushafBasmala.addEventListener('click', () => {
+        if (isMemorizationMode) {
+          audio.currentTime = 0;
+          if (!isPlaying) playAudio();
+          updateLiveMushafAyahHover(true);
+          showToast('تلاوة الاستفتاح: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ');
+        }
+      });
+    }
+
     // 18. Favorite Button on Player
     btnPlayerFav.addEventListener('click', () => {
       toggleFavorite(SURAHS[currentIndex].id);
@@ -1951,34 +1983,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSurahVerseRatios(surahId) {
-    const qdcId = getQdcReciterId(currentReciterId);
-    const cacheKey = `${qdcId}_${surahId}`;
-    if (surahTimestampsCache[cacheKey] && surahTimestampsCache[cacheKey].length > 0) {
-      return surahTimestampsCache[cacheKey];
-    }
-
-    // Instant proportional fallback based on Uthmani verse character lengths
     const surahData = mushafCache[surahId];
     if (!surahData || !Array.isArray(surahData.ayahs) || surahData.ayahs.length === 0) {
       return [];
     }
     const ayahs = surahData.ayahs;
+    const isAlFatihah = surahId === 1;
+    const isAtTawbah = surahId === 9;
+    const hasIntroBasmala = !isAlFatihah && !isAtTawbah;
+
     const weights = ayahs.map(a => Math.max(18, (a.text || '').length + 14));
-    const totalWeight = weights.reduce((acc, w) => acc + w, 0) || 1;
+    const totalAyahWeight = weights.reduce((acc, w) => acc + w, 0) || 1;
+
+    // Calculate introductory Basmala time slice for Surahs 2..114 (except 9)
+    // Audio reciters spend ~5.5 - 7.0 seconds reciting the Basmala before Ayah 1.
+    let basmalaRatio = 0;
+    if (hasIntroBasmala) {
+      const dur = audio && audio.duration && !isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0
+        ? audio.duration
+        : null;
+      if (dur) {
+        basmalaRatio = Math.min(0.26, 6.2 / dur);
+      } else {
+        const basmalaWeight = 55;
+        basmalaRatio = basmalaWeight / (totalAyahWeight + basmalaWeight);
+      }
+    }
+
+    const ratios = [];
+    if (hasIntroBasmala) {
+      ratios.push({
+        ayahNum: 0, // 0 represents the introductory Basmala
+        startRatio: 0,
+        endRatio: basmalaRatio
+      });
+    }
+
     let cumulative = 0;
-    return ayahs.map((a, idx) => {
-      const startRatio = cumulative / totalWeight;
+    const remainingRatio = 1 - basmalaRatio;
+    ayahs.forEach((a, idx) => {
+      const startRatio = basmalaRatio + (cumulative / totalAyahWeight) * remainingRatio;
       cumulative += weights[idx];
-      const endRatio = cumulative / totalWeight;
-      return {
+      const endRatio = basmalaRatio + (cumulative / totalAyahWeight) * remainingRatio;
+      ratios.push({
         ayahNum: a.numberInSurah,
         startRatio,
-        endRatio
-      };
+        endRatio: idx === ayahs.length - 1 ? 1 : endRatio
+      });
     });
+
+    return ratios;
   }
 
   function clearLiveMushafAyahHover() {
+    if (mushafBasmala) {
+      mushafBasmala.classList.remove('ayah-live-reading-hover');
+    }
     if (!mushafContent) return;
     mushafContent.querySelectorAll('.ayah-live-reading-hover').forEach(el => {
       el.classList.remove('ayah-live-reading-hover');
@@ -2060,7 +2120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ratios = getSurahVerseRatios(playingSurah.id);
     if (!ratios || ratios.length === 0) return;
 
-    let targetAyahNum = 1;
+    let targetAyahNum = ratios[0].ayahNum;
     const dur = audio.duration;
     if (dur && !isNaN(dur) && isFinite(dur) && dur > 0) {
       const progressRatio = Math.min(1, Math.max(0, audio.currentTime / dur));
@@ -2093,6 +2153,28 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (activeHoverAyahNum !== null && targetAyahNum !== activeHoverAyahNum) {
         currentAyahRepeatCount = 1;
       }
+    }
+
+    // Handle Ayah 0 (Introductory Basmala in Surahs 2..114)
+    if (targetAyahNum === 0) {
+      const changedAyah = activeHoverAyahNum !== 0 || (mushafBasmala && !mushafBasmala.classList.contains('ayah-live-reading-hover'));
+      if (changedAyah) {
+        clearLiveMushafAyahHover();
+        if (mushafBasmala) {
+          mushafBasmala.classList.add('ayah-live-reading-hover');
+        }
+        activeHoverAyahNum = 0;
+        if (forceScroll || isPlaying) {
+          mushafBasmala?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      if (memorizeLiveAyahText) {
+        const repeatSuffix = memorizeRepeatTarget > 1
+          ? ` • تكرار (${memorizeRepeatTarget === 99 ? '∞' : `${currentAyahRepeatCount}/${memorizeRepeatTarget}`})`
+          : '';
+        memorizeLiveAyahText.innerText = `🔊 تلاوة الاستفتاح: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ${repeatSuffix}`;
+      }
+      return;
     }
 
     const ayahEl = document.getElementById(`mushaf-ayah-${targetAyahNum}`);
