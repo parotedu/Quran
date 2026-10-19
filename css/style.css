@@ -652,3 +652,95 @@ body {
     line-height: 2.7;
   }
 }
+
+/* ==========================================================================
+   MOBILE FLOATING GLASS NAVIGATOR & FOCUSED APP EXPERIENCE
+   ========================================================================== */
+.mobile-glass-nav {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  background: rgba(2, 38, 29, 0.88);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+}
+
+[data-theme="light"] .mobile-glass-nav {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(4, 120, 87, 0.22);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="kaaba"] .mobile-glass-nav {
+  background: rgba(14, 14, 16, 0.92);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+[data-theme="quds"] .mobile-glass-nav {
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.m-nav-tab {
+  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.m-nav-tab .m-nav-icon-box {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.m-nav-tab.active {
+  color: var(--text-accent);
+}
+
+.m-nav-tab.active .m-nav-icon-box {
+  background: rgba(251, 191, 36, 0.2);
+  color: var(--text-accent);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.28);
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .m-nav-tab.active .m-nav-icon-box {
+  background: rgba(4, 120, 87, 0.16);
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+  box-shadow: 0 0 12px rgba(4, 120, 87, 0.2);
+}
+
+/* Float Mini-Player Bar Above Mobile Glass Navigator on Mobile/Tablet */
+@media (max-width: 1023px) {
+  .mini-player-bar {
+    bottom: calc(env(safe-area-inset-bottom, 8px) + 64px) !important;
+    left: 0.65rem !important;
+    right: 0.65rem !important;
+    border-radius: 1.25rem !important;
+    border: 1px solid rgba(251, 191, 36, 0.3) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  /* Ensure bottom elements in scroll containers never get covered by floating navigator */
+  #mushaf-scroll-area,
+  #playlist-container,
+  #spiritual-scroll-body {
+    padding-bottom: 145px !important;
+  }
+}
+
+.sebha-quick-pill {
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sebha-quick-pill.active {
+  background: rgba(251, 191, 36, 0.25) !important;
+  color: var(--text-accent) !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+}
+

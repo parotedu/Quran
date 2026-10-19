@@ -20,11 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const appSubtitle = document.getElementById('app-subtitle');
   const brandLogo = document.getElementById('brand-logo');
   
-  // Navigation Tabs (Unified across Desktop & Mobile)
+  // Navigation Tabs (Desktop & Mobile Glass Navigator)
   const navBtnPlayer = document.getElementById('nav-btn-player');
   const navBtnMushaf = document.getElementById('nav-btn-mushaf');
   const navBtnSpiritual = document.getElementById('nav-btn-spiritual');
   const navBtnPlaylist = document.getElementById('nav-btn-playlist');
+  const mNavPlayer = document.getElementById('m-nav-player');
+  const mNavMushaf = document.getElementById('m-nav-mushaf');
+  const mNavSpiritual = document.getElementById('m-nav-spiritual');
+  const mNavPlaylist = document.getElementById('m-nav-playlist');
   const spiritualView = document.getElementById('spiritual-view');
 
   // V2 Elements (Segmented Search Mode, Player Corner Pills, Modals, Single Ayah Audio)
@@ -291,6 +295,26 @@ document.addEventListener('DOMContentLoaded', () => {
       playerView.classList.remove('hidden');
       miniPlayer.classList.add('hidden');
     }
+
+    // Update Mobile Glass Navigator Tabs
+    const mTabs = [
+      { id: 'player', el: mNavPlayer },
+      { id: 'mushaf', el: mNavMushaf },
+      { id: 'spiritual', el: mNavSpiritual },
+      { id: 'playlist', el: mNavPlaylist }
+    ];
+    mTabs.forEach(tab => {
+      if (!tab.el) return;
+      if (tab.id === targetView) {
+        tab.el.classList.add('active');
+        tab.el.classList.remove('text-[var(--text-secondary)]');
+        tab.el.classList.add('text-amber-400');
+      } else {
+        tab.el.classList.remove('active');
+        tab.el.classList.remove('text-amber-400');
+        tab.el.classList.add('text-[var(--text-secondary)]');
+      }
+    });
 
     if (!isDesktop && shouldScroll) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1070,11 +1094,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Attach All Event Listeners ---
   function attachEventListeners() {
-    // 1. Navigation Mode Tabs (Unified across Desktop & Mobile)
-    navBtnPlayer.addEventListener('click', () => switchView('player'));
-    navBtnMushaf.addEventListener('click', () => switchView('mushaf'));
+    // 1. Navigation Mode Tabs (Desktop)
+    if (navBtnPlayer) navBtnPlayer.addEventListener('click', () => switchView('player'));
+    if (navBtnMushaf) navBtnMushaf.addEventListener('click', () => switchView('mushaf'));
     if (navBtnSpiritual) navBtnSpiritual.addEventListener('click', () => switchView('spiritual'));
     if (navBtnPlaylist) navBtnPlaylist.addEventListener('click', () => switchView('playlist'));
+
+    // Mobile Floating Glass Navigator Tabs
+    if (mNavPlayer) mNavPlayer.addEventListener('click', () => switchView('player'));
+    if (mNavMushaf) mNavMushaf.addEventListener('click', () => switchView('mushaf'));
+    if (mNavSpiritual) mNavSpiritual.addEventListener('click', () => switchView('spiritual'));
+    if (mNavPlaylist) mNavPlaylist.addEventListener('click', () => switchView('playlist'));
     
     btnReadInMushaf.addEventListener('click', () => switchView('mushaf'));
     brandLogo.addEventListener('click', () => switchView('player'));
@@ -2599,22 +2629,32 @@ document.addEventListener('DOMContentLoaded', () => {
     updateKhatmaDashboard();
 
     // Sub-tabs navigation inside #spiritual-view
+    const khatmaCard = document.getElementById('khatma-dashboard-card');
     const spTabs = [
-      { btn: document.getElementById('sp-tab-compass'), panel: document.getElementById('sp-panel-compass') },
-      { btn: document.getElementById('sp-tab-azkar'), panel: document.getElementById('sp-panel-azkar') },
-      { btn: document.getElementById('sp-tab-sebha'), panel: document.getElementById('sp-panel-sebha') }
+      { id: 'sebha', btn: document.getElementById('sp-tab-sebha'), panel: document.getElementById('sp-panel-sebha') },
+      { id: 'azkar', btn: document.getElementById('sp-tab-azkar'), panel: document.getElementById('sp-panel-azkar') },
+      { id: 'compass', btn: document.getElementById('sp-tab-compass'), panel: document.getElementById('sp-panel-compass') }
     ];
 
-    spTabs.forEach(({ btn, panel }) => {
+    spTabs.forEach(({ id, btn, panel }) => {
       if (!btn || !panel) return;
       btn.addEventListener('click', () => {
         spTabs.forEach(t => {
           if (!t.btn || !t.panel) return;
           t.panel.classList.add('hidden');
-          t.btn.className = 'sp-subtab px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40 border border-emerald-500/15 flex-shrink-0';
+          t.btn.className = 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40 border border-emerald-500/15 flex-shrink-0';
         });
         panel.classList.remove('hidden');
-        btn.className = 'sp-subtab px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0';
+        btn.className = 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0';
+        
+        // Full focus on Sebha on mobile: collapse or minimize khatma card when in Sebha mode
+        if (khatmaCard) {
+          if (id === 'sebha' && window.innerWidth < 1024) {
+            khatmaCard.classList.add('hidden');
+          } else {
+            khatmaCard.classList.remove('hidden');
+          }
+        }
       });
     });
 
@@ -2809,6 +2849,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalCount = parseInt(localStorage.getItem('quran_sebha_total')) || 0;
     if (totEl) totEl.innerText = totalCount;
 
+    // Quick dhikr pills handler
+    const quickPills = document.querySelectorAll('.sebha-quick-pill');
+    quickPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const pIdx = parseInt(pill.getAttribute('data-phrase-idx'));
+        if (select) {
+          select.value = pIdx;
+          currentCount = 0;
+          if (curEl) curEl.innerText = '0';
+          quickPills.forEach(p => {
+            p.className = 'sebha-quick-pill px-2.5 py-1 rounded-xl text-[11px] font-bold text-[var(--text-secondary)] bg-emerald-950/60 border border-emerald-500/15 flex-shrink-0 transition-all';
+          });
+          pill.className = 'sebha-quick-pill active px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0 transition-all';
+          if (navigator.vibrate) navigator.vibrate(25);
+          showToast(`تم اختيار: ${TASBEEH_PHRASES[pIdx] || ''}`);
+        }
+      });
+    });
+
+    select.addEventListener('change', () => {
+      currentCount = 0;
+      if (curEl) curEl.innerText = '0';
+      const curIdx = parseInt(select.value);
+      quickPills.forEach(p => {
+        if (parseInt(p.getAttribute('data-phrase-idx')) === curIdx) {
+          p.className = 'sebha-quick-pill active px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0 transition-all';
+        } else {
+          p.className = 'sebha-quick-pill px-2.5 py-1 rounded-xl text-[11px] font-bold text-[var(--text-secondary)] bg-emerald-950/60 border border-emerald-500/15 flex-shrink-0 transition-all';
+        }
+      });
+    });
+
     tapBtn.addEventListener('click', () => {
       currentCount++;
       totalCount++;
@@ -2816,7 +2888,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (totEl) totEl.innerText = totalCount;
       localStorage.setItem('quran_sebha_total', totalCount);
       if (navigator.vibrate) {
-        navigator.vibrate(currentCount % 33 === 0 ? [40, 60, 40] : 12);
+        navigator.vibrate(currentCount % 33 === 0 ? [40, 60, 40] : 20);
       }
       if (currentCount % 33 === 0) {
         showToast(`ما شاء الله! أتممت ${currentCount} تسبيحة في هذه الدورة ✨`);
@@ -2827,6 +2899,7 @@ document.addEventListener('DOMContentLoaded', () => {
       resetBtn.addEventListener('click', () => {
         currentCount = 0;
         if (curEl) curEl.innerText = '0';
+        if (navigator.vibrate) navigator.vibrate(15);
         showToast('تم تصفير عداد الدورة الحالية');
       });
     }
