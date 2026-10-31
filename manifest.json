@@ -1,0 +1,29 @@
+{
+  "name": "منصة القرآن الكريم",
+  "short_name": "القرآن الكريم",
+  "description": "منصة القرآن الكريم للاستماع للمصاحف المرتلة والمجودة لمشاهير القراء وقراءة المصحف الشريف بتصميم حديث وسلس",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#01140f",
+  "theme_color": "#064e3b",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
