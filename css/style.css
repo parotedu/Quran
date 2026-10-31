@@ -274,7 +274,7 @@ body {
 
 .artwork-ambient-glow {
   position: absolute;
-  inset: -14px;
+  inset: 0;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(251, 191, 36, 0.35) 0%, rgba(4, 120, 87, 0.15) 50%, transparent 70%);
   filter: blur(20px);
@@ -731,8 +731,35 @@ body {
   /* Ensure bottom elements in scroll containers never get covered by floating navigator or mini player */
   #mushaf-scroll-area,
   #playlist-container,
-  #spiritual-scroll-body {
-    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 165px) !important;
+  #spiritual-scroll-body,
+  #memorial-scroll-area {
+    padding-bottom: calc(env(safe-area-inset-bottom, 12px) + 68px) !important;
+  }
+
+  /* When mini-player is active on mobile, add dynamic clearance for mini-player + glass nav */
+  body.mini-player-active #mushaf-scroll-area,
+  body.mini-player-active #playlist-container,
+  body.mini-player-active #spiritual-scroll-body,
+  body.mini-player-active #memorial-scroll-area {
+    padding-bottom: calc(env(safe-area-inset-bottom, 12px) + 138px) !important;
+  }
+}
+
+/* Mobile Bottom Sheet Smooth Slide-Up Animation */
+@keyframes mobileSheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 639px) {
+  .mobile-bottom-sheet {
+    animation: mobileSheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
 
@@ -760,4 +787,176 @@ body {
   border-color: rgba(251, 191, 36, 0.45) !important;
   box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
 }
+
+/* ==========================================================================
+   V2.5: MEMORIAL & SADAQAH JARIYAH STYLES
+   ========================================================================== */
+.memorial-dhikr-pill {
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.memorial-dhikr-pill.active {
+  background: rgba(251, 191, 36, 0.25) !important;
+  color: var(--text-accent) !important;
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+  transform: translateY(-1px);
+}
+
+.memorial-dua-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.memorial-dua-card:hover {
+  border-color: rgba(251, 191, 36, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.memorial-dua-card.prayed {
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  background: rgba(6, 78, 59, 0.25) !important;
+}
+
+.memorial-dua-card.prayed .dua-amen-btn {
+  background: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+.memorial-gender-opt.active {
+  background: rgba(251, 191, 36, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+}
+
+/* Tactile Click Ripple on Tasbeeh Ring */
+@keyframes ringRipple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(251, 191, 36, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+.sebha-ring-btn.ripple-active {
+  animation: ringRipple 0.35s ease-out;
+}
+
+/* Subtle Glowing Heart Pill for Memorial in Header */
+#btn-header-memorial {
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.18);
+}
+
+#btn-header-memorial:hover {
+  box-shadow: 0 0 22px rgba(244, 63, 94, 0.35);
+}
+
+/* ==========================================================================
+   VIDEO STUDIO & SOCIAL REELS GENERATOR (صانع فيديوهات القرآن)
+   ========================================================================== */
+.phone-mockup-frame {
+  position: relative;
+  width: auto;
+  max-width: 285px;
+  max-height: clamp(380px, 56vh, 520px);
+  aspect-ratio: 9 / 16;
+  border-radius: 32px;
+  padding: 6px;
+  background: linear-gradient(145deg, #1e293b, #090d16);
+  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.8), inset 0 0 0 2px rgba(251, 191, 36, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.phone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-island-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84px;
+  height: 18px;
+  background: #000;
+  border-radius: 12px;
+  z-index: 30;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+.video-progress-shimmer {
+  background: linear-gradient(90deg, #d97706, #fbbf24, #fef08a, #fbbf24, #d97706);
+  background-size: 200% 100%;
+  animation: progressShimmer 2s infinite linear;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.video-theme-pill {
+  cursor: pointer;
+  user-select: none;
+}
+
+.video-theme-pill.active {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.35);
+}
+
+.video-stepper-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 44, 34, 0.75);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.video-stepper-btn:hover {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: #fbbf24;
+  transform: scale(1.05);
+}
+
+.video-stepper-btn:active {
+  transform: scale(0.95);
+}
+
+#btn-header-video {
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+}
+
+#btn-header-video:hover {
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.45);
+}
+
 

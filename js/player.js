@@ -29,8 +29,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const mNavPlayer = document.getElementById('m-nav-player');
   const mNavMushaf = document.getElementById('m-nav-mushaf');
   const mNavSpiritual = document.getElementById('m-nav-spiritual');
+  const mNavMemorial = document.getElementById('m-nav-memorial');
   const mNavPlaylist = document.getElementById('m-nav-playlist');
   const spiritualView = document.getElementById('spiritual-view');
+
+  // Memorial Elements (صدقة جارية ودعاء للمتوفي V2.5)
+  const navBtnMemorial = document.getElementById('nav-btn-memorial');
+  const btnHeaderMemorial = document.getElementById('btn-header-memorial');
+  const spTabMemorial = document.getElementById('sp-tab-memorial');
+  const memorialView = document.getElementById('memorial-view');
+  const memorialGenderBadge = document.getElementById('memorial-gender-badge');
+  const memorialDeceasedName = document.getElementById('memorial-deceased-name');
+  const memorialDedicatedNote = document.getElementById('memorial-dedicated-note');
+  const btnOpenMemorialCreator = document.getElementById('btn-open-memorial-creator');
+  const btnCopyMemorialLink = document.getElementById('btn-copy-memorial-link');
+  const btnWhatsappMemorial = document.getElementById('btn-whatsapp-memorial');
+  const btnDownloadMemorialCard = document.getElementById('btn-download-memorial-card');
+  const memorialDhikrChips = document.getElementById('memorial-dhikr-chips');
+  const memorialActiveDhikrText = document.getElementById('memorial-active-dhikr-text');
+  const memorialTapBtn = document.getElementById('memorial-tap-btn');
+  const memorialRoundCount = document.getElementById('memorial-round-count');
+  const memorialSoundBtn = document.getElementById('memorial-sound-btn');
+  const memorialSoundIcon = document.getElementById('memorial-sound-icon');
+  const memorialResetRoundBtn = document.getElementById('memorial-reset-round-btn');
+  const memorialDuasGrid = document.getElementById('memorial-duas-grid');
+  const memorialSurahsGrid = document.getElementById('memorial-surahs-grid');
+  const memorialCreatorModal = document.getElementById('memorial-creator-modal');
+  const btnCloseMemorialModal = document.getElementById('btn-close-memorial-modal');
+  const memorialInputName = document.getElementById('memorial-input-name');
+  const memorialGenderBtnM = document.getElementById('memorial-gender-btn-m');
+  const memorialGenderBtnF = document.getElementById('memorial-gender-btn-f');
+  const memorialInputNote = document.getElementById('memorial-input-note');
+  const memorialPreviewText = document.getElementById('memorial-preview-text');
+  const btnSubmitCreateMemorial = document.getElementById('btn-submit-create-memorial');
+  const memorialSavedList = document.getElementById('memorial-saved-list');
 
   // V2 Elements (Segmented Search Mode, Player Corner Pills, Modals, Single Ayah Audio)
   const ayahSingleAudio = document.getElementById('ayah-single-audio');
@@ -130,6 +162,54 @@ document.addEventListener('DOMContentLoaded', () => {
   const miniBtnNext = document.getElementById('mini-btn-next');
   const miniBtnExpand = document.getElementById('mini-btn-expand');
 
+  // Mobile Single Pill & Modals Elements
+  const btnOpenPlayerTools = document.getElementById('btn-open-player-tools');
+  const playerToolsModal = document.getElementById('player-tools-modal');
+  const btnClosePlayerTools = document.getElementById('btn-close-player-tools');
+  const mToolMemorize = document.getElementById('m-tool-memorize');
+  const mToolAbLoop = document.getElementById('m-tool-ab-loop');
+  const mToolAbLabel = document.getElementById('m-tool-ab-label');
+  const mToolSleep = document.getElementById('m-tool-sleep');
+  const mToolRadio = document.getElementById('m-tool-radio');
+  const mToolFav = document.getElementById('m-tool-fav');
+  const mToolFavIcon = document.getElementById('m-tool-fav-icon');
+  const mToolShare = document.getElementById('m-tool-share');
+  const mToolDownload = document.getElementById('m-tool-download');
+
+  const mMushafBadge = document.getElementById('m-mushaf-badge');
+  const mMushafTitle = document.getElementById('m-mushaf-title');
+  const mMushafRevelation = document.getElementById('m-mushaf-revelation');
+  const mMushafMeta = document.getElementById('m-mushaf-meta');
+  const mMushafBtnPlay = document.getElementById('m-mushaf-btn-play');
+  const mMushafPlayIcon = document.getElementById('m-mushaf-play-icon');
+  const btnOpenMushafOptions = document.getElementById('btn-open-mushaf-options');
+  const mushafOptionsModal = document.getElementById('mushaf-options-modal');
+  const btnCloseMushafOptions = document.getElementById('btn-close-mushaf-options');
+  const mOptionsSurahSelect = document.getElementById('m-options-surah-select');
+  const mOptionsBtnJumpBookmark = document.getElementById('m-options-btn-jump-bookmark');
+  const mOptionsBookmarkText = document.getElementById('m-options-bookmark-text');
+  const mOptionsFontLabel = document.getElementById('m-options-font-label');
+  const mOptionsZoomOut = document.getElementById('m-options-zoom-out');
+  const mOptionsZoomReset = document.getElementById('m-options-zoom-reset');
+  const mOptionsZoomIn = document.getElementById('m-options-zoom-in');
+  const mOptionsToggleMemorize = document.getElementById('m-options-toggle-memorize');
+  const mOptionsRepeatSelect = document.getElementById('m-options-repeat-select');
+  const mOptionsBtnBlur = document.getElementById('m-options-btn-blur');
+  const mOptionsBtnStudio = document.getElementById('m-options-btn-studio');
+
+  const mMemorialName = document.getElementById('m-memorial-name');
+  const btnOpenMemorialOptions = document.getElementById('btn-open-memorial-options');
+  const memorialOptionsModal = document.getElementById('memorial-options-modal');
+  const btnCloseMemorialOptions = document.getElementById('btn-close-memorial-options');
+  const mOptBtnEditMemorial = document.getElementById('m-opt-btn-edit-memorial');
+  const mOptBtnCopyLink = document.getElementById('m-opt-btn-copy-link');
+  const mOptBtnWhatsapp = document.getElementById('m-opt-btn-whatsapp');
+  const mOptBtnDownloadCard = document.getElementById('m-opt-btn-download-card');
+  const mOptBtnToggleSound = document.getElementById('m-opt-btn-toggle-sound');
+  const mOptSoundIcon = document.getElementById('m-opt-sound-icon');
+  const mOptSoundText = document.getElementById('m-opt-sound-text');
+  const mOptBtnResetRound = document.getElementById('m-opt-btn-reset-round');
+
   // --- State Variables ---
   let currentSurahList = [...SURAHS];
   let currentIndex = 0;
@@ -180,6 +260,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let ambienceSourceNodes = [];
   let ambienceVolume = 0.25;
 
+  // Memorial & Gifting State (صدقة جارية V2.5)
+  let currentMemorial = {
+    name: "مَنْ تُحِبّونَ (فقيدكم الغالي)",
+    gender: "m",
+    isGeneric: true,
+    note: "اللهم اغفر لموتانا وموتى المسلمين واجعل قبورهم روضات من رياض الجنة وأسكنهم الفردوس الأعلى"
+  };
+  let memorialRoundCounter = 0;
+  let activeMemorialDhikrIdx = 0;
+  let isTasbeehSoundEnabled = localStorage.getItem('quran_tasbeeh_sound') !== 'false';
+  let tasbeehAudioCtx = null;
+  let modalSelectedGender = 'm';
+  let savedMemorials = JSON.parse(localStorage.getItem('quran_saved_memorials')) || [];
+  let currentMemorialCardBlob = null;
+  let currentMemorialCardFile = null;
+
   // --- Initial Setup ---
   init();
 
@@ -209,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateVolumeIcon(savedVolume);
     }
 
-    // 7. Handle URL parameters (e.g. ?surah=18)
+    // 7. Handle URL parameters (e.g. ?surah=18 or ?memorial=أم-السعد&gender=f)
     const urlParams = new URLSearchParams(window.location.search);
     const sharedSurahId = parseInt(urlParams.get('surah'));
     if (sharedSurahId && sharedSurahId >= 1 && sharedSurahId <= 114) {
@@ -221,6 +317,44 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else {
       loadSurah(SURAHS[currentIndex], false);
+    }
+
+    // Check for Memorial query param or hash (e.g. ?memorial=ام-السعد&gender=f or #pack/ام-السعد/f)
+    let sharedMemorialName = urlParams.get('memorial') || urlParams.get('pack');
+    let sharedMemorialGender = urlParams.get('gender') || 'f';
+    let sharedMemorialNote = urlParams.get('note') || '';
+
+    if (!sharedMemorialName && window.location.hash) {
+      const hashStr = decodeURIComponent(window.location.hash.replace(/^#\/?/, ''));
+      const parts = hashStr.split('/');
+      if (parts[0] === 'pack' || parts[0] === 'memorial') {
+        if (parts[1]) sharedMemorialName = parts[1].replace(/-/g, ' ');
+        if (parts[2]) sharedMemorialGender = parts[2].toLowerCase() === 'm' ? 'm' : 'f';
+      }
+    }
+
+    if (sharedMemorialName) {
+      const cleanName = decodeURIComponent(sharedMemorialName).replace(/-/g, ' ').trim();
+      const cleanGender = sharedMemorialGender.toLowerCase() === 'm' ? 'm' : 'f';
+      const cleanNote = sharedMemorialNote ? decodeURIComponent(sharedMemorialNote).trim() : '';
+      currentMemorial = {
+        name: cleanName,
+        gender: cleanGender,
+        isGeneric: false,
+        note: cleanNote || (cleanGender === 'm' ? 'اللهم اغفر له وارحمه وأسكنه الفردوس الأعلى برفقة الصالحين' : 'اللهم اغفر لها وارحمها وأسكنها الفردوس الأعلى برفقة الصالحين')
+      };
+      if (!savedMemorials.some(m => m.name === currentMemorial.name && m.gender === currentMemorial.gender)) {
+        savedMemorials.unshift(currentMemorial);
+        try { localStorage.setItem('quran_saved_memorials', JSON.stringify(savedMemorials.slice(0, 10))); } catch (e) {}
+      }
+      setTimeout(() => {
+        openMemorialPage(currentMemorial.name, currentMemorial.gender, currentMemorial.note, false);
+      }, 150);
+    } else {
+      const targetViewParam = urlParams.get('view');
+      if (targetViewParam && ['player', 'mushaf', 'spiritual', 'memorial', 'video', 'playlist'].includes(targetViewParam)) {
+        setTimeout(() => switchView(targetViewParam), 100);
+      }
     }
 
     // 8. Attach Event Listeners & Shortcuts
@@ -252,23 +386,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function switchView(targetView, shouldScroll = true) {
+    window.switchView = switchView;
     currentView = targetView;
     const isDesktop = window.innerWidth >= 1024;
 
-    const tabInactive = 'nav-tab-btn flex-1 md:flex-initial px-2.5 xs:px-3.5 py-1.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
-    const tabActive = 'nav-tab-btn flex-1 md:flex-initial px-2.5 xs:px-3.5 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30';
+    const tabInactive = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
+    const tabActive = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30';
+
+    const navBtnVideo = document.getElementById('nav-btn-video');
+    const videoStudioView = document.getElementById('video-studio-view');
 
     if (navBtnPlayer) navBtnPlayer.className = tabInactive;
     if (navBtnMushaf) navBtnMushaf.className = tabInactive;
     if (navBtnSpiritual) navBtnSpiritual.className = tabInactive;
     if (navBtnPlaylist) navBtnPlaylist.className = tabInactive + ' lg:hidden';
+    if (navBtnMemorial) navBtnMemorial.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-rose-300 hover:text-rose-200 hover:bg-rose-500/10';
+    if (navBtnVideo) navBtnVideo.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/20';
 
     playerView.classList.add('hidden');
     mushafView.classList.add('hidden');
     if (spiritualView) spiritualView.classList.add('hidden');
+    if (memorialView) memorialView.classList.add('hidden');
+    if (videoStudioView) videoStudioView.classList.add('hidden');
 
     if (isDesktop) {
-      playlistSection.classList.remove('hidden');
+      if (targetView === 'video') {
+        playlistSection.classList.add('hidden');
+      } else {
+        playlistSection.classList.remove('hidden');
+      }
       if (contentSection) contentSection.classList.remove('hidden');
     } else {
       if (targetView === 'playlist') {
@@ -282,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mini Player is only shown on other tabs if audio has been started/played
     const shouldShowMini = (isPlaying || (audio.currentTime > 0 && !audio.paused) || isRadioMode) && targetView !== 'player';
+    document.body.classList.toggle('mini-player-active', shouldShowMini);
 
     if (targetView === 'mushaf') {
       if (navBtnMushaf) navBtnMushaf.className = tabActive;
@@ -303,6 +450,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (khatmaCard && sebhaPanel && !sebhaPanel.classList.contains('hidden') && window.innerWidth < 1024) {
         khatmaCard.classList.add('hidden');
       }
+    } else if (targetView === 'memorial') {
+      if (navBtnMemorial) navBtnMemorial.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-rose-500/25 text-rose-200 border border-rose-500/40 shadow-sm';
+      if (memorialView) memorialView.classList.remove('hidden');
+      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
+      updateMemorialViewUI();
+    } else if (targetView === 'video') {
+      if (navBtnVideo) navBtnVideo.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm';
+      if (videoStudioView) videoStudioView.classList.remove('hidden');
+      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
+      if (window.initVideoStudioView) window.initVideoStudioView();
     } else if (targetView === 'playlist' && !isDesktop) {
       if (navBtnPlaylist) navBtnPlaylist.className = tabActive + ' lg:hidden';
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
@@ -317,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
       { id: 'player', el: mNavPlayer },
       { id: 'mushaf', el: mNavMushaf },
       { id: 'spiritual', el: mNavSpiritual },
+      { id: 'memorial', el: mNavMemorial },
       { id: 'playlist', el: mNavPlaylist }
     ];
     mTabs.forEach(tab => {
@@ -357,14 +515,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function populateMushafSurahSelect() {
-    if (!mushafSurahSelect) return;
-    mushafSurahSelect.innerHTML = '';
-    SURAHS.forEach(surah => {
-      const opt = document.createElement('option');
-      opt.value = surah.id;
-      opt.innerText = `${surah.id}. سورة ${surah.name}`;
-      opt.className = 'bg-emerald-950 text-white';
-      mushafSurahSelect.appendChild(opt);
+    [mushafSurahSelect, mOptionsSurahSelect].forEach(sel => {
+      if (!sel) return;
+      sel.innerHTML = '';
+      SURAHS.forEach(surah => {
+        const opt = document.createElement('option');
+        opt.value = surah.id;
+        opt.innerText = `${surah.id}. سورة ${surah.name}`;
+        opt.className = 'bg-emerald-950 text-white';
+        sel.appendChild(opt);
+      });
     });
   }
 
@@ -734,6 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-pause text-sm sm:text-base text-slate-900';
         if (miniIcon) miniIcon.className = 'fa-solid fa-volume-high text-xs text-amber-400 animate-pulse';
         if (mushafPlayIcon) mushafPlayIcon.className = 'fa-solid fa-pause';
+        if (mMushafPlayIcon) mMushafPlayIcon.className = 'fa-solid fa-pause text-xs';
         if (currentView !== 'player' && miniPlayer) {
           miniPlayer.classList.remove('hidden');
         }
@@ -772,6 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-play text-sm sm:text-base mr-0.5 text-slate-900';
     if (miniIcon) miniIcon.className = 'fa-solid fa-music text-sm text-amber-400';
     if (mushafPlayIcon) mushafPlayIcon.className = 'fa-solid fa-play';
+    if (mMushafPlayIcon) mMushafPlayIcon.className = 'fa-solid fa-play text-xs';
 
     // Animations
     artworkMandala.classList.add('spin-paused');
@@ -793,12 +955,18 @@ document.addEventListener('DOMContentLoaded', () => {
     currentMushafSurahId = surahId;
     const surah = SURAHS.find(s => s.id === surahId) || SURAHS[0];
     
-    // Header UI
-    mushafSurahBadge.innerText = surah.id;
-    mushafSurahTitle.innerText = `سُورَةُ ${surah.name}`;
-    mushafRevelationBadge.innerText = surah.revelationPlace === 'makkah' ? 'مكية' : 'مدنية';
-    mushafSurahMeta.innerText = `${surah.versesCount} آيات • الجزء ${Math.ceil(surah.id / 4.2) || 1} • ترتيب النزول ${surah.id}`;
+    // Header UI (Desktop & Mobile)
+    if (mushafSurahBadge) mushafSurahBadge.innerText = surah.id;
+    if (mushafSurahTitle) mushafSurahTitle.innerText = `سُورَةُ ${surah.name}`;
+    if (mushafRevelationBadge) mushafRevelationBadge.innerText = surah.revelationPlace === 'makkah' ? 'مكية' : 'مدنية';
+    if (mushafSurahMeta) mushafSurahMeta.innerText = `${surah.versesCount} آيات • الجزء ${Math.ceil(surah.id / 4.2) || 1} • ترتيب النزول ${surah.id}`;
     if (mushafSurahSelect) mushafSurahSelect.value = surah.id;
+
+    if (mMushafBadge) mMushafBadge.innerText = surah.id;
+    if (mMushafTitle) mMushafTitle.innerText = `سُورَةُ ${surah.name}`;
+    if (mMushafRevelation) mMushafRevelation.innerText = surah.revelationPlace === 'makkah' ? 'مكية' : 'مدنية';
+    if (mMushafMeta) mMushafMeta.innerText = `${surah.versesCount} آيات • الجزء ${Math.ceil(surah.id / 4.2) || 1}`;
+    if (mOptionsSurahSelect) mOptionsSurahSelect.value = surah.id;
     
     // Basmala visibility:
     // Surah 1 (Al-Fatihah) has Basmala as Ayah 1, so hide top banner to prevent duplicate
@@ -954,6 +1122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const baseRem = (1.5 * (mushafFontSize / 100)).toFixed(2);
     mushafContent.style.setProperty('--mushaf-font-size', `${baseRem}rem`);
     if (mushafFontSizeLabel) mushafFontSizeLabel.innerText = `${mushafFontSize}%`;
+    if (mOptionsFontLabel) mOptionsFontLabel.innerText = `${mushafFontSize}%`;
   }
 
   // --- Favorite Toggle ---
@@ -1119,12 +1288,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navBtnPlayer) navBtnPlayer.addEventListener('click', () => switchView('player'));
     if (navBtnMushaf) navBtnMushaf.addEventListener('click', () => switchView('mushaf'));
     if (navBtnSpiritual) navBtnSpiritual.addEventListener('click', () => switchView('spiritual'));
+    if (navBtnMemorial) navBtnMemorial.addEventListener('click', () => switchView('memorial'));
     if (navBtnPlaylist) navBtnPlaylist.addEventListener('click', () => switchView('playlist'));
+
+    // Video Studio Navigation & Header Buttons
+    const navBtnVideo = document.getElementById('nav-btn-video');
+    const btnHeaderVideo = document.getElementById('btn-header-video');
+    const btnMobileHeaderVideo = document.getElementById('btn-mobile-header-video');
+    const videoBtnBackPlayer = document.getElementById('video-btn-back-player');
+
+    if (navBtnVideo) navBtnVideo.addEventListener('click', () => switchView('video'));
+    if (btnHeaderVideo) btnHeaderVideo.addEventListener('click', () => switchView('video'));
+    if (btnMobileHeaderVideo) btnMobileHeaderVideo.addEventListener('click', () => switchView('video'));
+    if (videoBtnBackPlayer) videoBtnBackPlayer.addEventListener('click', () => switchView('player'));
+
+    // Header Memorial Pill
+    if (btnHeaderMemorial) btnHeaderMemorial.addEventListener('click', () => switchView('memorial'));
 
     // Mobile Floating Glass Navigator Tabs
     if (mNavPlayer) mNavPlayer.addEventListener('click', () => switchView('player'));
     if (mNavMushaf) mNavMushaf.addEventListener('click', () => switchView('mushaf'));
     if (mNavSpiritual) mNavSpiritual.addEventListener('click', () => switchView('spiritual'));
+    if (mNavMemorial) mNavMemorial.addEventListener('click', () => switchView('memorial'));
     if (mNavPlaylist) mNavPlaylist.addEventListener('click', () => switchView('playlist'));
     
     btnReadInMushaf.addEventListener('click', () => switchView('mushaf'));
@@ -1615,7 +1800,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 21. Keyboard & TV Remote Shortcuts
     window.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
 
       switch (e.code) {
         case 'Space':
@@ -1645,6 +1830,11 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
         case 'KeyF':
           toggleFavorite(SURAHS[currentIndex].id);
+          break;
+        case 'Escape':
+          if (playerToolsModal) playerToolsModal.classList.add('hidden');
+          if (mushafOptionsModal) mushafOptionsModal.classList.add('hidden');
+          if (memorialOptionsModal) memorialOptionsModal.classList.add('hidden');
           break;
       }
     });
@@ -1806,6 +1996,21 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    const studioBtnVideo = document.getElementById('studio-btn-video');
+    if (studioBtnVideo) {
+      studioBtnVideo.addEventListener('click', () => {
+        if (!currentStudioContext) return;
+        const ctxSurah = currentStudioContext.surahId;
+        const ctxAyah = currentStudioContext.ayahNum;
+        closeAyahStudio();
+        if (typeof window.openVideoStudio === 'function') {
+          window.openVideoStudio(ctxSurah, ctxAyah);
+        } else {
+          switchView('video');
+        }
+      });
+    }
+
     document.querySelectorAll('.tafsir-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!currentStudioContext) return;
@@ -1927,6 +2132,300 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 7. Initialize Spiritual Companion Hub (Mood Compass, Azkar, Sebha, Khatma)
     initSpiritualCompanionHub();
+
+    // 8. Initialize Memorial & Ongoing Charity Engine (صدقة جارية ودعاء للمتوفي)
+    initMemorialEngine();
+
+    // 9. Initialize Mobile Compact Options Popups Engine
+    initMobileModals();
+  }
+
+  // ==========================================================================
+  // Mobile Compact View & Single Options Popups Engine
+  // ==========================================================================
+  function initMobileModals() {
+    // Helper to open / close player tools modal
+    const openPlayerTools = () => {
+      if (!playerToolsModal) return;
+      if (mToolAbLabel && abLoopLabel) mToolAbLabel.innerText = abLoopLabel.innerText;
+      if (mToolFavIcon) {
+        const isFav = favorites.includes(SURAHS[currentIndex].id);
+        mToolFavIcon.className = isFav ? 'fa-solid fa-heart block mb-1 text-sm text-red-500' : 'fa-regular fa-heart block mb-1 text-sm text-red-400';
+      }
+      playerToolsModal.classList.remove('hidden');
+    };
+    const closePlayerTools = () => {
+      if (playerToolsModal) playerToolsModal.classList.add('hidden');
+    };
+
+    if (btnOpenPlayerTools) btnOpenPlayerTools.addEventListener('click', openPlayerTools);
+    if (btnClosePlayerTools) btnClosePlayerTools.addEventListener('click', closePlayerTools);
+    if (playerToolsModal) {
+      playerToolsModal.addEventListener('click', (e) => {
+        if (e.target === playerToolsModal) closePlayerTools();
+      });
+    }
+
+    const mToolVideo = document.getElementById('m-tool-video');
+    if (mToolVideo) {
+      mToolVideo.addEventListener('click', () => {
+        closePlayerTools();
+        switchView('video');
+      });
+    }
+
+    if (mToolMemorize) {
+      mToolMemorize.addEventListener('click', () => {
+        closePlayerTools();
+        isMemorizationMode = true;
+        localStorage.setItem('quran_memorize_mode', 'true');
+        updateMemorizationModeUI();
+        switchView('mushaf');
+        if (!isPlaying && !isRadioMode) playAudio();
+        showToast('تم تفعيل وضع التحفيظ والتتبع الحي للآيات مع القارئ ✨');
+      });
+    }
+
+    if (mToolAbLoop) {
+      mToolAbLoop.addEventListener('click', () => {
+        cycleAbLoop();
+        if (mToolAbLabel && abLoopLabel) mToolAbLabel.innerText = abLoopLabel.innerText;
+      });
+    }
+
+    if (mToolSleep) {
+      mToolSleep.addEventListener('click', () => {
+        closePlayerTools();
+        const sleepModal = document.getElementById('sleep-ambience-modal');
+        if (sleepModal) sleepModal.classList.remove('hidden');
+      });
+    }
+
+    if (mToolRadio) {
+      mToolRadio.addEventListener('click', () => {
+        closePlayerTools();
+        renderRadioStations();
+        const radioModal = document.getElementById('radio-modal');
+        if (radioModal) radioModal.classList.remove('hidden');
+      });
+    }
+
+    if (mToolFav) {
+      mToolFav.addEventListener('click', () => {
+        toggleFavorite(SURAHS[currentIndex].id);
+        if (mToolFavIcon) {
+          const isFav = favorites.includes(SURAHS[currentIndex].id);
+          mToolFavIcon.className = isFav ? 'fa-solid fa-heart block mb-1 text-sm text-red-500' : 'fa-regular fa-heart block mb-1 text-sm text-red-400';
+        }
+      });
+    }
+
+    if (mToolShare) {
+      mToolShare.addEventListener('click', () => {
+        closePlayerTools();
+        btnShare.click();
+      });
+    }
+
+    if (mToolDownload) {
+      mToolDownload.addEventListener('click', () => {
+        closePlayerTools();
+        btnDownload.click();
+      });
+    }
+
+    // Helper to open / close Mushaf Options Bottom Sheet
+    const openMushafOptions = () => {
+      if (!mushafOptionsModal) return;
+      if (mOptionsSurahSelect) mOptionsSurahSelect.value = currentMushafSurahId;
+      if (mOptionsFontLabel) mOptionsFontLabel.innerText = `${mushafFontSize}%`;
+      if (mOptionsRepeatSelect) mOptionsRepeatSelect.value = memorizeRepeatTarget.toString();
+      if (mOptionsBookmarkText) {
+        if (khatmaBookmark) {
+          mOptionsBookmarkText.innerText = `سورة ${khatmaBookmark.surahName} : آية ${khatmaBookmark.ayahNum}`;
+        } else {
+          mOptionsBookmarkText.innerText = 'لا يوجد فاصل';
+        }
+      }
+      if (mOptionsToggleMemorize) {
+        mOptionsToggleMemorize.innerText = isMemorizationMode ? 'مفعل' : 'معطل';
+        mOptionsToggleMemorize.className = isMemorizationMode
+          ? 'py-1.5 px-3 rounded-xl font-bold text-xs bg-amber-500 text-slate-900 active:scale-95 shadow transition-all'
+          : 'py-1.5 px-3 rounded-xl font-bold text-xs bg-emerald-950/80 text-gray-400 border border-emerald-500/20 active:scale-95 transition-all';
+      }
+      mushafOptionsModal.classList.remove('hidden');
+    };
+    const closeMushafOptions = () => {
+      if (mushafOptionsModal) mushafOptionsModal.classList.add('hidden');
+    };
+
+    if (btnOpenMushafOptions) btnOpenMushafOptions.addEventListener('click', openMushafOptions);
+    if (btnCloseMushafOptions) btnCloseMushafOptions.addEventListener('click', closeMushafOptions);
+    if (mushafOptionsModal) {
+      mushafOptionsModal.addEventListener('click', (e) => {
+        if (e.target === mushafOptionsModal) closeMushafOptions();
+      });
+    }
+
+    if (mOptionsSurahSelect) {
+      mOptionsSurahSelect.addEventListener('change', (e) => {
+        const sid = parseInt(e.target.value);
+        if (mushafSurahSelect) mushafSurahSelect.value = sid;
+        loadSurahMushaf(sid);
+        closeMushafOptions();
+      });
+    }
+
+    if (mOptionsBtnJumpBookmark) {
+      mOptionsBtnJumpBookmark.addEventListener('click', () => {
+        closeMushafOptions();
+        if (mushafBtnGotoBookmark) mushafBtnGotoBookmark.click();
+      });
+    }
+
+    if (mOptionsZoomIn) {
+      mOptionsZoomIn.addEventListener('click', () => {
+        mushafFontSize = Math.min(220, mushafFontSize + 15);
+        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
+        applyMushafFontSize();
+      });
+    }
+
+    if (mOptionsZoomOut) {
+      mOptionsZoomOut.addEventListener('click', () => {
+        mushafFontSize = Math.max(70, mushafFontSize - 15);
+        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
+        applyMushafFontSize();
+      });
+    }
+
+    if (mOptionsZoomReset) {
+      mOptionsZoomReset.addEventListener('click', () => {
+        mushafFontSize = 100;
+        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
+        applyMushafFontSize();
+        showToast('تمت استعادة حجم الخط الافتراضي');
+      });
+    }
+
+    if (mOptionsToggleMemorize) {
+      mOptionsToggleMemorize.addEventListener('click', () => {
+        if (btnToggleMemorizeMode) btnToggleMemorizeMode.click();
+      });
+    }
+
+    if (mOptionsRepeatSelect) {
+      mOptionsRepeatSelect.addEventListener('change', (e) => {
+        memorizeRepeatTarget = parseInt(e.target.value) || 1;
+        currentAyahRepeatCount = 1;
+        if (memorizeRepeatSelect) memorizeRepeatSelect.value = memorizeRepeatTarget.toString();
+        if (!isMemorizationMode && memorizeRepeatTarget > 1) {
+          isMemorizationMode = true;
+          localStorage.setItem('quran_memorize_mode', 'true');
+          updateMemorizationModeUI();
+        }
+        const label = memorizeRepeatTarget === 99 ? 'تكرار مستمر للآية' : `${memorizeRepeatTarget} مرات لكل آية`;
+        showToast(`تم ضبط تكرار التحفيظ: ${label}`);
+      });
+    }
+
+    if (mOptionsBtnBlur) {
+      mOptionsBtnBlur.addEventListener('click', () => {
+        closeMushafOptions();
+        if (btnMemorizeBlur) btnMemorizeBlur.click();
+      });
+    }
+
+    if (mOptionsBtnStudio) {
+      mOptionsBtnStudio.addEventListener('click', () => {
+        closeMushafOptions();
+        if (btnMemorizeOpenStudio) btnMemorizeOpenStudio.click();
+      });
+    }
+
+    // Play/Pause button in mobile Mushaf topbar
+    if (mMushafBtnPlay) {
+      mMushafBtnPlay.addEventListener('click', () => {
+        if (currentIndex !== currentMushafSurahId - 1) {
+          const surah = SURAHS.find(s => s.id === currentMushafSurahId);
+          if (surah) {
+            currentIndex = SURAHS.indexOf(surah);
+            loadSurah(surah, true);
+          }
+        } else {
+          togglePlayPause();
+        }
+      });
+    }
+
+    // Helper to open / close Memorial Options Bottom Sheet
+    const openMemorialOptions = () => {
+      if (!memorialOptionsModal) return;
+      if (mOptSoundIcon && mOptSoundText) {
+        mOptSoundIcon.className = isTasbeehSoundEnabled ? 'fa-solid fa-volume-high text-amber-400' : 'fa-solid fa-volume-xmark text-gray-400';
+        mOptSoundText.innerText = isTasbeehSoundEnabled ? 'صوت النقر: مفعل' : 'صوت النقر: صامت';
+      }
+      memorialOptionsModal.classList.remove('hidden');
+    };
+    const closeMemorialOptions = () => {
+      if (memorialOptionsModal) memorialOptionsModal.classList.add('hidden');
+    };
+
+    if (btnOpenMemorialOptions) btnOpenMemorialOptions.addEventListener('click', openMemorialOptions);
+    if (btnCloseMemorialOptions) btnCloseMemorialOptions.addEventListener('click', closeMemorialOptions);
+    if (memorialOptionsModal) {
+      memorialOptionsModal.addEventListener('click', (e) => {
+        if (e.target === memorialOptionsModal) closeMemorialOptions();
+      });
+    }
+
+    if (mOptBtnEditMemorial) {
+      mOptBtnEditMemorial.addEventListener('click', () => {
+        closeMemorialOptions();
+        openMemorialModal();
+      });
+    }
+
+    if (mOptBtnCopyLink) {
+      mOptBtnCopyLink.addEventListener('click', () => {
+        closeMemorialOptions();
+        shareMemorialLink('copy');
+      });
+    }
+
+    if (mOptBtnWhatsapp) {
+      mOptBtnWhatsapp.addEventListener('click', () => {
+        closeMemorialOptions();
+        shareMemorialLink('whatsapp');
+      });
+    }
+
+    if (mOptBtnDownloadCard) {
+      mOptBtnDownloadCard.addEventListener('click', () => {
+        closeMemorialOptions();
+        generateMemorialCard();
+      });
+    }
+
+    if (mOptBtnToggleSound) {
+      mOptBtnToggleSound.addEventListener('click', () => {
+        toggleMemorialSound();
+        if (mOptSoundIcon && mOptSoundText) {
+          mOptSoundIcon.className = isTasbeehSoundEnabled ? 'fa-solid fa-volume-high text-amber-400' : 'fa-solid fa-volume-xmark text-gray-400';
+          mOptSoundText.innerText = isTasbeehSoundEnabled ? 'صوت النقر: مفعل' : 'صوت النقر: صامت';
+        }
+      });
+    }
+
+    if (mOptBtnResetRound) {
+      mOptBtnResetRound.addEventListener('click', () => {
+        closeMemorialOptions();
+        memorialRoundCounter = 0;
+        if (memorialRoundCount) memorialRoundCount.innerText = '0';
+        triggerHapticFeedback(15);
+        showToast('تم تصفير عداد الدورة الحالية للتسبيح');
+      });
+    }
   }
 
   // --- Smart Memorization & Live Reciter Ayah Hover Engine ---
@@ -2073,6 +2572,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btnDockMemorize) {
         btnDockMemorize.classList.add('border-amber-400', 'bg-amber-500/20');
       }
+      if (mOptionsToggleMemorize) {
+        mOptionsToggleMemorize.innerText = 'مفعل';
+        mOptionsToggleMemorize.className = 'py-1.5 px-3 rounded-xl font-bold text-xs bg-amber-500 text-slate-900 active:scale-95 shadow transition-all';
+      }
       loadSurahTimestamps(SURAHS[currentIndex].id);
       if (currentView === 'mushaf') {
         setTimeout(() => updateLiveMushafAyahHover(true), 60);
@@ -2100,6 +2603,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (btnDockMemorize) {
         btnDockMemorize.classList.remove('border-amber-400', 'bg-amber-500/20');
+      }
+      if (mOptionsToggleMemorize) {
+        mOptionsToggleMemorize.innerText = 'معطل';
+        mOptionsToggleMemorize.className = 'py-1.5 px-3 rounded-xl font-bold text-xs bg-emerald-950/80 text-gray-400 border border-emerald-500/20 active:scale-95 transition-all';
       }
       clearLiveMushafAyahHover();
       if (isMemorizeBlur && mushafContent) {
@@ -2740,6 +3247,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // Jump to Memorial Page from Spiritual Companion Hub Tab
+    if (spTabMemorial) {
+      spTabMemorial.addEventListener('click', () => {
+        switchView('memorial');
+      });
+    }
+
     // 1. Render Mood Compass
     if (typeof MOOD_COMPASS !== 'undefined') {
       const moodGrid = document.getElementById('mood-buttons-grid');
@@ -2985,6 +3499,770 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('تم تصفير عداد الدورة الحالية');
       });
     }
+  }
+
+  // ==========================================================================
+  // Memorial Engine: Ongoing Charity & Supplications for the Deceased (V2.5)
+  // ==========================================================================
+  function initMemorialEngine() {
+    if (!memorialView) return;
+
+    // Attach Tasbeeh Click & Counter Handlers
+    if (memorialTapBtn) {
+      memorialTapBtn.addEventListener('click', handleMemorialTasbeehTap);
+    }
+
+    if (memorialResetRoundBtn) {
+      memorialResetRoundBtn.addEventListener('click', () => {
+        memorialRoundCounter = 0;
+        if (memorialRoundCount) memorialRoundCount.innerText = '0';
+        triggerHapticFeedback(15);
+        showToast('تم تصفير عداد الدورة الحالية للتسبيح');
+      });
+    }
+
+    if (memorialSoundBtn) {
+      memorialSoundBtn.addEventListener('click', toggleMemorialSound);
+    }
+
+    // Modal Opening & Closing
+    const memorialHeaderTitleBox = document.getElementById('memorial-header-title-box');
+    if (memorialHeaderTitleBox) {
+      memorialHeaderTitleBox.addEventListener('click', openMemorialModal);
+    }
+    if (btnOpenMemorialCreator) {
+      btnOpenMemorialCreator.addEventListener('click', openMemorialModal);
+    }
+    if (btnCloseMemorialModal) {
+      btnCloseMemorialModal.addEventListener('click', closeMemorialModal);
+    }
+    if (memorialCreatorModal) {
+      memorialCreatorModal.addEventListener('click', (e) => {
+        if (e.target === memorialCreatorModal) closeMemorialModal();
+      });
+    }
+
+    // Image Preview Modal Listeners (Mobile & Tablet)
+    const memorialImageModal = document.getElementById('memorial-image-modal');
+    const btnCloseImageModal = document.getElementById('btn-close-image-modal');
+    if (btnCloseImageModal && memorialImageModal) {
+      btnCloseImageModal.addEventListener('click', () => memorialImageModal.classList.add('hidden'));
+      memorialImageModal.addEventListener('click', (e) => {
+        if (e.target === memorialImageModal) memorialImageModal.classList.add('hidden');
+      });
+    }
+
+    // Modal Gender Selectors
+    if (memorialGenderBtnM) {
+      memorialGenderBtnM.addEventListener('click', () => setModalGender('m'));
+    }
+    if (memorialGenderBtnF) {
+      memorialGenderBtnF.addEventListener('click', () => setModalGender('f'));
+    }
+
+    // Modal Inputs Live Preview
+    if (memorialInputName) {
+      memorialInputName.addEventListener('input', updateModalPreview);
+    }
+    if (memorialInputNote) {
+      memorialInputNote.addEventListener('input', updateModalPreview);
+    }
+
+    // Modal Form Submission
+    if (btnSubmitCreateMemorial) {
+      btnSubmitCreateMemorial.addEventListener('click', submitCreateMemorial);
+    }
+
+    // Share Actions
+    if (btnCopyMemorialLink) {
+      btnCopyMemorialLink.addEventListener('click', () => shareMemorialLink('copy'));
+    }
+    if (btnWhatsappMemorial) {
+      btnWhatsappMemorial.addEventListener('click', () => shareMemorialLink('whatsapp'));
+    }
+    if (btnDownloadMemorialCard) {
+      btnDownloadMemorialCard.addEventListener('click', generateMemorialCard);
+    }
+
+    // Render Initial UI
+    updateMemorialViewUI();
+  }
+
+  function toggleMemorialSound() {
+    isTasbeehSoundEnabled = !isTasbeehSoundEnabled;
+    localStorage.setItem('quran_tasbeeh_sound', isTasbeehSoundEnabled);
+    if (memorialSoundIcon) {
+      memorialSoundIcon.className = isTasbeehSoundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    }
+    showToast(isTasbeehSoundEnabled ? 'تم تفعيل صوت التسبيح' : 'تم كتم صوت التسبيح', 'info');
+  }
+
+  function playTasbeehClickSound() {
+    if (!isTasbeehSoundEnabled) return;
+    try {
+      if (!tasbeehAudioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) tasbeehAudioCtx = new AudioContextClass();
+      }
+      if (tasbeehAudioCtx && tasbeehAudioCtx.state === 'suspended') {
+        tasbeehAudioCtx.resume();
+      }
+      if (tasbeehAudioCtx) {
+        const osc = tasbeehAudioCtx.createOscillator();
+        const gain = tasbeehAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, tasbeehAudioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(320, tasbeehAudioCtx.currentTime + 0.035);
+        gain.gain.setValueAtTime(0.2, tasbeehAudioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, tasbeehAudioCtx.currentTime + 0.035);
+        osc.connect(gain);
+        gain.connect(tasbeehAudioCtx.destination);
+        osc.start();
+        osc.stop(tasbeehAudioCtx.currentTime + 0.04);
+      }
+    } catch (e) {
+      // AudioContext fallback
+    }
+  }
+
+  function triggerHapticFeedback(pattern = 18) {
+    if (navigator.vibrate) {
+      try { navigator.vibrate(pattern); } catch (e) {}
+    }
+  }
+
+  function handleMemorialTasbeehTap() {
+    memorialRoundCounter++;
+    if (memorialRoundCount) {
+      memorialRoundCount.innerText = memorialRoundCounter.toLocaleString('ar-EG');
+    }
+
+    playTasbeehClickSound();
+
+    if (memorialRoundCounter % 33 === 0) {
+      triggerHapticFeedback([40, 70, 40]);
+      const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
+      showToast(`ما شاء الله! أتممت ${memorialRoundCounter} تسبيحة مهداة لروح ${targetName} 🌿`);
+    } else {
+      triggerHapticFeedback(15);
+    }
+
+    if (memorialTapBtn) {
+      memorialTapBtn.classList.remove('ripple-active');
+      void memorialTapBtn.offsetWidth; // trigger reflow
+      memorialTapBtn.classList.add('ripple-active');
+    }
+  }
+
+  function openMemorialPage(name, gender, note, updateUrl = true) {
+    const isGeneric = !name || name.trim() === 'مَنْ تُحِبّونَ (فقيدكم الغالي)' || name.trim() === 'صدقة جارية لمن تُحبّون';
+    currentMemorial = {
+      name: isGeneric ? "مَنْ تُحِبّونَ (فقيدكم الغالي)" : name.trim(),
+      gender: gender === 'm' ? 'm' : 'f',
+      isGeneric: isGeneric,
+      note: note ? note.trim() : (gender === 'm' ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى برفقة الصالحين' : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين')
+    };
+    memorialRoundCounter = 0;
+    activeMemorialDhikrIdx = 0;
+
+    if (updateUrl && !isGeneric) {
+      try {
+        const url = new URL(window.location);
+        url.searchParams.set('memorial', currentMemorial.name);
+        url.searchParams.set('gender', currentMemorial.gender);
+        if (note) url.searchParams.set('note', note);
+        else url.searchParams.delete('note');
+        window.history.pushState({ memorial: currentMemorial.name, gender: currentMemorial.gender }, '', url.toString());
+      } catch (e) {}
+    }
+
+    switchView('memorial');
+  }
+
+  function updateMemorialViewUI() {
+    if (!memorialView) return;
+
+    if (mMemorialName) {
+      mMemorialName.innerText = currentMemorial.isGeneric ? 'صدقة جارية لمن تُحبّون' : currentMemorial.name;
+    }
+
+    if (memorialDeceasedName) {
+      if (currentMemorial.isGeneric) {
+        memorialDeceasedName.innerHTML = `
+          <span class="flex items-center gap-2">
+            <span>صدقة جارية لمن تُحبّون</span>
+            <i class="fa-solid fa-pen-to-square text-xs text-amber-400"></i>
+          </span>
+        `;
+      } else {
+        memorialDeceasedName.innerText = currentMemorial.name;
+      }
+    }
+
+    if (memorialGenderBadge) {
+      if (currentMemorial.isGeneric) {
+        memorialGenderBadge.innerHTML = '<i class="fa-solid fa-heart text-amber-400 ml-1"></i> إهداء ثواب وتسبيح للمتوفى';
+        memorialGenderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      } else if (currentMemorial.gender === 'm') {
+        memorialGenderBadge.innerHTML = '<i class="fa-solid fa-mars ml-1 text-sky-400"></i> ذكر (المرحوم له)';
+        memorialGenderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30';
+      } else {
+        memorialGenderBadge.innerHTML = '<i class="fa-solid fa-venus ml-1 text-pink-400"></i> أنثى (المرحومة لها)';
+        memorialGenderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30';
+      }
+    }
+
+    if (memorialDedicatedNote) {
+      if (currentMemorial.isGeneric) {
+        memorialDedicatedNote.innerHTML = `
+          <span class="text-amber-300 font-semibold underline cursor-pointer hover:text-amber-200" id="btn-prompt-custom-name">
+            انقر هنا لكتابة اسم فقيدكم وتخصيص الصفحة باسمه
+          </span> ومشاركتها مع الأحباب بالدعاء
+        `;
+        const promptBtn = document.getElementById('btn-prompt-custom-name');
+        if (promptBtn) promptBtn.addEventListener('click', (e) => { e.stopPropagation(); openMemorialModal(); });
+      } else {
+        memorialDedicatedNote.innerText = currentMemorial.note || (currentMemorial.gender === 'm' ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى' : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى');
+      }
+    }
+
+    if (memorialRoundCount) {
+      memorialRoundCount.innerText = memorialRoundCounter.toLocaleString('ar-EG');
+    }
+
+    if (memorialSoundIcon) {
+      memorialSoundIcon.className = isTasbeehSoundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    }
+
+    renderMemorialDhikrChips();
+    renderMemorialDuas();
+    renderMemorialSurahs();
+  }
+
+  function renderMemorialDhikrChips() {
+    if (!memorialDhikrChips || typeof MEMORIAL_DATA === 'undefined' || !MEMORIAL_DATA.phrases) return;
+    memorialDhikrChips.innerHTML = '';
+
+    MEMORIAL_DATA.phrases.forEach((phrase, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      const isActive = idx === activeMemorialDhikrIdx;
+      btn.className = `memorial-dhikr-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
+        isActive 
+          ? 'active bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm' 
+          : 'bg-emerald-950/60 text-[var(--text-secondary)] hover:text-amber-400 border border-emerald-500/15'
+      }`;
+      btn.innerHTML = `<i class="fa-solid fa-seedling text-[10px] text-amber-400/80"></i> <span>${phrase.name}</span>`;
+      btn.addEventListener('click', () => {
+        activeMemorialDhikrIdx = idx;
+        memorialRoundCounter = 0;
+        if (memorialRoundCount) memorialRoundCount.innerText = '0';
+        renderMemorialDhikrChips();
+        updateMemorialActiveDhikrText();
+      });
+      memorialDhikrChips.appendChild(btn);
+    });
+
+    updateMemorialActiveDhikrText();
+  }
+
+  function updateMemorialActiveDhikrText() {
+    if (!memorialActiveDhikrText || typeof MEMORIAL_DATA === 'undefined') return;
+    const phrase = MEMORIAL_DATA.phrases[activeMemorialDhikrIdx] || MEMORIAL_DATA.phrases[0];
+    if (currentMemorial.gender === 'f' && phrase.femaleText) {
+      memorialActiveDhikrText.innerText = phrase.femaleText;
+    } else {
+      memorialActiveDhikrText.innerText = phrase.text;
+    }
+  }
+
+  function renderMemorialDuas() {
+    if (!memorialDuasGrid || typeof MEMORIAL_DATA === 'undefined' || !MEMORIAL_DATA.duas) return;
+    memorialDuasGrid.innerHTML = '';
+
+    MEMORIAL_DATA.duas.forEach((dua) => {
+      const isFemale = currentMemorial.gender === 'f';
+      const duaText = isFemale ? dua.femaleText : dua.maleText;
+
+      const card = document.createElement('div');
+      card.className = 'memorial-dua-card glass-panel p-3.5 rounded-2xl border border-emerald-500/20 hover:border-amber-500/30 flex flex-col justify-between transition-all space-y-2.5';
+      card.innerHTML = `
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-bold text-xs sm:text-sm text-amber-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-hands-praying text-amber-400 text-xs"></i>
+              ${dua.title}
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/70 text-[var(--text-secondary)] border border-emerald-500/15">
+              ${dua.source}
+            </span>
+          </div>
+          <p class="font-quran text-xs sm:text-sm text-[var(--text-primary)] leading-relaxed select-text py-1">
+            ${duaText}
+          </p>
+          <div class="text-[11px] text-[var(--text-secondary)] italic flex items-center gap-1">
+            <i class="fa-solid fa-circle-info text-[10px] text-amber-400/80"></i>
+            <span>${dua.virtue}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-2 border-t border-emerald-500/15 gap-2">
+          <button class="btn-pray-dua flex-1 py-1.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-heart text-rose-400"></i>
+            <span>آمين، دعوتُ ${isFemale ? 'لها' : 'له'} 🤲</span>
+          </button>
+          <button class="btn-copy-dua py-1.5 px-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-[var(--text-secondary)] hover:text-amber-400 border border-emerald-500/20 text-xs flex items-center justify-center gap-1 transition-all active:scale-95" title="نسخ الدعاء">
+            <i class="fa-regular fa-copy"></i>
+            <span class="hidden xs:inline">نسخ</span>
+          </button>
+        </div>
+      `;
+
+      const btnPray = card.querySelector('.btn-pray-dua');
+      const btnCopy = card.querySelector('.btn-copy-dua');
+
+      btnPray.addEventListener('click', () => {
+        triggerHapticFeedback([25, 40]);
+        btnPray.className = 'btn-pray-dua flex-1 py-1.5 px-3 rounded-xl bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all';
+        btnPray.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> <span>تقبّل الله، تم الدعاء وإهداء الثواب ✓</span>';
+        card.classList.add('border-emerald-500/50');
+        const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
+        showToast(`تقبل الله منا ومنكم صالح الدعاء لروح ${targetName} 🤲`);
+      });
+
+      btnCopy.addEventListener('click', () => {
+        const fullShareText = `🕊️ دعاء لروح المغفور ${isFemale ? 'لها' : 'له'} بإذن الله: ${currentMemorial.name}\n\n«${duaText}»\n\n- المصدر: ${dua.source}\n- منصة القرآن الكريم`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(fullShareText);
+          showToast('تم نسخ الدعاء إلى الحافظة بنجاح 📋');
+        }
+      });
+
+      memorialDuasGrid.appendChild(card);
+    });
+  }
+
+  function renderMemorialSurahs() {
+    if (!memorialSurahsGrid || typeof MEMORIAL_DATA === 'undefined' || !MEMORIAL_DATA.surahs) return;
+    memorialSurahsGrid.innerHTML = '';
+
+    MEMORIAL_DATA.surahs.forEach((s) => {
+      const card = document.createElement('div');
+      card.className = 'glass-panel p-3 rounded-2xl border border-emerald-500/20 hover:border-amber-500/35 flex flex-col justify-between transition-all space-y-2';
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-sm text-[var(--text-accent)] font-quran">سورة ${s.name}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">${s.title}</span>
+          </div>
+          <p class="text-[11px] text-[var(--text-secondary)] mt-1.5 leading-snug line-clamp-2">${s.reason}</p>
+        </div>
+        <button class="btn-play-memorial-surah w-full py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
+          <i class="fa-solid fa-play text-[10px]"></i>
+          <span>تلاوة وإهداء الثواب 🎧</span>
+        </button>
+      `;
+
+      const btnPlay = card.querySelector('.btn-play-memorial-surah');
+      btnPlay.addEventListener('click', () => {
+        const idx = SURAHS.findIndex(item => item.id === s.id);
+        if (idx !== -1) {
+          currentIndex = idx;
+          loadSurah(SURAHS[currentIndex], true);
+        }
+        triggerHapticFeedback([30, 50]);
+        const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
+        showToast(`بدأت تلاوة سورة ${s.name} بنية إهداء ثواب الاستماع لروح ${targetName} 🌿`);
+      });
+
+      memorialSurahsGrid.appendChild(card);
+    });
+  }
+
+  function shareMemorialLink(channel = 'copy') {
+    const isGeneric = currentMemorial.isGeneric;
+    const url = isGeneric 
+      ? `${window.location.origin}${window.location.pathname}`
+      : `${window.location.origin}${window.location.pathname}?memorial=${encodeURIComponent(currentMemorial.name)}&gender=${currentMemorial.gender}`;
+    const pronoun = currentMemorial.gender === 'm' ? 'له' : 'لها';
+    const targetName = isGeneric ? 'موتانا وموتى المسلمين' : `المغفور ${pronoun} بإذن الله: *${currentMemorial.name}*`;
+    const message = `🕊️ صدقة جارية وإهداء ثواب على روح ${targetName}\n\nقال رسول الله ﷺ: «إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، وَعِلْمٍ يُنْتَفَعُ بِهِ، وَوَلَدٍ صَالِحٍ يَدْعُو لَهُ».\n\nشاركونا الأجر بقراءة سورة من القرآن، أو التسبيح والدعاء عبر الرابط التالي:\n${url}`;
+
+    if (channel === 'whatsapp') {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+      showToast('تم فتح واتساب لمشاركة صفحة الصدقة الجارية');
+    } else {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+        showToast('تم نسخ رابط صفحة الصدقة الجارية بنجاح! 📋');
+      } else if (navigator.share) {
+        navigator.share({
+          title: `صدقة جارية لروح ${currentMemorial.name}`,
+          text: message,
+          url: url
+        }).catch(() => {});
+      }
+    }
+  }
+
+  function showImagePreviewModal(blob, fileName) {
+    const modal = document.getElementById('memorial-image-modal');
+    const img = document.getElementById('memorial-preview-image');
+    const btnShare = document.getElementById('btn-share-preview-card');
+    const btnDownload = document.getElementById('btn-download-preview-card');
+    if (!modal || !img) return;
+
+    currentMemorialCardBlob = blob;
+    currentMemorialCardFile = new File([blob], fileName, { type: 'image/png' });
+    const url = URL.createObjectURL(blob);
+    img.src = url;
+
+    modal.classList.remove('hidden');
+
+    if (btnShare) {
+      btnShare.onclick = async () => {
+        if (navigator.canShare && navigator.canShare({ files: [currentMemorialCardFile] })) {
+          try {
+            await navigator.share({
+              files: [currentMemorialCardFile],
+              title: `صدقة جارية لروح ${currentMemorial.name}`,
+              text: `🕊️ صدقة جارية وإهداء ثواب لروح ${currentMemorial.name}`
+            });
+            showToast('تمت مشاركة البطاقة بنجاح! 🖼️');
+          } catch (e) {
+            if (e.name !== 'AbortError') showToast('تعذرت المشاركة المباشرة', 'info');
+          }
+        } else {
+          window.open(url, '_blank');
+        }
+      };
+    }
+
+    if (btnDownload) {
+      btnDownload.onclick = () => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('جاري حفظ الصورة على جهازك...');
+      };
+    }
+  }
+
+  function generateMemorialCard() {
+    try {
+      showToast('جاري توليد البطاقة المصورة...', 'info');
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+
+      // 1. Background Gradient
+      const grad = ctx.createRadialGradient(540, 540, 50, 540, 540, 720);
+      grad.addColorStop(0, '#064e3b');
+      grad.addColorStop(0.55, '#022c22');
+      grad.addColorStop(1, '#01150f');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1080);
+
+      // 2. Subtle Starry/Dot pattern
+      ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+      for (let i = 0; i < 40; i++) {
+        const x = (i * 97) % 1080;
+        const y = (i * 123) % 1080;
+        ctx.beginPath();
+        ctx.arc(x, y, (i % 3) + 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Golden Ornamental Border
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(45, 45, 990, 990);
+
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(55, 55, 970, 970);
+
+      // Corner Accents
+      const drawCorner = (cx, cy) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-18, 0); ctx.lineTo(18, 0);
+        ctx.moveTo(0, -18); ctx.lineTo(0, 18);
+        ctx.stroke();
+        ctx.restore();
+      };
+      drawCorner(70, 70);
+      drawCorner(1010, 70);
+      drawCorner(70, 1010);
+      drawCorner(1010, 1010);
+
+      // 4. Header: Basmala & Title
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 36px "Amiri Quran", "Amiri", "Cairo", serif';
+      ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', 540, 140);
+
+      // Decorative divider
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(340, 165); ctx.lineTo(740, 165);
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 22px "Cairo", sans-serif';
+      ctx.fillText('صَدَقَةٌ جَارِيَةٌ وَإِهْدَاءُ ثَوَابٍ', 540, 205);
+
+      // 5. Dedication Heading & Name
+      const isFemale = currentMemorial.gender === 'f';
+      const pronoun = isFemale ? 'لَهَا' : 'لَهُ';
+      const isGeneric = currentMemorial.isGeneric;
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 26px "Amiri", "Cairo", sans-serif';
+      if (isGeneric) {
+        ctx.fillText('عَلَى نِيَّةِ مَوْتَانَا وَمَوْتَى المُسْلِمِينَ جَمِيعاً:', 540, 275);
+      } else {
+        ctx.fillText(`عَلَى رُوحِ المَغْفُورِ ${pronoun} بِإِذْنِ اللَّهِ تَعَالَى:`, 540, 275);
+      }
+
+      // 6. Big Glowing Deceased Name
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 60px "Amiri", "Cairo", serif';
+      ctx.shadowColor = 'rgba(251, 191, 36, 0.7)';
+      ctx.shadowBlur = 18;
+      const displayName = isGeneric ? 'فقيدكم الغالي' : currentMemorial.name;
+      ctx.fillText(displayName, 540, 360);
+      ctx.shadowBlur = 0; // reset shadow
+
+      // 7. Dedication Dua Note or Featured Dua
+      const defaultDua = isFemale
+        ? 'اللَّهُمَّ اغْفِرْ لَهَا وَارْحَمْهَا وَعَافِهَا وَاعْفُ عَنْهَا وَأَكْرِمْ نُزُلَهَا وَوَسِّعْ مُدْخَلَهَا، وَاجْعَلْ قَبْرَهَا رَوْضَةً مِنْ رِيَاضِ الْجَنَّةِ.'
+        : 'اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ وَعَافِهِ وَاعْفُ عَنْهُ وَأَكْرِمْ نُزُلَهُ وَوَسِّعْ مُدْخَلَهُ، وَاجْعَلْ قَبْرَهُ رَوْضَةً مِنْ رِيَاضِ الْجَنَّةِ.';
+      const noteToRender = (currentMemorial.note && !isGeneric) ? currentMemorial.note : defaultDua;
+
+      // Rounded container for Dua
+      ctx.fillStyle = 'rgba(3, 38, 29, 0.65)';
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
+      ctx.lineWidth = 1.5;
+      const boxX = 110, boxY = 415, boxW = 860, boxH = 260, radius = 24;
+      ctx.beginPath();
+      ctx.roundRect(boxX, boxY, boxW, boxH, radius);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '28px "Amiri", "Cairo", serif';
+      wrapCanvasText(ctx, noteToRender, 540, 480, 780, 48);
+
+      // 8. Quranic Noble Ayah Box
+      ctx.fillStyle = 'rgba(251, 191, 36, 0.12)';
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+      ctx.beginPath();
+      ctx.roundRect(140, 715, 800, 115, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 28px "Amiri Quran", "Amiri", serif';
+      ctx.fillText('«رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالإِيمَانِ»', 540, 762);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 18px "Cairo", sans-serif';
+      ctx.fillText('سورة الحشر - آية 10', 540, 804);
+
+      // 9. Prophetic Hadith & Footer
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '19px "Cairo", sans-serif';
+      ctx.fillText('«إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، وَعِلْمٍ يُنْتَفَعُ بِهِ، وَوَلَدٍ صَالِحٍ يَدْعُو لَهُ»', 540, 895);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 18px "Cairo", sans-serif';
+      ctx.fillText('مَنْصَةُ القُرآنِ الكَرِيمِ | شاركونا الدعاء والتسبيح', 540, 970);
+
+      // Export Blob & Handle Mobile / Desktop download
+      const cleanFileName = isGeneric ? 'فقيدكم_الغالي' : currentMemorial.name.replace(/\s+/g, '_');
+      const fileName = `صدقة_جارية_${cleanFileName}.png`;
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          showToast('تعذر تصدير البطاقة', 'error');
+          return;
+        }
+
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
+        if (isMobile) {
+          showImagePreviewModal(blob, fileName);
+          showToast('تم تجهيز البطاقة المصورة للموبايل! 🖼️');
+        } else {
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = blobUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+          showToast('تم توليد وتنزيل بطاقة الصدقة الجارية بنجاح! 🖼️');
+        }
+      }, 'image/png');
+
+    } catch (e) {
+      console.error(e);
+      showToast('حدث خطأ أثناء إنشاء البطاقة المصورة', 'error');
+    }
+  }
+
+  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let curY = y;
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + (line ? ' ' : '') + words[n];
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        ctx.fillText(line, x, curY);
+        line = words[n];
+        curY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, curY);
+    return curY + lineHeight;
+  }
+
+  // Modal Creator Handlers
+  function openMemorialModal() {
+    if (!memorialCreatorModal) return;
+    if (memorialInputName) {
+      memorialInputName.value = currentMemorial.isGeneric ? '' : currentMemorial.name;
+    }
+    if (memorialInputNote) {
+      memorialInputNote.value = currentMemorial.isGeneric ? '' : (currentMemorial.note || '');
+    }
+    setModalGender(currentMemorial.gender || 'm');
+    renderSavedMemorials();
+    updateModalPreview();
+    memorialCreatorModal.classList.remove('hidden');
+    setTimeout(() => {
+      if (memorialInputName) memorialInputName.focus();
+    }, 120);
+  }
+
+  function closeMemorialModal() {
+    if (!memorialCreatorModal) return;
+    memorialCreatorModal.classList.add('hidden');
+  }
+
+  function setModalGender(gender) {
+    modalSelectedGender = gender;
+    if (memorialGenderBtnM && memorialGenderBtnF) {
+      if (gender === 'm') {
+        memorialGenderBtnM.className = 'memorial-gender-opt active py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm';
+        memorialGenderBtnF.className = 'memorial-gender-opt py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-emerald-950/60 text-[var(--text-secondary)] border-emerald-500/20';
+      } else {
+        memorialGenderBtnF.className = 'memorial-gender-opt active py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-pink-500/20 text-pink-300 border-pink-500/40 shadow-sm';
+        memorialGenderBtnM.className = 'memorial-gender-opt py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-emerald-950/60 text-[var(--text-secondary)] border-emerald-500/20';
+      }
+    }
+    updateModalPreview();
+  }
+
+  function updateModalPreview() {
+    if (!memorialPreviewText) return;
+    const name = (memorialInputName?.value || '').trim() || (modalSelectedGender === 'm' ? 'فقيدكم الغالي' : 'فقيدتكم الغالية');
+    const note = (memorialInputNote?.value || '').trim();
+    const pronoun = modalSelectedGender === 'm' ? 'له' : 'لها';
+    const defaultDua = modalSelectedGender === 'm' 
+      ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى برفقة الصالحين.' 
+      : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين.';
+
+    memorialPreviewText.innerHTML = `
+      🕊️ صدقة جارية وإهداء ثواب على روح المغفور ${pronoun} بإذن الله: <strong class="text-amber-400">${name}</strong>.<br>
+      <span class="text-emerald-300 italic">«${note || defaultDua}»</span>
+    `;
+  }
+
+  function submitCreateMemorial() {
+    const name = (memorialInputName?.value || '').trim();
+    if (!name || name.length < 2) {
+      showToast('يرجى إدخال اسم الفقيد أو الفقيدة (حرفين على الأقل)', 'error');
+      if (memorialInputName) memorialInputName.focus();
+      return;
+    }
+
+    const note = (memorialInputNote?.value || '').trim();
+    const newMemorial = {
+      name: name,
+      gender: modalSelectedGender,
+      isGeneric: false,
+      note: note || (modalSelectedGender === 'm' ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى برفقة الصالحين' : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين')
+    };
+
+    // Save to localStorage
+    savedMemorials = savedMemorials.filter(m => !(m.name === newMemorial.name && m.gender === newMemorial.gender));
+    savedMemorials.unshift(newMemorial);
+    try {
+      localStorage.setItem('quran_saved_memorials', JSON.stringify(savedMemorials.slice(0, 10)));
+    } catch (e) {}
+
+    closeMemorialModal();
+    openMemorialPage(newMemorial.name, newMemorial.gender, newMemorial.note, true);
+    showToast(`تم إنشاء وتفعيل صفحة الصدقة الجارية لروح ${name} بنجاح ✨`);
+  }
+
+  function renderSavedMemorials() {
+    if (!memorialSavedList) return;
+    memorialSavedList.innerHTML = '';
+
+    if (!savedMemorials || savedMemorials.length === 0) {
+      memorialSavedList.innerHTML = '<p class="text-[11px] text-[var(--text-secondary)] text-center py-2">لا توجد صفحات سابقة محفوظة</p>';
+      return;
+    }
+
+    savedMemorials.forEach((m, idx) => {
+      const isFemale = m.gender === 'f';
+      const item = document.createElement('div');
+      item.className = 'flex items-center justify-between p-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/15 text-xs transition-colors';
+      item.innerHTML = `
+        <button type="button" class="btn-load-saved-memorial flex-1 flex items-center gap-2 text-right">
+          <i class="fa-solid ${isFemale ? 'fa-venus text-pink-400' : 'fa-mars text-sky-400'} text-xs"></i>
+          <span class="font-bold text-[var(--text-primary)] hover:text-amber-300">${m.name}</span>
+          <span class="text-[10px] text-[var(--text-secondary)]">(${isFemale ? 'أنثى' : 'ذكر'})</span>
+        </button>
+        <button type="button" class="btn-delete-saved-memorial text-[var(--text-secondary)] hover:text-red-400 p-1 rounded-lg transition-colors" title="حذف من السجل">
+          <i class="fa-regular fa-trash-can text-xs"></i>
+        </button>
+      `;
+
+      item.querySelector('.btn-load-saved-memorial').addEventListener('click', () => {
+        closeMemorialModal();
+        openMemorialPage(m.name, m.gender, m.note, true);
+      });
+
+      item.querySelector('.btn-delete-saved-memorial').addEventListener('click', (e) => {
+        e.stopPropagation();
+        savedMemorials.splice(idx, 1);
+        try {
+          localStorage.setItem('quran_saved_memorials', JSON.stringify(savedMemorials));
+        } catch (err) {}
+        renderSavedMemorials();
+        showToast(`تم حذف ${m.name} من السجل`);
+      });
+
+      memorialSavedList.appendChild(item);
+    });
   }
 
   // --- Toast Notification Helper ---
