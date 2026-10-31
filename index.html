@@ -67,109 +67,100 @@
   <!-- ======================================================================
        HEADER SECTION
        ====================================================================== -->
-  <header class="glass-panel mx-2 xs:mx-3 sm:mx-6 mt-1.5 sm:mt-3 mb-1 sm:mb-2 rounded-2xl py-1 sm:py-2 px-2.5 sm:px-5 flex items-center justify-between gap-2 z-20 flex-shrink-0">
+  <header class="glass-panel mx-1.5 xs:mx-3 sm:mx-6 mt-1 sm:mt-3 mb-1 sm:mb-2 rounded-2xl py-1 sm:py-2 px-2 xs:px-3 sm:px-5 flex items-center justify-between gap-1.5 sm:gap-3 z-20 flex-shrink-0">
     <!-- Brand Logo / Title -->
-    <div class="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none" id="brand-logo" title="منصة القرآن الكريم">
-      <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md flex-shrink-0 overflow-hidden p-0.5">
+    <div class="flex items-center gap-1.5 sm:gap-3 cursor-pointer select-none flex-shrink-0" id="brand-logo" title="منصة القرآن الكريم">
+      <div class="w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md flex-shrink-0 overflow-hidden p-0.5">
         <img src="assets/apple-touch-icon.png" alt="شعار منصة القرآن الكريم" class="w-full h-full object-cover rounded-full">
       </div>
-      <div>
-        <div class="flex items-center gap-1.5">
-          <h1 class="text-sm xs:text-base sm:text-lg lg:text-xl font-bold tracking-tight text-[var(--text-accent)] font-quran leading-tight">
+      <div class="min-w-0">
+        <div class="flex items-center gap-1">
+          <h1 class="text-[11px] xs:text-sm sm:text-base lg:text-lg font-bold tracking-tight text-[var(--text-accent)] font-quran leading-tight whitespace-nowrap">
             مَنْصَةُ القُرآنِ الكَرِيمِ
           </h1>
         </div>
-        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] hidden xs:block truncate max-w-[170px] sm:max-w-none" id="app-subtitle">
+        <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] hidden xl:block truncate max-w-[140px] xl:max-w-[200px] 2xl:max-w-none" id="app-subtitle">
           المصحف المرتل - الشيخ محمود خليل الحصري
         </p>
       </div>
     </div>
 
     <!-- Desktop Mode Navigation Tabs (On Mobile, Navigation is handled by the Floating Glass Navigator at the bottom) -->
-    <nav class="hidden lg:flex items-center gap-1 bg-emerald-950/50 p-1 rounded-xl border border-emerald-500/15 text-xs order-2 shadow-inner">
-      <button id="nav-btn-player" class="nav-tab-btn px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30">
+    <nav class="hidden lg:flex items-center gap-0.5 xl:gap-1.5 bg-emerald-950/50 p-1 rounded-xl border border-emerald-500/15 text-[11px] xl:text-xs shadow-inner flex-shrink-0">
+      <button id="nav-btn-player" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30">
         <i class="fa-solid fa-headphones-simple"></i>
         <span>الاستماع</span>
       </button>
-      <button id="nav-btn-mushaf" class="nav-tab-btn px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
+      <button id="nav-btn-mushaf" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
         <i class="fa-solid fa-book-open-reader"></i>
         <span>المصحف</span>
       </button>
-      <button id="nav-btn-spiritual" class="nav-tab-btn px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
+      <button id="nav-btn-spiritual" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
         <i class="fa-solid fa-heart-pulse"></i>
         <span>الورد والأذكار</span>
       </button>
-      <button id="nav-btn-memorial" class="nav-tab-btn px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-rose-300 hover:text-rose-200 hover:bg-rose-500/10">
+      <button id="nav-btn-memorial" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 text-rose-300 hover:text-rose-200 hover:bg-rose-500/10">
         <i class="fa-solid fa-hands-praying text-rose-400"></i>
         <span>صدقة جارية</span>
       </button>
-      <button id="nav-btn-video" class="nav-tab-btn px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/20" title="صانع فيديوهات التلاوة والريلز (Instagram & TikTok)">
+      <button id="nav-btn-video" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/20" title="صانع فيديوهات التلاوة والريلز (Instagram & TikTok)">
         <i class="fa-solid fa-clapperboard text-amber-400"></i>
         <span>صانع الفيديوهات</span>
-        <span class="text-[9px] bg-amber-500/30 text-amber-300 px-1 py-0.2 rounded font-bold">ريلز</span>
+        <span class="hidden 2xl:inline text-[9px] bg-amber-500/30 text-amber-300 px-1 py-0.2 rounded font-bold">ريلز</span>
       </button>
-      <button id="nav-btn-playlist" class="nav-tab-btn px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5 lg:hidden">
+      <button id="nav-btn-playlist" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5 lg:hidden">
         <i class="fa-solid fa-list-ul"></i>
         <span>السور</span>
       </button>
     </nav>
 
     <!-- Controls (Reciter Selector + Live Radio + Theme Toggle) -->
-    <div class="flex items-center gap-1.5 sm:gap-2 order-2 md:order-3">
+    <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
       <!-- Reciter Selector Chip -->
-      <div class="flex items-center gap-1.5 bg-emerald-950/50 rounded-xl px-2 sm:px-2.5 py-1 border border-emerald-500/15 text-xs shadow-inner">
-        <i class="fa-solid fa-microphone-lines text-amber-400 text-xs"></i>
-        <label for="reciter-select" class="text-[var(--text-secondary)] font-medium select-none hidden xl:inline mr-1">القارئ:</label>
-        <div class="relative">
+      <div class="flex items-center gap-1 bg-emerald-950/50 rounded-xl px-1.5 xs:px-2 sm:px-2.5 py-0.5 sm:py-1 border border-emerald-500/15 text-[10px] sm:text-xs shadow-inner flex-shrink-0 max-w-[100px] xs:max-w-[130px] sm:max-w-[170px] lg:max-w-[150px] xl:max-w-[190px] 2xl:max-w-[240px]">
+        <i class="fa-solid fa-microphone-lines text-amber-400 text-[10px] sm:text-xs flex-shrink-0"></i>
+        <label for="reciter-select" class="text-[var(--text-secondary)] font-medium select-none hidden 2xl:inline mr-1">القارئ:</label>
+        <div class="relative min-w-0 flex-1">
           <select id="reciter-select"
-            class="bg-transparent text-amber-400 font-bold py-1 pr-1 pl-5 rounded-lg transition-all duration-200 outline-none appearance-none cursor-pointer text-xs max-w-[110px] xs:max-w-[140px] sm:max-w-[180px] md:max-w-none truncate"
+            class="w-full bg-transparent text-amber-400 font-bold py-0.5 sm:py-1 pr-0.5 pl-3 sm:pl-4 rounded-lg transition-all duration-200 outline-none appearance-none cursor-pointer text-[10px] sm:text-xs truncate block"
             title="اختر القارئ">
             <!-- Populated dynamically via JS -->
           </select>
-          <span class="absolute left-0 top-1/2 transform -translate-y-1/2 text-amber-400 text-[10px] pointer-events-none">
+          <span class="absolute left-0 top-1/2 transform -translate-y-1/2 text-amber-400 text-[8px] sm:text-[10px] pointer-events-none">
             <i class="fa-solid fa-chevron-down"></i>
           </span>
         </div>
       </div>
 
-      <!-- Social Video & Reels Generator Quick Button (Desktop/Tablet) -->
+      <!-- Social Video & Reels Generator Quick Button (Tablet only 768px-1023px, hidden on desktop and mobile) -->
       <button id="btn-header-video"
-        class="hidden md:flex h-8 sm:h-10 px-2 sm:px-3 rounded-xl glass-panel items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
+        class="hidden md:flex lg:hidden h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl glass-panel items-center gap-1 text-xs font-bold text-amber-300 hover:text-amber-200 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm flex-shrink-0"
         title="صانع فيديوهات التلاوة والريلز (Instagram & TikTok & Story)">
-        <i class="fa-solid fa-clapperboard text-amber-400 text-xs sm:text-sm"></i>
-        <span class="hidden xl:inline">صانع الفيديوهات</span>
-        <span class="text-[9px] bg-amber-500 text-slate-950 px-1 rounded font-bold">ريلز</span>
+        <i class="fa-solid fa-clapperboard text-amber-400 text-xs"></i>
+        <span class="text-[10px] bg-amber-500 text-slate-950 px-1 rounded font-bold">ريلز</span>
       </button>
 
-      <!-- Mobile Header Quick Video Studio Button -->
+      <!-- Mobile Header Quick Video Studio Button (<768px) -->
       <button id="btn-mobile-header-video"
-        class="md:hidden w-8 h-8 rounded-xl glass-panel flex items-center justify-center text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all duration-200 active:scale-95 shadow-sm"
+        class="md:hidden w-7 h-7 xs:w-8 xs:h-8 rounded-xl glass-panel flex items-center justify-center text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all duration-200 active:scale-95 shadow-sm flex-shrink-0"
         title="صانع فيديوهات الريلز والستوري">
-        <i class="fa-solid fa-clapperboard text-xs"></i>
-      </button>
-
-      <!-- Memorial / Sadaqah Jariyah Quick Button -->
-      <button id="btn-header-memorial"
-        class="hidden md:flex h-8 sm:h-10 px-2 sm:px-3 rounded-xl glass-panel items-center gap-1.5 text-xs font-bold text-rose-300 hover:text-rose-200 border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
-        title="صدقة جارية وإهداء ثواب لروح المتوفى">
-        <i class="fa-solid fa-heart text-rose-400 text-xs sm:text-sm animate-pulse"></i>
-        <span>صدقة جارية</span>
+        <i class="fa-solid fa-clapperboard text-[11px] xs:text-xs"></i>
       </button>
 
       <!-- Live Radio Quick Button -->
       <button id="btn-header-radio"
-        class="hidden md:flex h-8 sm:h-10 px-2.5 sm:px-3 rounded-xl glass-panel items-center gap-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/15 transition-all duration-300 hover:scale-105 active:scale-95"
+        class="hidden sm:flex h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl glass-panel items-center gap-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/15 transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0"
         title="إذاعات القرآن الكريم المباشرة 24/7">
         <span class="live-pulse-dot"></span>
-        <i class="fa-solid fa-tower-broadcast text-xs sm:text-sm"></i>
-        <span class="hidden sm:inline">إذاعة</span>
+        <i class="fa-solid fa-tower-broadcast text-xs"></i>
+        <span class="hidden xl:inline">إذاعة</span>
       </button>
 
       <!-- Theme Toggle Button (Cycles 4 Royal Themes) -->
       <button id="theme-toggle"
-        class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl glass-panel flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+        class="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-xl glass-panel flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0"
         title="تبديل السمة الملكية (الزمرد / الكعبة / القدس / الرق)">
-        <i id="theme-icon" class="fas fa-gem text-amber-400 text-base sm:text-lg"></i>
+        <i id="theme-icon" class="fas fa-gem text-amber-400 text-xs xs:text-sm sm:text-base"></i>
       </button>
     </div>
   </header>
