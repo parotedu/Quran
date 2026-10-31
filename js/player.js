@@ -386,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function switchView(targetView, shouldScroll = true) {
+    window.switchView = switchView;
     currentView = targetView;
     const isDesktop = window.innerWidth >= 1024;
 

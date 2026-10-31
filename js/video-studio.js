@@ -1401,8 +1401,13 @@
 
   // --- 16. Public Integration API ---
   window.openVideoStudio = function (surahId, ayahNum) {
-    if (typeof switchView === 'function') {
+    if (typeof window.switchView === 'function') {
+      window.switchView('video');
+    } else if (typeof switchView === 'function') {
       switchView('video');
+    } else {
+      const btn = document.getElementById('nav-btn-video') || document.getElementById('btn-header-video');
+      if (btn) btn.click();
     }
     initVideoStudio();
 
