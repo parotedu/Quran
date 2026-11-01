@@ -877,7 +877,26 @@ body {
   flex-direction: column;
   overflow: hidden;
   margin: 0 auto;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.phone-mockup-frame.ratio-square {
+  aspect-ratio: 1 / 1;
+  max-width: 360px;
+  max-height: clamp(320px, 46vh, 400px);
+  border-radius: 24px;
+}
+
+.phone-mockup-frame.ratio-landscape {
+  aspect-ratio: 16 / 9;
+  max-width: 480px;
+  max-height: clamp(270px, 40vh, 320px);
+  border-radius: 20px;
+}
+
+.phone-mockup-frame.ratio-square .phone-island-notch,
+.phone-mockup-frame.ratio-landscape .phone-island-notch {
+  display: none;
 }
 
 .phone-screen {

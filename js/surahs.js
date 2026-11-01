@@ -226,6 +226,250 @@ const RECITERS = [
     "serverUrl": "https://download.quranicaudio.com/quran/yasser_ad-dussary/",
     "shortName": "الدوسري",
     "complete": true
+  },
+  {
+    "id": "hussein_alazzam",
+    "name": "الشيخ حسين العزام",
+    "englishName": "Hussein Al-Azzam",
+    "slug": "hussein_alazzam/",
+    "shortName": "حسين العزام",
+    "complete": false,
+    "availableSurahs": [1, 12, 14, 15, 18, 19, 26, 27, 30, 36, 44, 52, 55, 67, 75, 79, 89],
+    "surahFiles": {
+      "1": "https://archive.org/download/20241124_20241124_1556/001%20_%20%D8%B3%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D9%81%D8%A7%D8%AA%D8%AD%D8%A9%20%D9%85%D9%86%20%D8%B5%D9%84%D8%A7%D8%A9%20%D8%A7%D9%84%D9%85%D8%BA%D8%B1%D8%A8%20%D8%A7%D9%84%D9%8A%D9%88%D9%85%20-%20%D9%85%D8%B3%D8%AC%D8%AF%20%D8%A8%D9%84%D8%A7%D9%84%20%D8%A8%D9%86%20%D8%B1%D8%A8%D8%A7%D8%AD%20_%20%D8%A7%D9%84%D8%A3%D8%B1%D8%AF%D9%86.mp3",
+      "12": "https://archive.org/download/surat_elmulk/surat_youssef.mp3",
+      "14": "https://archive.org/download/surat_elmulk/surat_ibrahim.mp3",
+      "15": "https://archive.org/download/surat_elmulk/surat_elhajr.mp3",
+      "18": "https://archive.org/download/surat_elmulk/surat_elkahf.mp3",
+      "19": "https://archive.org/download/surat_elmulk/surat_maryam.mp3",
+      "26": "https://archive.org/download/20241124_20241124_1556/026%20_%20%D8%AA%D9%84%D8%A7%D9%88%D8%A9%20%D9%85%D9%86%20%D8%B3%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D8%B4%D8%B9%D8%B1%D8%A7%D8%A1%20%D9%84%D9%84%D9%82%D8%A7%D8%B1%D8%A6%20%D8%AD%D8%B3%D9%8A%D9%86%20%D8%A7%D9%84%D8%B9%D8%B2%D8%A7%D9%85.mp3",
+      "27": "https://archive.org/download/20241124_20241124_1556/027%20_%20%D8%AA%D9%84%D8%A7%D9%88%D8%A9%20%D9%85%D8%B1%D9%8A%D8%AD%D8%A9%20%D9%85%D9%86%20%D8%B3%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D9%86%D9%85%D9%84%20_%20%D8%A7%D9%84%D9%82%D8%A7%D8%B1%D8%A6%20%D8%AD%D8%B3%D9%8A%D9%86%20%D8%A7%D9%84%D8%B9%D8%B2%D8%A7%D9%85.mp3",
+      "30": "https://archive.org/download/20241124_20241124_1556/030%20_%20%D8%B3%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D8%B1%D9%88%D9%85%20%D8%AA%D9%84%D8%A7%D9%88%D8%A9%20%D8%B1%D9%85%D8%B6%D8%A7%D9%86%D9%8A%D8%A9%20%D9%85%D9%86%20%D8%B5%D9%84%D8%A7%D8%A9%20%D8%A7%D9%84%D8%AA%D8%B1%D8%A7%D9%88%D9%8A%D8%AD%20-%20%D9%85%D8%B3%D8%AC%D8%AF%20%D8%A8%D9%84%D8%A7%D9%84%20%D8%A8%D9%86%20%D8%B1%D8%A8%D8%A7%D8%AD.mp3",
+      "36": "https://archive.org/download/surat_elmulk/surat_yas.mp3",
+      "44": "https://archive.org/download/surat_elmulk/surat_dokhan.mp3",
+      "52": "https://archive.org/download/20241124_20241124_1556/052%20_%20%D8%B3%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D8%B7%D9%88%D8%B1%20_%20%D8%B3%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D8%B7%D9%88%D8%B1%20%D9%83%D8%A7%D9%85%D9%84%D8%A9.mp3",
+      "55": "https://archive.org/download/surat_elmulk/surat_elrahman.mp3",
+      "67": "https://archive.org/download/surat_elmulk/surat_elmulk.mp3",
+      "75": "https://archive.org/download/surat_elmulk/surat_elqiyamah.mp3",
+      "79": "https://archive.org/download/surat_elmulk/surat_elnazi3at.mp3",
+      "89": "https://archive.org/download/surat_elmulk/surat_elfajr.mp3"
+    }
+  },
+  {
+    "id": "nasser_alqatami",
+    "name": "الشيخ ناصر القطامي",
+    "englishName": "Nasser Al-Qatami",
+    "slug": "nasser_alqatami/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/nasser-qatami/r1/",
+    "shortName": "القطامي",
+    "complete": true
+  },
+  {
+    "id": "ali_jaber",
+    "name": "الشيخ علي جابر",
+    "englishName": "Ali Jaber",
+    "slug": "ali_jaber/",
+    "serverUrl": "https://download.quranicaudio.com/quran/ali_jaber/",
+    "shortName": "علي جابر",
+    "complete": true
+  },
+  {
+    "id": "ayyoob",
+    "name": "الشيخ محمد أيوب",
+    "englishName": "Muhammad Ayyoub",
+    "slug": "muhammad_ayyoob/",
+    "serverUrl": "https://download.quranicaudio.com/quran/muhammad_ayyoob/",
+    "shortName": "محمد أيوب",
+    "complete": true
+  },
+  {
+    "id": "rifai",
+    "name": "الشيخ هاني الرفاعي",
+    "englishName": "Hani ar-Rifai",
+    "slug": "hani_rifai/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/hani-rifai/r1/",
+    "shortName": "الرفاعي",
+    "complete": true
+  },
+  {
+    "id": "fares_abbad",
+    "name": "الشيخ فارس عباد",
+    "englishName": "Fares Abbad",
+    "slug": "fares/",
+    "serverUrl": "https://download.quranicaudio.com/quran/fares/",
+    "shortName": "فارس عباد",
+    "complete": true
+  },
+  {
+    "id": "tablaway",
+    "name": "الشيخ محمد محمود الطبلاوي",
+    "englishName": "Mohammad al-Tablaway",
+    "slug": "mohammad_al_tablaway/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/muhammad-tablawi/r2/",
+    "shortName": "الطبلاوي",
+    "complete": true
+  },
+  {
+    "id": "hudhaify",
+    "name": "الشيخ علي بن عبد الرحمن الحذيفي",
+    "englishName": "Ali Al-Hudhaify",
+    "slug": "ali_hudhaifi/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/ali-hudhaifi/r3/",
+    "shortName": "الحذيفي",
+    "complete": true
+  },
+  {
+    "id": "juhaynee",
+    "name": "الشيخ عبد الله عواد الجهني",
+    "englishName": "Abdullah Awad Al-Juhany",
+    "slug": "abdullaah_3awwaad_al-juhaynee/",
+    "serverUrl": "https://download.quranicaudio.com/quran/abdullaah_3awwaad_al-juhaynee/",
+    "shortName": "الجهني",
+    "complete": true
+  },
+  {
+    "id": "basfar",
+    "name": "الشيخ عبد الله بصفر",
+    "englishName": "Abdullah Basfar",
+    "slug": "abdullah_basfar/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdullah-basfar/r1/",
+    "shortName": "بصفر",
+    "complete": true
+  },
+  {
+    "id": "jibreel",
+    "name": "الشيخ محمد جبريل",
+    "englishName": "Muhammad Jibreel",
+    "slug": "muhammad_jibreel/",
+    "serverUrl": "https://download.quranicaudio.com/quran/muhammad_jibreel/complete/",
+    "shortName": "جبريل",
+    "complete": true
+  },
+  {
+    "id": "mustafa_ismail",
+    "name": "الشيخ مصطفى إسماعيل",
+    "englishName": "Mustafa Ismail",
+    "slug": "mustafa_ismail/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/mustafa-ismail/r2/",
+    "shortName": "مصطفى إسماعيل",
+    "complete": true
+  },
+  {
+    "id": "banna",
+    "name": "الشيخ محمود علي البنا",
+    "englishName": "Mahmoud Ali Al-Banna",
+    "slug": "mahmoud_banna/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/mahmoud-banna/r2/",
+    "shortName": "البنا",
+    "complete": true
+  },
+  {
+    "id": "khalid_jalil",
+    "name": "الشيخ خالد الجليل",
+    "englishName": "Khalid Al-Jaleel",
+    "slug": "khalid_jalil/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/khalid-jalil/r1/",
+    "shortName": "خالد الجليل",
+    "complete": true
+  },
+  {
+    "id": "badr_turki",
+    "name": "الشيخ بدر التركي",
+    "englishName": "Bader Al-Turki",
+    "slug": "badr_turki/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/badr-turki/r1/",
+    "shortName": "بدر التركي",
+    "complete": true
+  },
+  {
+    "id": "wadee_yamani",
+    "name": "الشيخ وديع اليمني",
+    "englishName": "Wadih Al-Yamani",
+    "slug": "wadee_yamani/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/wadee-yamani/r1/",
+    "shortName": "وديع اليمني",
+    "complete": true
+  },
+  {
+    "id": "idrees_abkar",
+    "name": "الشيخ إدريس أبكر",
+    "englishName": "Idrees Abkar",
+    "slug": "idrees_abkar/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/idrees-abkar/r1/",
+    "shortName": "إدريس أبكر",
+    "complete": true
+  },
+  {
+    "id": "ajamy",
+    "name": "الشيخ أحمد بن علي العجمي",
+    "englishName": "Ahmed Al-Ajamy",
+    "slug": "ahmed_ibn_3ali_al-3ajamy/",
+    "serverUrl": "https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/",
+    "shortName": "العجمي",
+    "complete": true
+  },
+  {
+    "id": "matroud",
+    "name": "الشيخ عبد الله مطرود",
+    "englishName": "Abdullah Matroud",
+    "slug": "abdullah_matroud/",
+    "serverUrl": "https://download.quranicaudio.com/quran/abdullah_matroud/",
+    "shortName": "مطرود",
+    "complete": true
+  },
+  {
+    "id": "akhdar",
+    "name": "الشيخ إبراهيم الأخضر",
+    "englishName": "Ibrahim Al-Akhdar",
+    "slug": "ibrahim-akhdar/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/ibrahim-akhdar/r1/",
+    "shortName": "الأخضر",
+    "complete": true
+  },
+  {
+    "id": "bukhatir",
+    "name": "الشيخ صلاح بو خاطر",
+    "englishName": "Salah Bukhatir",
+    "slug": "salah-bukhatir/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/salah-bukhatir/r1/",
+    "shortName": "بو خاطر",
+    "complete": true
+  },
+  {
+    "id": "budair",
+    "name": "الشيخ صلاح البدير",
+    "englishName": "Salah Al-Budair",
+    "slug": "salahbudair/",
+    "serverUrl": "https://download.quranicaudio.com/quran/salahbudair/",
+    "shortName": "البدير",
+    "complete": true
+  },
+  {
+    "id": "qasim",
+    "name": "الشيخ عبد المحسن القاسم",
+    "englishName": "Abdulmohsen Al-Qasim",
+    "slug": "abdulmohsen-qasim/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdulmohsen-qasim/r1/",
+    "shortName": "القاسم",
+    "complete": true
+  },
+  {
+    "id": "qahtani",
+    "name": "الشيخ خالد القحطاني",
+    "englishName": "Khalid Al-Qahtani",
+    "slug": "khalid-qahtani/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/khalid-qahtani/r1/",
+    "shortName": "القحطاني",
+    "complete": true
+  },
+  {
+    "id": "tunaiji",
+    "name": "الشيخ خليفة الطنيجي",
+    "englishName": "Khalifa Al-Tunaiji",
+    "slug": "khalifa-tunaiji/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/khalifa-tunaiji/r1/",
+    "shortName": "الطنيجي",
+    "complete": true
   }
 ];
 
