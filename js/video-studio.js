@@ -795,7 +795,6 @@
         scale: 1.0,
         offsetY: 0
       },
-      nextAyah: null,
       audioLevel: 0.35,
       themeId: state.selectedThemeId
     });
@@ -840,13 +839,9 @@
       drawDedicationBadge(ctx, w, h, scale, theme);
     }
 
-    // 7. Word-Wrapped Center Ayah Text with Smooth Eased Transitions
-    if (data.activeAyah && data.activeAyah.text) {
+    // 7. Word-Wrapped Center Ayah Text with Smooth Eased Transitions (Guaranteed Non-overlapping)
+    if (data.activeAyah && data.activeAyah.text && data.activeAyah.alpha > 0.005) {
       drawAyahText(ctx, w, h, scale, theme, data.activeAyah);
-    }
-    // Crossfade overlap support for next ayah
-    if (data.nextAyah && data.nextAyah.text && data.nextAyah.alpha > 0.01) {
-      drawAyahText(ctx, w, h, scale, theme, data.nextAyah);
     }
 
     // 8. Symmetrical Quranic Audio Soundwave
@@ -1256,7 +1251,10 @@
       const count = item.trimmedLength;
 
       const ayahStartSec = currentSample / sampleRate;
-      const ayahEndSec = (currentSample + count) / sampleRate;
+      const stepSamples = (idx < ayahBuffersWithMeta.length - 1 && mode === 'seamless')
+        ? (count - crossfadeSamples)
+        : count;
+      const ayahEndSec = (currentSample + stepSamples) / sampleRate;
 
       timeline.push({
         ayahNum: item.ayahNum,
@@ -1627,54 +1625,47 @@
       const progress = Math.min(1.0, Math.max(0, elapsed / totalDuration));
 
       let activeAyahData = null;
-      let nextAyahData = null;
 
-      // Find active verse and compute ultra-smooth easing
+      // Find active verse and compute ultra-smooth easing without overlapping
       for (let i = 0; i < timeline.length; i++) {
         const item = timeline[i];
-        if (elapsed >= item.startTime && elapsed <= item.endTime) {
+        const isLast = (i === timeline.length - 1);
+        const isActive = isLast
+          ? (elapsed >= item.startTime && elapsed <= item.endTime)
+          : (elapsed >= item.startTime && elapsed < item.endTime);
+
+        if (isActive) {
           const t = elapsed - item.startTime;
           const rem = item.endTime - elapsed;
           const dur = item.duration;
-          const fadeDuration = Math.min(0.65, Math.max(0.35, dur * 0.18));
+
+          // Elegant, natural fade durations
+          const fadeInDur = Math.min(0.42, Math.max(0.18, dur * 0.12));
+          const fadeOutDur = Math.min(0.38, Math.max(0.18, dur * 0.10));
 
           let alpha = 1.0;
           let animScale = 1.0;
           let offsetY = 0;
 
-          if (t < fadeDuration) {
-            // Smooth Ease-In with Quintic curve & breathing scale
-            const p = Math.max(0, Math.min(1, t / fadeDuration));
+          if (t < fadeInDur) {
+            // Smooth Ease-In Fade (Appearance)
+            const p = Math.max(0, Math.min(1, t / fadeInDur));
             const eased = easeOutQuint(p);
             alpha = eased;
-            animScale = 0.94 + (0.06 * eased);
+            animScale = 0.95 + (0.05 * eased);
             offsetY = (1 - eased) * (18 * scale);
-          } else if (rem < fadeDuration) {
-            // Smooth Ease-Out with Cubic curve & gentle float
-            const p = Math.max(0, Math.min(1, rem / fadeDuration));
+          } else if (rem < fadeOutDur) {
+            // Smooth Ease-Out Fade (Exit - completely reaches 0 before next verse starts!)
+            const p = Math.max(0, Math.min(1, rem / fadeOutDur));
             const eased = easeInCubic(p);
             alpha = eased;
             animScale = 1.0 + (0.02 * (1 - eased));
             offsetY = -(1 - eased) * (16 * scale);
-
-            // Crossfade overlap: start fading in next ayah simultaneously
-            if (i + 1 < timeline.length) {
-              const nextItem = timeline[i + 1];
-              const nextP = 1 - p;
-              const nextEased = easeOutQuint(nextP);
-              nextAyahData = {
-                text: nextItem.text,
-                ayahNum: nextItem.ayahNum,
-                alpha: nextEased * 0.85,
-                scale: 0.94 + (0.06 * nextEased),
-                offsetY: (1 - nextEased) * (18 * scale)
-              };
-            }
           } else {
-            // Sustain / Breathing State
-            const sustainProgress = (t - fadeDuration) / Math.max(0.1, dur - 2 * fadeDuration);
-            animScale = 1.0 + (0.015 * Math.sin(sustainProgress * Math.PI));
-            offsetY = - (sustainProgress * 6 * scale);
+            // Sustain / Gentle Breathing State during speech
+            const sustainProgress = (t - fadeInDur) / Math.max(0.1, dur - fadeInDur - fadeOutDur);
+            animScale = 1.0 + (0.012 * Math.sin(sustainProgress * Math.PI));
+            offsetY = -(sustainProgress * 4 * scale);
           }
 
           activeAyahData = {
@@ -1688,11 +1679,10 @@
         }
       }
 
-      // Draw the complete frame
+      // Draw the complete frame (Strictly one active verse, guaranteed zero overlap)
       drawSingleFrame(ctx, w, h, {
         time: elapsed,
         activeAyah: activeAyahData,
-        nextAyah: nextAyahData,
         audioLevel: activeAyahData ? (0.32 + 0.48 * Math.sin(elapsed * 7)) : 0.12,
         themeId: state.selectedThemeId
       });
