@@ -701,6 +701,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSurahAudioUrl(reciter, surahId) {
     const paddedId = surahId.toString().padStart(3, '0');
     
+    // Direct surahFiles mapping (e.g. archive.org custom uploads)
+    if (reciter.surahFiles && reciter.surahFiles[surahId]) {
+      return {
+        url: reciter.surahFiles[surahId],
+        isFallback: false,
+        reciter: reciter,
+        fallbackReciter: null
+      };
+    }
+
     // Check if reciter has recorded this surah
     if (reciter.availableSurahs && !reciter.availableSurahs.includes(surahId)) {
       const fallbackReciter = RECITERS.find(r => r.id === 'hussary') || RECITERS[0];
