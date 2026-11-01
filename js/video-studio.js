@@ -256,6 +256,8 @@
     isPreviewing: false,
     isRecording: false,
     audioCtx: null,
+    previewAudio: null,
+    previewAudioUrl: null,
     recorder: null,
     recordedChunks: [],
     currentVideoBlob: null,
@@ -267,6 +269,7 @@
     renderAnimationId: null,
     operationAbortController: null
   };
+  window.__videoStudioState = state;
 
   // Ayahs Text In-Memory Cache
   const ayahsCache = {};
@@ -285,6 +288,7 @@
       view: document.getElementById('video-studio-view'),
       headerAspectBadge: document.getElementById('video-header-aspect-badge'),
       canvas: document.getElementById('video-canvas'),
+      previewAudio: document.getElementById('video-preview-audio'),
       videoPlayer: document.getElementById('video-result-player'),
       phoneScreen: document.getElementById('video-phone-screen'),
       phoneMockup: document.querySelector('.phone-mockup-frame'),
@@ -614,7 +618,7 @@
       els.btnGenerate.addEventListener('click', startVideoExport);
     }
     if (els.btnLivePreview) {
-      els.btnLivePreview.addEventListener('click', startLivePreview);
+      els.btnLivePreview.addEventListener('click', onLivePreviewClicked);
     }
     if (els.btnStopPreview) {
       els.btnStopPreview.addEventListener('click', stopLivePreview);
@@ -1165,9 +1169,69 @@
       state.audioCtx = new AudioCtxClass();
     }
     if (state.audioCtx.state === 'suspended') {
-      state.audioCtx.resume();
+      state.audioCtx.resume().catch(() => {});
     }
     return state.audioCtx;
+  }
+
+  // Convert Web AudioBuffer to Standard 16-bit PCM WAV Blob for Rock-Solid Native HTML5 Audio
+  function audioBufferToWavBlob(audioBuffer) {
+    const numOfChan = audioBuffer.numberOfChannels;
+    const length = audioBuffer.length * numOfChan * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+    const channels = [];
+    const sampleRate = audioBuffer.sampleRate;
+    let offset = 0;
+    let pos = 0;
+
+    function writeString(str) {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(pos++, str.charCodeAt(i));
+      }
+    }
+    function setUint16(data) {
+      view.setUint16(pos, data, true);
+      pos += 2;
+    }
+    function setUint32(data) {
+      view.setUint32(pos, data, true);
+      pos += 4;
+    }
+
+    // RIFF chunk descriptor
+    writeString('RIFF');
+    setUint32(length - 8);
+    writeString('WAVE');
+
+    // fmt subchunk
+    writeString('fmt ');
+    setUint32(16); // 16 for PCM
+    setUint16(1);  // linear quantization (PCM)
+    setUint16(numOfChan);
+    setUint32(sampleRate);
+    setUint32(sampleRate * 2 * numOfChan); // byteRate
+    setUint16(numOfChan * 2);              // blockAlign
+    setUint16(16);                         // bitsPerSample
+
+    // data subchunk
+    writeString('data');
+    setUint32(length - pos - 4);
+
+    for (let i = 0; i < numOfChan; i++) {
+      channels.push(audioBuffer.getChannelData(i));
+    }
+
+    while (pos < length) {
+      for (let i = 0; i < numOfChan; i++) {
+        let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF) | 0;
+        setUint16(sample);
+      }
+      offset++;
+    }
+
+    return new Blob([view], { type: 'audio/wav' });
   }
 
   // Silence Analyzer & Trimmer
@@ -1415,9 +1479,31 @@
   }
 
   // --- 11. Live Interactive Preview Mode ---
+  function onLivePreviewClicked() {
+    // Synchronously unlock Web Audio Context within user gesture (Safari & mobile requirement)
+    const audioCtx = getAudioContext();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    try {
+      const unlockBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate || 44100);
+      const unlockSrc = audioCtx.createBufferSource();
+      unlockSrc.buffer = unlockBuf;
+      unlockSrc.connect(audioCtx.destination);
+      unlockSrc.start(0);
+    } catch (e) {}
+
+    // Launch live preview
+    startLivePreview();
+  }
+
   async function startLivePreview() {
     if (state.isProcessing || state.isPreviewing) return;
     stopAllAudioPlayback();
+
+    // Pause background main audio if playing
+    const mainAudio = document.getElementById('main-audio');
+    if (mainAudio && !mainAudio.paused) mainAudio.pause();
 
     const audioCtx = getAudioContext();
     state.isPreviewing = true;
@@ -1433,20 +1519,25 @@
       state.timeline = timeline;
       hideProgressUI();
 
-      // Schedule Master Audio Playback through single AudioBufferSourceNode
-      const startTime = audioCtx.currentTime + 0.1;
+      // Ensure audioCtx is active (non-blocking to prevent promise deadlock)
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+
+      // Schedule Master Audio Playback through AudioBufferSourceNode
+      const startTime = audioCtx.currentTime + 0.08;
       const masterSource = audioCtx.createBufferSource();
       masterSource.buffer = masterBuffer;
 
       const masterGain = audioCtx.createGain();
-      masterGain.gain.value = 1.0;
+      masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
       masterGain.connect(audioCtx.destination);
       masterSource.connect(masterGain);
 
       masterSource.start(startTime);
       state.activeSources.push(masterSource);
 
-      // Run Animation Loop
+      // Run Animation Loop synchronized with audio playback
       runRenderLoop({
         audioCtx,
         startTime,
@@ -1585,6 +1676,7 @@
         startTime: recordingStartTime,
         totalDuration,
         timeline,
+        previewAudio: null,
         isRecording: true,
         onComplete: async () => {
           updateProgressUI({
@@ -1610,9 +1702,9 @@
     }
   }
 
-  // --- 13. Synchronized Frame Render Loop with Quintic Easing & Overlap ---
+  // --- 13. Synchronized Frame Render Loop with Explicit Visual Gap & Quintic Easing ---
   function runRenderLoop(config) {
-    const { audioCtx, startTime, totalDuration, timeline, isRecording, onComplete } = config;
+    const { audioCtx, startTime, totalDuration, timeline, previewAudio, isRecording, onComplete } = config;
     const ctx = els.canvas.getContext('2d');
     const w = els.canvas.width;
     const h = els.canvas.height;
@@ -1621,49 +1713,70 @@
     function frame() {
       if (!state.isRecording && !state.isPreviewing) return;
 
-      const elapsed = audioCtx.currentTime - startTime;
+      // Determine precise elapsed time:
+      let elapsed = 0;
+      if (previewAudio && !previewAudio.paused && !previewAudio.ended) {
+        elapsed = previewAudio.currentTime;
+      } else {
+        elapsed = audioCtx.currentTime - startTime;
+      }
+
       const progress = Math.min(1.0, Math.max(0, elapsed / totalDuration));
 
       let activeAyahData = null;
 
-      // Find active verse and compute ultra-smooth easing without overlapping
+      // Find active verse and compute ultra-smooth easing with explicit visual rest gap
       for (let i = 0; i < timeline.length; i++) {
         const item = timeline[i];
         const isLast = (i === timeline.length - 1);
-        const isActive = isLast
-          ? (elapsed >= item.startTime && elapsed <= item.endTime)
-          : (elapsed >= item.startTime && elapsed < item.endTime);
 
-        if (isActive) {
+        // Visual rest gap between verses (0.35s - 0.45s)
+        // During this gap, the Sheikh's recitation flows seamlessly, but NO text is drawn.
+        const visualGap = isLast
+          ? Math.min(0.35, Math.max(0.20, item.duration * 0.08))
+          : Math.min(0.45, Math.max(0.28, item.duration * 0.10));
+
+        const visualEndTime = item.endTime - visualGap;
+        const dur = item.duration;
+        const visualDuration = Math.max(0.2, visualEndTime - item.startTime);
+
+        // Check if current time falls within this verse's audio lifecycle
+        if (elapsed >= item.startTime && elapsed < item.endTime) {
+          // If we reached the visual rest gap:
+          if (elapsed >= visualEndTime) {
+            // Verse has completely faded out to alpha 0. Screen is left in pure serene state
+            // for the remainder of this ayah's audio duration. Guaranteed zero overlap!
+            activeAyahData = null;
+            break;
+          }
+
           const t = elapsed - item.startTime;
-          const rem = item.endTime - elapsed;
-          const dur = item.duration;
+          const remVisual = visualEndTime - elapsed;
 
-          // Elegant, natural fade durations
-          const fadeInDur = Math.min(0.42, Math.max(0.18, dur * 0.12));
-          const fadeOutDur = Math.min(0.38, Math.max(0.18, dur * 0.10));
+          const fadeInDur = Math.min(0.40, Math.max(0.18, visualDuration * 0.14));
+          const fadeOutDur = Math.min(0.36, Math.max(0.18, visualDuration * 0.12));
 
           let alpha = 1.0;
           let animScale = 1.0;
           let offsetY = 0;
 
           if (t < fadeInDur) {
-            // Smooth Ease-In Fade (Appearance)
+            // 1. Entrance: Quintic ease-in with gentle upward rise
             const p = Math.max(0, Math.min(1, t / fadeInDur));
             const eased = easeOutQuint(p);
             alpha = eased;
-            animScale = 0.95 + (0.05 * eased);
+            animScale = 0.94 + (0.06 * eased);
             offsetY = (1 - eased) * (18 * scale);
-          } else if (rem < fadeOutDur) {
-            // Smooth Ease-Out Fade (Exit - completely reaches 0 before next verse starts!)
-            const p = Math.max(0, Math.min(1, rem / fadeOutDur));
+          } else if (remVisual < fadeOutDur) {
+            // 2. Exit: Cubic ease-out down to complete transparency BEFORE the visual gap
+            const p = Math.max(0, Math.min(1, remVisual / fadeOutDur));
             const eased = easeInCubic(p);
             alpha = eased;
             animScale = 1.0 + (0.02 * (1 - eased));
             offsetY = -(1 - eased) * (16 * scale);
           } else {
-            // Sustain / Gentle Breathing State during speech
-            const sustainProgress = (t - fadeInDur) / Math.max(0.1, dur - fadeInDur - fadeOutDur);
+            // 3. Sustain: Majestic spiritual breathing scale & subtle float
+            const sustainProgress = (t - fadeInDur) / Math.max(0.1, visualDuration - fadeInDur - fadeOutDur);
             animScale = 1.0 + (0.012 * Math.sin(sustainProgress * Math.PI));
             offsetY = -(sustainProgress * 4 * scale);
           }
@@ -1671,7 +1784,7 @@
           activeAyahData = {
             text: item.text,
             ayahNum: item.ayahNum,
-            alpha: alpha,
+            alpha: Math.max(0, Math.min(1, alpha)),
             scale: animScale,
             offsetY: offsetY
           };
@@ -1679,7 +1792,7 @@
         }
       }
 
-      // Draw the complete frame (Strictly one active verse, guaranteed zero overlap)
+      // Draw the complete frame (Guaranteed zero overlap, distinct visual pause between verses)
       drawSingleFrame(ctx, w, h, {
         time: elapsed,
         activeAyah: activeAyahData,
@@ -1701,7 +1814,11 @@
       }
 
       // Completion check
-      if (elapsed >= totalDuration) {
+      const isEnded = (previewAudio && previewAudio.duration)
+        ? (previewAudio.ended || elapsed >= totalDuration)
+        : (elapsed >= totalDuration);
+
+      if (isEnded) {
         if (state.renderAnimationId) cancelAnimationFrame(state.renderAnimationId);
         state.renderAnimationId = null;
         if (onComplete) onComplete();
@@ -1844,6 +1961,17 @@
   }
 
   function stopAllAudioPlayback() {
+    if (state.previewAudio) {
+      try {
+        state.previewAudio.pause();
+        state.previewAudio.currentTime = 0;
+        state.previewAudio.src = '';
+      } catch (e) {}
+    }
+    if (state.previewAudioUrl) {
+      try { URL.revokeObjectURL(state.previewAudioUrl); } catch (e) {}
+      state.previewAudioUrl = null;
+    }
     state.activeSources.forEach(src => {
       try { src.stop(); } catch (e) {}
     });
