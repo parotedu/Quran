@@ -936,14 +936,20 @@ body {
   100% { background-position: -200% 0; }
 }
 
-.video-theme-pill {
+.video-theme-pill,
+.video-motion-pill {
   cursor: pointer;
   user-select: none;
 }
 
-.video-theme-pill.active {
+.video-theme-pill.active,
+.video-motion-pill.active {
   border-color: #fbbf24 !important;
   box-shadow: 0 0 14px rgba(251, 191, 36, 0.35);
+}
+
+.video-motion-pill.active {
+  background: rgba(245, 158, 11, 0.18) !important;
 }
 
 .video-stepper-btn {

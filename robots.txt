@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Dedicated AI crawlers and LLM Indexers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Sitemaps and AI Map
+Sitemap: https://quran.parotcorp.com/sitemap.xml

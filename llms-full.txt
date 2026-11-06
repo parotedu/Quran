@@ -1,0 +1,802 @@
+# منصة القرآن الكريم - الفهرس الشامل للذكاء الاصطناعي (Full LLM Index)
+# المنصة: https://quran.parotcorp.com/
+# الوصف: فهرس كامل لـ 114 سورة قرآنية مع بيانات التلاوة والرسم العثماني.
+
+## 1. سورة الفاتحة (Al-Fatihah)
+- الرقم: 1
+- عدد الآيات: 7
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=1
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=1
+
+## 2. سورة البقرة (Al-Baqarah)
+- الرقم: 2
+- عدد الآيات: 286
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=2
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=2
+
+## 3. سورة آل عمران (Ali 'Imran)
+- الرقم: 3
+- عدد الآيات: 200
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=3
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=3
+
+## 4. سورة النساء (An-Nisa)
+- الرقم: 4
+- عدد الآيات: 176
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=4
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=4
+
+## 5. سورة المائدة (Al-Ma'idah)
+- الرقم: 5
+- عدد الآيات: 120
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=5
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=5
+
+## 6. سورة الأنعام (Al-An'am)
+- الرقم: 6
+- عدد الآيات: 165
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=6
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=6
+
+## 7. سورة الأعراف (Al-A'raf)
+- الرقم: 7
+- عدد الآيات: 206
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=7
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=7
+
+## 8. سورة الأنفال (Al-Anfal)
+- الرقم: 8
+- عدد الآيات: 75
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=8
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=8
+
+## 9. سورة التوبة (At-Tawbah)
+- الرقم: 9
+- عدد الآيات: 129
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=9
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=9
+
+## 10. سورة يونس (Yunus)
+- الرقم: 10
+- عدد الآيات: 109
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=10
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=10
+
+## 11. سورة هود (Hud)
+- الرقم: 11
+- عدد الآيات: 123
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=11
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=11
+
+## 12. سورة يوسف (Yusuf)
+- الرقم: 12
+- عدد الآيات: 111
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=12
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=12
+
+## 13. سورة الرعد (Ar-Ra'd)
+- الرقم: 13
+- عدد الآيات: 43
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=13
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=13
+
+## 14. سورة ابراهيم (Ibrahim)
+- الرقم: 14
+- عدد الآيات: 52
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=14
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=14
+
+## 15. سورة الحجر (Al-Hijr)
+- الرقم: 15
+- عدد الآيات: 99
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=15
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=15
+
+## 16. سورة النحل (An-Nahl)
+- الرقم: 16
+- عدد الآيات: 128
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=16
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=16
+
+## 17. سورة الإسراء (Al-Isra)
+- الرقم: 17
+- عدد الآيات: 111
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=17
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=17
+
+## 18. سورة الكهف (Al-Kahf)
+- الرقم: 18
+- عدد الآيات: 110
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=18
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=18
+
+## 19. سورة مريم (Maryam)
+- الرقم: 19
+- عدد الآيات: 98
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=19
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=19
+
+## 20. سورة طه (Taha)
+- الرقم: 20
+- عدد الآيات: 135
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=20
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=20
+
+## 21. سورة الأنبياء (Al-Anbya)
+- الرقم: 21
+- عدد الآيات: 112
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=21
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=21
+
+## 22. سورة الحج (Al-Hajj)
+- الرقم: 22
+- عدد الآيات: 78
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=22
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=22
+
+## 23. سورة المؤمنون (Al-Mu'minun)
+- الرقم: 23
+- عدد الآيات: 118
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=23
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=23
+
+## 24. سورة النور (An-Nur)
+- الرقم: 24
+- عدد الآيات: 64
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=24
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=24
+
+## 25. سورة الفرقان (Al-Furqan)
+- الرقم: 25
+- عدد الآيات: 77
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=25
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=25
+
+## 26. سورة الشعراء (Ash-Shu'ara)
+- الرقم: 26
+- عدد الآيات: 227
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=26
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=26
+
+## 27. سورة النمل (An-Naml)
+- الرقم: 27
+- عدد الآيات: 93
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=27
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=27
+
+## 28. سورة القصص (Al-Qasas)
+- الرقم: 28
+- عدد الآيات: 88
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=28
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=28
+
+## 29. سورة العنكبوت (Al-'Ankabut)
+- الرقم: 29
+- عدد الآيات: 69
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=29
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=29
+
+## 30. سورة الروم (Ar-Rum)
+- الرقم: 30
+- عدد الآيات: 60
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=30
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=30
+
+## 31. سورة لقمان (Luqman)
+- الرقم: 31
+- عدد الآيات: 34
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=31
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=31
+
+## 32. سورة السجدة (As-Sajdah)
+- الرقم: 32
+- عدد الآيات: 30
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=32
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=32
+
+## 33. سورة الأحزاب (Al-Ahzab)
+- الرقم: 33
+- عدد الآيات: 73
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=33
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=33
+
+## 34. سورة سبإ (Saba)
+- الرقم: 34
+- عدد الآيات: 54
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=34
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=34
+
+## 35. سورة فاطر (Fatir)
+- الرقم: 35
+- عدد الآيات: 45
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=35
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=35
+
+## 36. سورة يس (Ya-Sin)
+- الرقم: 36
+- عدد الآيات: 83
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=36
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=36
+
+## 37. سورة الصافات (As-Saffat)
+- الرقم: 37
+- عدد الآيات: 182
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=37
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=37
+
+## 38. سورة ص (Sad)
+- الرقم: 38
+- عدد الآيات: 88
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=38
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=38
+
+## 39. سورة الزمر (Az-Zumar)
+- الرقم: 39
+- عدد الآيات: 75
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=39
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=39
+
+## 40. سورة غافر (Ghafir)
+- الرقم: 40
+- عدد الآيات: 85
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=40
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=40
+
+## 41. سورة فصلت (Fussilat)
+- الرقم: 41
+- عدد الآيات: 54
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=41
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=41
+
+## 42. سورة الشورى (Ash-Shuraa)
+- الرقم: 42
+- عدد الآيات: 53
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=42
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=42
+
+## 43. سورة الزخرف (Az-Zukhruf)
+- الرقم: 43
+- عدد الآيات: 89
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=43
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=43
+
+## 44. سورة الدخان (Ad-Dukhan)
+- الرقم: 44
+- عدد الآيات: 59
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=44
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=44
+
+## 45. سورة الجاثية (Al-Jathiyah)
+- الرقم: 45
+- عدد الآيات: 37
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=45
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=45
+
+## 46. سورة الأحقاف (Al-Ahqaf)
+- الرقم: 46
+- عدد الآيات: 35
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=46
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=46
+
+## 47. سورة محمد (Muhammad)
+- الرقم: 47
+- عدد الآيات: 38
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=47
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=47
+
+## 48. سورة الفتح (Al-Fath)
+- الرقم: 48
+- عدد الآيات: 29
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=48
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=48
+
+## 49. سورة الحجرات (Al-Hujurat)
+- الرقم: 49
+- عدد الآيات: 18
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=49
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=49
+
+## 50. سورة ق (Qaf)
+- الرقم: 50
+- عدد الآيات: 45
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=50
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=50
+
+## 51. سورة الذاريات (Adh-Dhariyat)
+- الرقم: 51
+- عدد الآيات: 60
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=51
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=51
+
+## 52. سورة الطور (At-Tur)
+- الرقم: 52
+- عدد الآيات: 49
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=52
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=52
+
+## 53. سورة النجم (An-Najm)
+- الرقم: 53
+- عدد الآيات: 62
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=53
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=53
+
+## 54. سورة القمر (Al-Qamar)
+- الرقم: 54
+- عدد الآيات: 55
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=54
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=54
+
+## 55. سورة الرحمن (Ar-Rahman)
+- الرقم: 55
+- عدد الآيات: 78
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=55
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=55
+
+## 56. سورة الواقعة (Al-Waqi'ah)
+- الرقم: 56
+- عدد الآيات: 96
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=56
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=56
+
+## 57. سورة الحديد (Al-Hadid)
+- الرقم: 57
+- عدد الآيات: 29
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=57
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=57
+
+## 58. سورة المجادلة (Al-Mujadila)
+- الرقم: 58
+- عدد الآيات: 22
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=58
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=58
+
+## 59. سورة الحشر (Al-Hashr)
+- الرقم: 59
+- عدد الآيات: 24
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=59
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=59
+
+## 60. سورة الممتحنة (Al-Mumtahanah)
+- الرقم: 60
+- عدد الآيات: 13
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=60
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=60
+
+## 61. سورة الصف (As-Saf)
+- الرقم: 61
+- عدد الآيات: 14
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=61
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=61
+
+## 62. سورة الجمعة (Al-Jumu'ah)
+- الرقم: 62
+- عدد الآيات: 11
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=62
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=62
+
+## 63. سورة المنافقون (Al-Munafiqun)
+- الرقم: 63
+- عدد الآيات: 11
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=63
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=63
+
+## 64. سورة التغابن (At-Taghabun)
+- الرقم: 64
+- عدد الآيات: 18
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=64
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=64
+
+## 65. سورة الطلاق (At-Talaq)
+- الرقم: 65
+- عدد الآيات: 12
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=65
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=65
+
+## 66. سورة التحريم (At-Tahrim)
+- الرقم: 66
+- عدد الآيات: 12
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=66
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=66
+
+## 67. سورة الملك (Al-Mulk)
+- الرقم: 67
+- عدد الآيات: 30
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=67
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=67
+
+## 68. سورة القلم (Al-Qalam)
+- الرقم: 68
+- عدد الآيات: 52
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=68
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=68
+
+## 69. سورة الحاقة (Al-Haqqah)
+- الرقم: 69
+- عدد الآيات: 52
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=69
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=69
+
+## 70. سورة المعارج (Al-Ma'arij)
+- الرقم: 70
+- عدد الآيات: 44
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=70
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=70
+
+## 71. سورة نوح (Nuh)
+- الرقم: 71
+- عدد الآيات: 28
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=71
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=71
+
+## 72. سورة الجن (Al-Jinn)
+- الرقم: 72
+- عدد الآيات: 28
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=72
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=72
+
+## 73. سورة المزمل (Al-Muzzammil)
+- الرقم: 73
+- عدد الآيات: 20
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=73
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=73
+
+## 74. سورة المدثر (Al-Muddaththir)
+- الرقم: 74
+- عدد الآيات: 56
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=74
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=74
+
+## 75. سورة القيامة (Al-Qiyamah)
+- الرقم: 75
+- عدد الآيات: 40
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=75
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=75
+
+## 76. سورة الانسان (Al-Insan)
+- الرقم: 76
+- عدد الآيات: 31
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=76
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=76
+
+## 77. سورة المرسلات (Al-Mursalat)
+- الرقم: 77
+- عدد الآيات: 50
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=77
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=77
+
+## 78. سورة النبإ (An-Naba)
+- الرقم: 78
+- عدد الآيات: 40
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=78
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=78
+
+## 79. سورة النازعات (An-Nazi'at)
+- الرقم: 79
+- عدد الآيات: 46
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=79
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=79
+
+## 80. سورة عبس ('Abasa)
+- الرقم: 80
+- عدد الآيات: 42
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=80
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=80
+
+## 81. سورة التكوير (At-Takwir)
+- الرقم: 81
+- عدد الآيات: 29
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=81
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=81
+
+## 82. سورة الإنفطار (Al-Infitar)
+- الرقم: 82
+- عدد الآيات: 19
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=82
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=82
+
+## 83. سورة المطففين (Al-Mutaffifin)
+- الرقم: 83
+- عدد الآيات: 36
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=83
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=83
+
+## 84. سورة الإنشقاق (Al-Inshiqaq)
+- الرقم: 84
+- عدد الآيات: 25
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=84
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=84
+
+## 85. سورة البروج (Al-Buruj)
+- الرقم: 85
+- عدد الآيات: 22
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=85
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=85
+
+## 86. سورة الطارق (At-Tariq)
+- الرقم: 86
+- عدد الآيات: 17
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=86
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=86
+
+## 87. سورة الأعلى (Al-A'la)
+- الرقم: 87
+- عدد الآيات: 19
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=87
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=87
+
+## 88. سورة الغاشية (Al-Ghashiyah)
+- الرقم: 88
+- عدد الآيات: 26
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=88
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=88
+
+## 89. سورة الفجر (Al-Fajr)
+- الرقم: 89
+- عدد الآيات: 30
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=89
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=89
+
+## 90. سورة البلد (Al-Balad)
+- الرقم: 90
+- عدد الآيات: 20
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=90
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=90
+
+## 91. سورة الشمس (Ash-Shams)
+- الرقم: 91
+- عدد الآيات: 15
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=91
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=91
+
+## 92. سورة الليل (Al-Layl)
+- الرقم: 92
+- عدد الآيات: 21
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=92
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=92
+
+## 93. سورة الضحى (Ad-Duhaa)
+- الرقم: 93
+- عدد الآيات: 11
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=93
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=93
+
+## 94. سورة الشرح (Ash-Sharh)
+- الرقم: 94
+- عدد الآيات: 8
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=94
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=94
+
+## 95. سورة التين (At-Tin)
+- الرقم: 95
+- عدد الآيات: 8
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=95
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=95
+
+## 96. سورة العلق (Al-'Alaq)
+- الرقم: 96
+- عدد الآيات: 19
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=96
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=96
+
+## 97. سورة القدر (Al-Qadr)
+- الرقم: 97
+- عدد الآيات: 5
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=97
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=97
+
+## 98. سورة البينة (Al-Bayyinah)
+- الرقم: 98
+- عدد الآيات: 8
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=98
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=98
+
+## 99. سورة الزلزلة (Az-Zalzalah)
+- الرقم: 99
+- عدد الآيات: 8
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=99
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=99
+
+## 100. سورة العاديات (Al-'Adiyat)
+- الرقم: 100
+- عدد الآيات: 11
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=100
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=100
+
+## 101. سورة القارعة (Al-Qari'ah)
+- الرقم: 101
+- عدد الآيات: 11
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=101
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=101
+
+## 102. سورة التكاثر (At-Takathur)
+- الرقم: 102
+- عدد الآيات: 8
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=102
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=102
+
+## 103. سورة العصر (Al-'Asr)
+- الرقم: 103
+- عدد الآيات: 3
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=103
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=103
+
+## 104. سورة الهمزة (Al-Humazah)
+- الرقم: 104
+- عدد الآيات: 9
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=104
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=104
+
+## 105. سورة الفيل (Al-Fil)
+- الرقم: 105
+- عدد الآيات: 5
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=105
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=105
+
+## 106. سورة قريش (Quraysh)
+- الرقم: 106
+- عدد الآيات: 4
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=106
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=106
+
+## 107. سورة الماعون (Al-Ma'un)
+- الرقم: 107
+- عدد الآيات: 7
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=107
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=107
+
+## 108. سورة الكوثر (Al-Kawthar)
+- الرقم: 108
+- عدد الآيات: 3
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=108
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=108
+
+## 109. سورة الكافرون (Al-Kafirun)
+- الرقم: 109
+- عدد الآيات: 6
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=109
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=109
+
+## 110. سورة النصر (An-Nasr)
+- الرقم: 110
+- عدد الآيات: 3
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=110
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=110
+
+## 111. سورة المسد (Al-Masad)
+- الرقم: 111
+- عدد الآيات: 5
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=111
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=111
+
+## 112. سورة الإخلاص (Al-Ikhlas)
+- الرقم: 112
+- عدد الآيات: 4
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=112
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=112
+
+## 113. سورة الفلق (Al-Falaq)
+- الرقم: 113
+- عدد الآيات: 5
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=113
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=113
+
+## 114. سورة الناس (An-Nas)
+- الرقم: 114
+- عدد الآيات: 6
+- مكان النزول: مدنية
+- رابط الاستماع المباشر: https://quran.parotcorp.com/?surah=114
+- رابط إنشاء فيديو مخصص: https://quran.parotcorp.com/?view=video&surah=114
+
