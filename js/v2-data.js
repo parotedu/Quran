@@ -343,11 +343,34 @@ const AZKAR_DATA = {
 
 const RADIO_STATIONS = [
   {
+    id: "radio_roqiah_alafasy",
+    name: "الرقية الشرعية - الشيخ مشاري راشد العفاسي",
+    subtitle: "التسجيل الشامل المبارك للرقية الشرعية والتحصين من العين والسحر والحسد",
+    url: "https://archive.org/download/20240228_20240228_1849/034%20%20%204%20%20%D8%A7%D9%84%D8%B1%D9%82%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B4%D8%B1%D8%B9%D9%8A%D8%A9%20%D9%83%D8%A7%D9%85%D9%84%D8%A9%20%D9%84%D8%B9%D9%84%D8%A7%D8%AC%20%D8%A7%D9%84%D8%B3%D8%AD%D8%B1%20%D9%88%D8%A7%D9%84%D9%85%D8%B3%20%D9%88%D8%A7%D9%84%D8%B9%D9%8A%D9%86%20%D9%88%D8%A7%D9%84%D8%AD%D8%B3%D8%AF%20%D8%A8%D8%B5%D9%88%D8%AA%20%D8%A7%D9%84%D8%B4%D9%8A%D8%AE%20%D9%85%D8%B4%D8%A7%D8%B1%D9%8A%20%D8%A7%D9%84%D8%B9%D9%81%D8%A7%D8%B3%D9%8A%20%D8%AC%D9%88%D8%AF%D8%A9%20%D8%B9%D8%A7%D9%84%D9%8A%D8%A9.mp3",
+    badge: "الرقية • العفاسي",
+    reciter: "الشيخ مشاري راشد العفاسي",
+    isAudioFile: true
+  },
+  {
+    id: "radio_roqiah_live",
+    name: "إذاعة الرقية الشرعية والسكينة (مباشر)",
+    subtitle: "آيات السكينة والشفاء والتحصين من القرآن الكريم على مدار الساعة",
+    url: "https://backup.qurango.net/radio/roqiah",
+    badge: "بث مباشر 24/7"
+  },
+  {
     id: "radio_tarateel",
     name: "إذاعة التلاوات الخاشعة المختارة",
     subtitle: "تلاوات قصيرة خاشعة على مدار الساعة",
     url: "https://backup.qurango.net/radio/tarateel",
-    badge: "بث مباشر 24/7"
+    badge: "تلاوات خاشعة"
+  },
+  {
+    id: "radio_alafasy",
+    name: "إذاعة الشيخ مشاري راشد العفاسي",
+    subtitle: "تلاوات ندية على مدار الساعة",
+    url: "https://backup.qurango.net/radio/mishary_alafasi",
+    badge: "العفاسي"
   },
   {
     id: "radio_hussary",
@@ -369,20 +392,6 @@ const RADIO_STATIONS = [
     subtitle: "روائع المصحف المجود والمرتل",
     url: "https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad",
     badge: "عبد الباسط"
-  },
-  {
-    id: "radio_alafasy",
-    name: "إذاعة الشيخ مشاري راشد العفاسي",
-    subtitle: "تلاوات ندية على مدار الساعة",
-    url: "https://backup.qurango.net/radio/mishary_alafasi",
-    badge: "العفاسي"
-  },
-  {
-    id: "radio_roqiah",
-    name: "إذاعة السكينة والرقية الشرعية",
-    subtitle: "آيات السكينة والشفاء والتحصين من القرآن الكريم",
-    url: "https://backup.qurango.net/radio/roqiah",
-    badge: "السكينة"
   },
   {
     id: "radio_tafseer",

@@ -446,6 +446,8 @@
       els.bgVideoPlayer.muted = true;
       els.bgVideoPlayer.loop = true;
       els.bgVideoPlayer.playsInline = true;
+      els.bgVideoPlayer.playbackRate = 0.52;
+      els.bgVideoPlayer.defaultPlaybackRate = 0.52;
       els.bgVideoPlayer.addEventListener('canplay', () => {
         if (state.bgType === 'video' && !state.isPreviewing && !state.isRecording) {
           renderStaticPreviewFrame();
@@ -545,6 +547,10 @@
     if (!els.bgVideoPlayer) return;
     const motion = MOTION_BACKGROUNDS[state.selectedMotionId];
     if (!motion) return;
+
+    // Soothing slow-motion playback speed for spiritual serenity
+    els.bgVideoPlayer.playbackRate = 0.52;
+    els.bgVideoPlayer.defaultPlaybackRate = 0.52;
 
     if (motion.isCustom) {
       if (state.customVideoUrl) {
@@ -1048,12 +1054,34 @@
       dx = (w - dw) / 2;
       dy = 0;
     }
+
+    // Ultra-smooth loop crossfade: gently dissolve near boundaries to avoid abrupt jump or cut
+    let alpha = 1.0;
+    if (video.duration && video.duration > 1.5) {
+      const cur = video.currentTime;
+      const dur = video.duration;
+      const fadeWindow = Math.min(0.75, dur * 0.12);
+      if (cur < fadeWindow) {
+        const t = cur / fadeWindow;
+        alpha = 0.35 + 0.65 * (t * t * (3 - 2 * t));
+      } else if (cur > dur - fadeWindow) {
+        const t = (dur - cur) / fadeWindow;
+        alpha = 0.35 + 0.65 * (t * t * (3 - 2 * t));
+      }
+    }
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.3, Math.min(1.0, alpha));
     ctx.drawImage(video, dx, dy, dw, dh);
+    ctx.restore();
     return true;
   }
 
   function drawProceduralNature(ctx, w, h, scale, motionId, time) {
     ctx.save();
+    // Calming slow-motion multiplier for meditative atmosphere
+    const calmTime = time * 0.40;
+
     if (motionId === 'sea') {
       const seaGrad = ctx.createLinearGradient(0, 0, 0, h);
       seaGrad.addColorStop(0, '#041624');
@@ -1064,15 +1092,15 @@
       ctx.fillRect(0, 0, w, h);
 
       for (let layer = 0; layer < 4; layer++) {
-        const speed = 0.8 + layer * 0.4;
+        const speed = 0.45 + layer * 0.22;
         const waveY = h * (0.55 + layer * 0.11);
-        const amp = 18 * scale * (layer + 1) * 0.45;
+        const amp = 14 * scale * (layer + 1) * 0.45;
         const freq = 0.0035 / scale;
         ctx.beginPath();
         ctx.moveTo(0, h);
         for (let x = 0; x <= w; x += 12) {
-          const y = waveY + Math.sin(x * freq + time * speed + layer) * amp
-                         + Math.cos(x * freq * 1.5 - time * speed * 0.5) * (amp * 0.35);
+          const y = waveY + Math.sin(x * freq + calmTime * speed + layer) * amp
+                         + Math.cos(x * freq * 1.5 - calmTime * speed * 0.5) * (amp * 0.35);
           ctx.lineTo(x, y);
         }
         ctx.lineTo(w, h);
@@ -1092,8 +1120,8 @@
       for (let i = 0; i < 45; i++) {
         const sx = ((i * 137.5) % w);
         const sy = ((i * 93.7) % (h * 0.7));
-        const sa = 0.25 + 0.65 * Math.sin(time * 2 + i);
-        ctx.globalAlpha = Math.max(0.1, sa);
+        const sa = 0.35 + 0.55 * Math.sin(calmTime * 1.8 + i);
+        ctx.globalAlpha = Math.max(0.15, sa);
         ctx.beginPath();
         ctx.arc(sx, sy, (i % 3 === 0 ? 1.8 : 1.1) * scale, 0, Math.PI * 2);
         ctx.fill();
@@ -1113,15 +1141,15 @@
       ctx.fillStyle = rainGrad;
       ctx.fillRect(0, 0, w, h);
 
-      ctx.strokeStyle = 'rgba(147, 197, 253, 0.35)';
-      ctx.lineWidth = 1.2 * scale;
-      for (let i = 0; i < 55; i++) {
-        const rx = ((i * 123 + time * 350) % (w + 100)) - 50;
-        const ry = ((i * 87 + time * 900) % (h + 80)) - 40;
-        const len = 22 * scale;
+      ctx.strokeStyle = 'rgba(147, 197, 253, 0.30)';
+      ctx.lineWidth = 1.1 * scale;
+      for (let i = 0; i < 50; i++) {
+        const rx = ((i * 123 + calmTime * 220) % (w + 100)) - 50;
+        const ry = ((i * 87 + calmTime * 550) % (h + 80)) - 40;
+        const len = 18 * scale;
         ctx.beginPath();
         ctx.moveTo(rx, ry);
-        ctx.lineTo(rx - 4 * scale, ry + len);
+        ctx.lineTo(rx - 3 * scale, ry + len);
         ctx.stroke();
       }
     } else if (motionId === 'forest') {
@@ -1151,7 +1179,7 @@
       ctx.beginPath();
       ctx.moveTo(0, h);
       for (let x = 0; x <= w; x += 30) {
-        const sway = Math.sin(time * 1.2 + x * 0.02) * (8 * scale);
+        const sway = Math.sin(calmTime * 0.8 + x * 0.02) * (5 * scale);
         const ty = h * 0.72 + Math.sin(x * 0.01) * (20 * scale) + sway;
         ctx.lineTo(x, ty);
       }
@@ -1170,7 +1198,7 @@
       ctx.save();
       ctx.translate(w / 2, h * 0.45);
       for (let r = 0; r < 12; r++) {
-        const ang = (r * Math.PI * 2) / 12 + (time * 0.04);
+        const ang = (r * Math.PI * 2) / 12 + (calmTime * 0.03);
         const rGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, w * 0.6);
         rGrad.addColorStop(0, 'rgba(251, 191, 36, 0.12)');
         rGrad.addColorStop(0.7, 'rgba(217, 119, 6, 0.04)');
