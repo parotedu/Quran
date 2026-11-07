@@ -180,10 +180,13 @@
         <i class="fa-solid fa-list-ul"></i>
         <span>السور</span>
       </button>
-      <!-- Hidden compatibility anchors for existing script hooks -->
-      <button id="nav-btn-memorial" class="hidden"></button>
-      <button id="nav-btn-video" class="hidden"></button>
     </nav>
+
+    <!-- Invisible compatibility hooks completely outside flex layout -->
+    <div class="hidden" aria-hidden="true" style="display:none!important">
+      <button id="nav-btn-memorial" tabindex="-1"></button>
+      <button id="nav-btn-video" tabindex="-1"></button>
+    </div>
 
     <!-- Controls & Separate Services Launcher (Spacious, balanced, calming) -->
     <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
@@ -235,7 +238,7 @@
       </div>
 
       <!-- Reciter Selector Chip -->
-      <div class="flex items-center gap-1 bg-emerald-950/50 rounded-xl px-1.5 xs:px-2 sm:px-2.5 py-0.5 sm:py-1 border border-emerald-500/15 text-[10px] sm:text-xs shadow-inner flex-shrink-0 max-w-[110px] xs:max-w-[135px] sm:max-w-[170px] lg:max-w-[160px] xl:max-w-[190px] 2xl:max-w-[240px]">
+      <div class="flex items-center gap-1 bg-emerald-950/50 rounded-xl px-2 sm:px-2.5 py-0.5 sm:py-1 border border-emerald-500/20 text-[10px] sm:text-xs shadow-inner flex-shrink-0 max-w-[120px] xs:max-w-[150px] sm:max-w-[190px] lg:max-w-[215px] xl:max-w-[260px] 2xl:max-w-[310px]">
         <i class="fa-solid fa-microphone-lines text-amber-400 text-[10px] sm:text-xs flex-shrink-0"></i>
         <label for="reciter-select" class="text-[var(--text-secondary)] font-medium select-none hidden 2xl:inline mr-1">القارئ:</label>
         <div class="relative min-w-0 flex-1">
@@ -1381,6 +1384,46 @@
                       <i class="fa-solid fa-trash"></i>
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <!-- Ambient Spiritual Soundscape (مؤثرات السكينة الصوتية في خلفية الفيديو) -->
+              <div class="bg-emerald-950/50 p-2.5 rounded-2xl border border-emerald-500/20 space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="block text-[11px] font-bold text-amber-300">
+                    <i class="fa-solid fa-volume-low text-amber-400 ml-1"></i>مؤثرات السكينة بالخلفية (صوت بحر / مطر خفيف):
+                  </label>
+                  <span class="text-[9px] bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30 font-bold">اختياري</span>
+                </div>
+                
+                <div id="video-ambient-options" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+                  <button type="button" data-ambient="none" class="ambient-chip py-1.5 px-2 rounded-xl border border-amber-500/50 bg-amber-500/20 text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-microphone text-[10px]"></i>
+                    <span>تلاوة فقط</span>
+                  </button>
+                  <button type="button" data-ambient="rain" class="ambient-chip py-1.5 px-2 rounded-xl border border-emerald-500/20 bg-emerald-950/60 text-[var(--text-secondary)] hover:text-cyan-300 hover:border-cyan-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-cloud-showers-heavy text-cyan-400 text-[10px]"></i>
+                    <span>خرير مطر</span>
+                  </button>
+                  <button type="button" data-ambient="sea" class="ambient-chip py-1.5 px-2 rounded-xl border border-emerald-500/20 bg-emerald-950/60 text-[var(--text-secondary)] hover:text-sky-300 hover:border-sky-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-water text-sky-400 text-[10px]"></i>
+                    <span>أمواج بحر</span>
+                  </button>
+                  <button type="button" data-ambient="breeze" class="ambient-chip py-1.5 px-2 rounded-xl border border-emerald-500/20 bg-emerald-950/60 text-[var(--text-secondary)] hover:text-emerald-300 hover:border-emerald-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-wind text-emerald-400 text-[10px]"></i>
+                    <span>نسيم عليل</span>
+                  </button>
+                </div>
+
+                <div id="video-ambient-volume-container" class="hidden pt-1 space-y-1 bg-emerald-950/80 p-2 rounded-xl border border-emerald-500/15">
+                  <div class="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+                    <span class="flex items-center gap-1">
+                      <i class="fa-solid fa-sliders text-amber-400"></i>
+                      <span>مستوى صوت السكينة (خافت جداً للخشوع):</span>
+                    </span>
+                    <span id="video-ambient-volume-label" class="font-bold text-amber-400 text-xs">15%</span>
+                  </div>
+                  <input type="range" id="video-ambient-volume-slider" min="5" max="35" value="15" step="1" class="w-full accent-amber-400 h-1.5 bg-emerald-900 rounded-lg cursor-pointer">
                 </div>
               </div>
 

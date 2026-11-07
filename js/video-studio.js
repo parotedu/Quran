@@ -190,50 +190,50 @@
 
   // --- 2.2 Spiritual Motion Video Backgrounds & Presets ---
   const MOTION_BACKGROUNDS = {
+    kaaba: {
+      id: 'kaaba',
+      name: 'الكعبة المشرفة والسكينة',
+      badge: 'الحرم المكي الشريف ليلاً',
+      icon: 'fa-kaaba',
+      videoSrc: 'assets/videos/kaaba_night.webm',
+      fallbackType: 'kaaba',
+      accentColor: '#fbbf24'
+    },
     sea: {
       id: 'sea',
       name: 'أمواج البحر الهادئة',
-      badge: 'سكينة الشاطئ',
+      badge: 'سكينة الشاطئ والموج',
       icon: 'fa-water',
       videoSrc: 'assets/videos/sea_waves.webm',
       fallbackType: 'sea',
       accentColor: '#38bdf8'
     },
-    sky: {
-      id: 'sky',
-      name: 'سماء الليل والغيوم',
-      badge: 'سماء خاشعة',
-      icon: 'fa-cloud-moon',
-      videoSrc: 'assets/videos/sky_clouds.webm',
-      fallbackType: 'sky',
-      accentColor: '#818cf8'
-    },
     rain: {
       id: 'rain',
       name: 'أمطار الرحمة والماء',
-      badge: 'خرير الماء والقطرات',
+      badge: 'قطرات وسكينة الغيث ليلاً',
       icon: 'fa-cloud-showers-heavy',
       videoSrc: 'assets/videos/rain_calm.webm',
       fallbackType: 'rain',
       accentColor: '#67e8f9'
     },
+    sky: {
+      id: 'sky',
+      name: 'سماء الليل والغيوم',
+      badge: 'سماء خاشعة ونجوم',
+      icon: 'fa-cloud-moon',
+      videoSrc: 'assets/videos/sky_clouds.webm',
+      fallbackType: 'sky',
+      accentColor: '#818cf8'
+    },
     forest: {
       id: 'forest',
       name: 'أشجار الغابة والنسيم',
-      badge: 'أشجار وأغصان مورقة',
+      badge: 'خضرة ونسيم عليل',
       icon: 'fa-tree',
       videoSrc: null,
       fallbackType: 'forest',
       accentColor: '#34d399'
-    },
-    kaaba: {
-      id: 'kaaba',
-      name: 'الكعبة المشرفة والسكينة',
-      badge: 'الحرم المكي الشريف',
-      icon: 'fa-kaaba',
-      videoSrc: null,
-      fallbackType: 'kaaba',
-      accentColor: '#fbbf24'
     },
     custom: {
       id: 'custom',
@@ -298,7 +298,7 @@
     selectedReciterId: 'alafasy',
     selectedThemeId: 'emerald',
     bgType: 'theme', // 'theme' | 'video'
-    selectedMotionId: 'sea',
+    selectedMotionId: 'kaaba',
     customVideoFile: null,
     customVideoUrl: null,
     aspectRatio: 'vertical', // 'vertical' (9:16) | 'square' (1:1) | 'landscape' (16:9)
@@ -306,6 +306,8 @@
     transitionStyle: 'cinematic', // 'cinematic' | 'radiant' | 'reverent'
     dedicationText: '',
     fontSizeMode: 'auto', // 'auto' | 'medium' | 'large'
+    ambientSound: 'none', // 'none' | 'rain' | 'sea' | 'breeze'
+    ambientVolume: 0.15, // 15% soft background
     enableParticles: true,
     enableWave: true,
     enableBasmala: true,
@@ -403,6 +405,10 @@
       bgModeLabel: document.getElementById('video-bg-mode-label'),
 
       dedicationInput: document.getElementById('video-dedication-input'),
+      ambientContainer: document.getElementById('video-ambient-options'),
+      ambientVolumeContainer: document.getElementById('video-ambient-volume-container'),
+      ambientVolumeSlider: document.getElementById('video-ambient-volume-slider'),
+      ambientVolumeLabel: document.getElementById('video-ambient-volume-label'),
       qualitySelect: document.getElementById('video-quality-select'),
       fontSizeSelect: document.getElementById('video-fontsize-select'),
       particlesToggle: document.getElementById('video-particles-toggle'),
@@ -446,8 +452,8 @@
       els.bgVideoPlayer.muted = true;
       els.bgVideoPlayer.loop = true;
       els.bgVideoPlayer.playsInline = true;
-      els.bgVideoPlayer.playbackRate = 0.52;
-      els.bgVideoPlayer.defaultPlaybackRate = 0.52;
+      els.bgVideoPlayer.playbackRate = 0.38;
+      els.bgVideoPlayer.defaultPlaybackRate = 0.38;
       els.bgVideoPlayer.addEventListener('canplay', () => {
         if (state.bgType === 'video' && !state.isPreviewing && !state.isRecording) {
           renderStaticPreviewFrame();
@@ -549,8 +555,8 @@
     if (!motion) return;
 
     // Soothing slow-motion playback speed for spiritual serenity
-    els.bgVideoPlayer.playbackRate = 0.52;
-    els.bgVideoPlayer.defaultPlaybackRate = 0.52;
+    els.bgVideoPlayer.playbackRate = 0.38;
+    els.bgVideoPlayer.defaultPlaybackRate = 0.38;
 
     if (motion.isCustom) {
       if (state.customVideoUrl) {
@@ -842,6 +848,39 @@
     if (els.audioMonitorToggle) {
       els.audioMonitorToggle.addEventListener('change', (e) => {
         state.monitorAudio = e.target.checked;
+      });
+    }
+
+    // Ambient Soundscape Selector & Volume Slider
+    if (els.ambientContainer) {
+      els.ambientContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.ambient-chip');
+        if (!btn) return;
+        state.ambientSound = btn.dataset.ambient || 'none';
+        els.ambientContainer.querySelectorAll('.ambient-chip').forEach(c => {
+          c.classList.remove('active', 'border-amber-500/50', 'bg-amber-500/20', 'text-amber-300', 'font-bold');
+          c.classList.add('border-emerald-500/20', 'bg-emerald-950/60', 'text-[var(--text-secondary)]');
+        });
+        btn.classList.add('active', 'border-amber-500/50', 'bg-amber-500/20', 'text-amber-300', 'font-bold');
+        btn.classList.remove('border-emerald-500/20', 'bg-emerald-950/60', 'text-[var(--text-secondary)]');
+
+        if (els.ambientVolumeContainer) {
+          if (state.ambientSound === 'none') {
+            els.ambientVolumeContainer.classList.add('hidden');
+          } else {
+            els.ambientVolumeContainer.classList.remove('hidden');
+          }
+        }
+      });
+    }
+
+    if (els.ambientVolumeSlider) {
+      els.ambientVolumeSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        state.ambientVolume = val / 100;
+        if (els.ambientVolumeLabel) {
+          els.ambientVolumeLabel.innerText = `${val}%`;
+        }
       });
     }
 
@@ -1813,6 +1852,68 @@
     return await audioCtx.decodeAudioData(arrayBuffer);
   }
 
+  // --- Procedural Spiritual Ambient Sound Synthesizer ---
+  function createProceduralAmbientBuffer(ctx, type, durationSec) {
+    const sampleRate = ctx.sampleRate || 44100;
+    const numFrames = Math.max(1, Math.floor(sampleRate * Math.max(1, durationSec)));
+    const buffer = ctx.createBuffer(2, numFrames, sampleRate);
+    const left = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+
+    if (type === 'rain') {
+      // Gentle rainfall patter & soothing wash (filtered pink noise + soft droplet taps)
+      let b0L = 0, b1L = 0, b2L = 0;
+      let b0R = 0, b1R = 0, b2R = 0;
+      for (let i = 0; i < numFrames; i++) {
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        b0L = 0.99765 * b0L + whiteL * 0.0555179;
+        b1L = 0.96300 * b1L + whiteL * 0.0750759;
+        b2L = 0.57000 * b2L + whiteL * 0.1538520;
+        b0R = 0.99765 * b0R + whiteR * 0.0555179;
+        b1R = 0.96300 * b1R + whiteR * 0.0750759;
+        b2R = 0.57000 * b2R + whiteR * 0.1538520;
+        let sL = (b0L + b1L + b2L + whiteL * 0.08) * 0.32;
+        let sR = (b0R + b1R + b2R + whiteR * 0.08) * 0.32;
+        if (Math.random() < 0.0006) {
+          const drop = (Math.random() * 0.3 + 0.1);
+          sL += drop;
+          sR += drop * 0.75;
+        }
+        left[i] = Math.max(-0.95, Math.min(0.95, sL));
+        right[i] = Math.max(-0.95, Math.min(0.95, sR));
+      }
+    } else if (type === 'sea') {
+      // Ebb and flow tidal ocean waves: Brown noise with slow 0.08Hz swell modulation
+      let lastL = 0, lastR = 0;
+      const swellFreq = 0.08;
+      for (let i = 0; i < numFrames; i++) {
+        const t = i / sampleRate;
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        lastL = (lastL + (0.022 * whiteL)) / 1.022;
+        lastR = (lastR + (0.022 * whiteR)) / 1.022;
+        const swell = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(2 * Math.PI * swellFreq * t));
+        left[i] = Math.max(-0.95, Math.min(0.95, lastL * 3.5 * swell));
+        right[i] = Math.max(-0.95, Math.min(0.95, lastR * 3.5 * swell));
+      }
+    } else if (type === 'breeze') {
+      // Soothing atmospheric mountain breeze
+      let bL = 0, bR = 0;
+      for (let i = 0; i < numFrames; i++) {
+        const t = i / sampleRate;
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        bL = 0.993 * bL + whiteL * 0.007;
+        bR = 0.993 * bR + whiteR * 0.007;
+        const breathe = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.05 * t));
+        left[i] = Math.max(-0.95, Math.min(0.95, bL * 5.5 * breathe));
+        right[i] = Math.max(-0.95, Math.min(0.95, bR * 5.5 * breathe));
+      }
+    }
+    return buffer;
+  }
+
   async function prepareTimeline(audioCtx, signal) {
     const allAyahs = await fetchSurahAyahs(state.selectedSurahId);
     const selectedAyahs = allAyahs.filter(a => a.numberInSurah >= state.fromAyah && a.numberInSurah <= state.toAyah);
@@ -1967,6 +2068,23 @@
       masterSource.start(startTime);
       state.activeSources.push(masterSource);
 
+      // Play soft spiritual ambient soundscape in preview if enabled
+      if (state.ambientSound && state.ambientSound !== 'none') {
+        try {
+          const ambBuf = createProceduralAmbientBuffer(audioCtx, state.ambientSound, totalDuration + 2.0);
+          const ambSource = audioCtx.createBufferSource();
+          ambSource.buffer = ambBuf;
+          const ambGain = audioCtx.createGain();
+          ambGain.gain.setValueAtTime(state.ambientVolume || 0.15, audioCtx.currentTime);
+          ambGain.connect(audioCtx.destination);
+          ambSource.connect(ambGain);
+          ambSource.start(startTime);
+          state.activeSources.push(ambSource);
+        } catch (e) {
+          console.warn('Ambient preview audio notice:', e);
+        }
+      }
+
       // Start background motion video if selected
       if (state.bgType === 'video' && els.bgVideoPlayer) {
         try {
@@ -2063,6 +2181,23 @@
       masterSource.connect(monitorGain);
       masterSource.start(recordingStartTime);
       state.activeSources.push(masterSource);
+
+      // Mix soft spiritual ambient soundscape into final recorded stream
+      if (state.ambientSound && state.ambientSound !== 'none') {
+        try {
+          const ambBuf = createProceduralAmbientBuffer(audioCtx, state.ambientSound, totalDuration + 2.0);
+          const ambSource = audioCtx.createBufferSource();
+          ambSource.buffer = ambBuf;
+          const ambGain = audioCtx.createGain();
+          ambGain.gain.setValueAtTime(state.ambientVolume || 0.15, audioCtx.currentTime);
+          ambGain.connect(audioDest);
+          ambGain.connect(monitorGain);
+          ambSource.start(recordingStartTime);
+          state.activeSources.push(ambSource);
+        } catch (e) {
+          console.warn('Ambient recording audio notice:', e);
+        }
+      }
 
       // Combine Video & Audio Streams
       const combinedStream = new MediaStream([

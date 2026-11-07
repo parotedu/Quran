@@ -401,8 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navBtnMushaf) navBtnMushaf.className = tabInactive;
     if (navBtnSpiritual) navBtnSpiritual.className = tabInactive;
     if (navBtnPlaylist) navBtnPlaylist.className = tabInactive + ' lg:hidden';
-    if (navBtnMemorial) navBtnMemorial.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-rose-300 hover:text-rose-200 hover:bg-rose-500/10';
-    if (navBtnVideo) navBtnVideo.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/20';
 
     if (btnServicesMenu) {
       if (targetView === 'video') {
@@ -462,12 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
         khatmaCard.classList.add('hidden');
       }
     } else if (targetView === 'memorial') {
-      if (navBtnMemorial) navBtnMemorial.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-rose-500/25 text-rose-200 border border-rose-500/40 shadow-sm';
       if (memorialView) memorialView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       updateMemorialViewUI();
     } else if (targetView === 'video') {
-      if (navBtnVideo) navBtnVideo.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm';
       if (videoStudioView) videoStudioView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       if (window.initVideoStudioView) window.initVideoStudioView();
