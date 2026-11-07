@@ -936,14 +936,20 @@ body {
   100% { background-position: -200% 0; }
 }
 
-.video-theme-pill {
+.video-theme-pill,
+.video-motion-pill {
   cursor: pointer;
   user-select: none;
 }
 
-.video-theme-pill.active {
+.video-theme-pill.active,
+.video-motion-pill.active {
   border-color: #fbbf24 !important;
   box-shadow: 0 0 14px rgba(251, 191, 36, 0.35);
+}
+
+.video-motion-pill.active {
+  background: rgba(245, 158, 11, 0.18) !important;
 }
 
 .video-stepper-btn {
@@ -977,5 +983,52 @@ body {
 #btn-header-video:hover {
   box-shadow: 0 0 22px rgba(251, 191, 36, 0.45);
 }
+
+/* Ambient Spiritual Soundscape Chips */
+.ambient-chip {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ambient-chip:hover {
+  transform: translateY(-1px);
+}
+
+.ambient-chip.active {
+  border-color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.3);
+}
+
+/* Global Typography & Micro-Contrast Polish */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0.012em;
+}
+
+.font-quran {
+  letter-spacing: 0.015em;
+  line-height: 2.15;
+}
+
+/* Enhanced micro-transitions for interactive buttons and cards */
+button, select, input {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.surah-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.surah-card:hover {
+  transform: translateX(-3px);
+  border-color: rgba(251, 191, 36, 0.38) !important;
+  box-shadow: 0 4px 16px -2px rgba(251, 191, 36, 0.12);
+}
+
 
 

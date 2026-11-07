@@ -188,6 +188,63 @@
     }
   };
 
+  // --- 2.2 Spiritual Motion Video Backgrounds & Presets ---
+  const MOTION_BACKGROUNDS = {
+    kaaba: {
+      id: 'kaaba',
+      name: 'الكعبة المشرفة والسكينة',
+      badge: 'الحرم المكي الشريف ليلاً',
+      icon: 'fa-kaaba',
+      videoSrc: 'assets/videos/kaaba_night.webm',
+      fallbackType: 'kaaba',
+      accentColor: '#fbbf24'
+    },
+    sea: {
+      id: 'sea',
+      name: 'أمواج البحر الهادئة',
+      badge: 'سكينة الشاطئ والموج',
+      icon: 'fa-water',
+      videoSrc: 'assets/videos/sea_waves.webm',
+      fallbackType: 'sea',
+      accentColor: '#38bdf8'
+    },
+    rain: {
+      id: 'rain',
+      name: 'أمطار الرحمة والماء',
+      badge: 'قطرات وسكينة الغيث ليلاً',
+      icon: 'fa-cloud-showers-heavy',
+      videoSrc: 'assets/videos/rain_calm.webm',
+      fallbackType: 'rain',
+      accentColor: '#67e8f9'
+    },
+    sky: {
+      id: 'sky',
+      name: 'سماء الليل والغيوم',
+      badge: 'سماء خاشعة ونجوم',
+      icon: 'fa-cloud-moon',
+      videoSrc: 'assets/videos/sky_clouds.webm',
+      fallbackType: 'sky',
+      accentColor: '#818cf8'
+    },
+    forest: {
+      id: 'forest',
+      name: 'أشجار الغابة والنسيم',
+      badge: 'خضرة ونسيم عليل',
+      icon: 'fa-tree',
+      videoSrc: null,
+      fallbackType: 'forest',
+      accentColor: '#34d399'
+    },
+    custom: {
+      id: 'custom',
+      name: 'رفع فيديو من جهازك',
+      badge: 'فيديو شخصي مخصص',
+      icon: 'fa-upload',
+      isCustom: true,
+      accentColor: '#f59e0b'
+    }
+  };
+
   // --- 3. Dynamic Floating Particles System ---
   class GoldenParticle {
     constructor(w, h, randomY = true) {
@@ -240,11 +297,17 @@
     toAyah: 3,
     selectedReciterId: 'alafasy',
     selectedThemeId: 'emerald',
+    bgType: 'theme', // 'theme' | 'video'
+    selectedMotionId: 'kaaba',
+    customVideoFile: null,
+    customVideoUrl: null,
     aspectRatio: 'vertical', // 'vertical' (9:16) | 'square' (1:1) | 'landscape' (16:9)
     continuityMode: 'seamless', // 'seamless' (30ms crossfade, 0 gap) | 'natural' (180ms breath) | 'calm' (380ms pause)
     transitionStyle: 'cinematic', // 'cinematic' | 'radiant' | 'reverent'
     dedicationText: '',
     fontSizeMode: 'auto', // 'auto' | 'medium' | 'large'
+    ambientSound: 'none', // 'none' | 'rain' | 'sea' | 'breeze'
+    ambientVolume: 0.15, // 15% soft background
     enableParticles: true,
     enableWave: true,
     enableBasmala: true,
@@ -326,8 +389,26 @@
       reciterSelect: document.getElementById('video-reciter-select'),
       continuitySelect: document.getElementById('video-continuity-select'),
       transitionSelect: document.getElementById('video-transition-select'),
+
+      // Themes & Motion Background Controls
+      bgTabThemes: document.getElementById('video-bg-tab-themes'),
+      bgTabMotion: document.getElementById('video-bg-tab-motion'),
+      themeOptionsContainer: document.getElementById('video-theme-options-container'),
+      motionOptionsContainer: document.getElementById('video-motion-options-container'),
       themeContainer: document.getElementById('video-theme-options'),
+      motionContainer: document.getElementById('video-motion-options'),
+      customFileInput: document.getElementById('video-custom-file-input'),
+      customStatusBox: document.getElementById('video-custom-status'),
+      customFilename: document.getElementById('video-custom-filename'),
+      btnRemoveCustom: document.getElementById('video-btn-remove-custom'),
+      bgVideoPlayer: document.getElementById('video-bg-player'),
+      bgModeLabel: document.getElementById('video-bg-mode-label'),
+
       dedicationInput: document.getElementById('video-dedication-input'),
+      ambientContainer: document.getElementById('video-ambient-options'),
+      ambientVolumeContainer: document.getElementById('video-ambient-volume-container'),
+      ambientVolumeSlider: document.getElementById('video-ambient-volume-slider'),
+      ambientVolumeLabel: document.getElementById('video-ambient-volume-label'),
       qualitySelect: document.getElementById('video-quality-select'),
       fontSizeSelect: document.getElementById('video-fontsize-select'),
       particlesToggle: document.getElementById('video-particles-toggle'),
@@ -357,11 +438,28 @@
     // Populate Themes Selector
     populateThemesSelector();
 
+    // Populate Nature Motion Backgrounds Selector
+    populateMotionSelector();
+
     // Setup Canvas Dimensions according to Aspect Ratio & Quality
     setCanvasDimensions();
 
     // Initialize Particles
     initParticles();
+
+    // Setup Video Player element
+    if (els.bgVideoPlayer) {
+      els.bgVideoPlayer.muted = true;
+      els.bgVideoPlayer.loop = true;
+      els.bgVideoPlayer.playsInline = true;
+      els.bgVideoPlayer.playbackRate = 0.38;
+      els.bgVideoPlayer.defaultPlaybackRate = 0.38;
+      els.bgVideoPlayer.addEventListener('canplay', () => {
+        if (state.bgType === 'video' && !state.isPreviewing && !state.isRecording) {
+          renderStaticPreviewFrame();
+        }
+      });
+    }
 
     // Attach Event Listeners
     attachEventListeners();
@@ -432,6 +530,50 @@
         </button>
       `;
     }).join('');
+  }
+
+  function populateMotionSelector() {
+    if (!els.motionContainer) return;
+    els.motionContainer.innerHTML = Object.values(MOTION_BACKGROUNDS).map(m => {
+      const isSelected = state.selectedMotionId === m.id;
+      const activeClass = isSelected ? 'active ring-2 ring-amber-400 bg-amber-500/20 text-amber-300' : 'bg-emerald-950/50 hover:bg-emerald-900/40 text-slate-200';
+      return `
+        <button type="button" data-motion-id="${m.id}" class="video-motion-pill flex flex-col items-start gap-1 p-2 rounded-xl border border-amber-500/25 transition-all text-xs font-bold ${activeClass}">
+          <div class="flex items-center gap-1.5 w-full">
+            <i class="fa-solid ${m.icon} text-xs flex-shrink-0" style="color: ${m.accentColor}"></i>
+            <span class="truncate text-[11px]">${m.name}</span>
+          </div>
+          <span class="text-[9px] text-[var(--text-secondary)] font-normal">${m.badge}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  function updateActiveMotionVideo() {
+    if (!els.bgVideoPlayer) return;
+    const motion = MOTION_BACKGROUNDS[state.selectedMotionId];
+    if (!motion) return;
+
+    // Soothing slow-motion playback speed for spiritual serenity
+    els.bgVideoPlayer.playbackRate = 0.38;
+    els.bgVideoPlayer.defaultPlaybackRate = 0.38;
+
+    if (motion.isCustom) {
+      if (state.customVideoUrl) {
+        els.bgVideoPlayer.src = state.customVideoUrl;
+        els.bgVideoPlayer.load();
+      } else {
+        els.bgVideoPlayer.removeAttribute('src');
+      }
+      return;
+    }
+
+    if (motion.videoSrc) {
+      els.bgVideoPlayer.src = motion.videoSrc;
+      els.bgVideoPlayer.load();
+    } else {
+      els.bgVideoPlayer.removeAttribute('src');
+    }
   }
 
   // --- 7. Event Handlers ---
@@ -534,6 +676,102 @@
       });
     }
 
+    // Background Tab Switchers: Themes vs Motion Video
+    if (els.bgTabThemes) {
+      els.bgTabThemes.addEventListener('click', () => {
+        state.bgType = 'theme';
+        els.bgTabThemes.classList.add('bg-amber-500/20', 'text-amber-300', 'border', 'border-amber-500/30');
+        els.bgTabThemes.classList.remove('text-[var(--text-secondary)]');
+        if (els.bgTabMotion) {
+          els.bgTabMotion.classList.remove('bg-amber-500/20', 'text-amber-300', 'border', 'border-amber-500/30');
+          els.bgTabMotion.classList.add('text-[var(--text-secondary)]');
+        }
+        if (els.themeOptionsContainer) els.themeOptionsContainer.classList.remove('hidden');
+        if (els.motionOptionsContainer) els.motionOptionsContainer.classList.add('hidden');
+        if (els.bgModeLabel) els.bgModeLabel.innerText = 'سمات ملكية (مذهبة)';
+        if (els.bgVideoPlayer) {
+          try { els.bgVideoPlayer.pause(); } catch(e) {}
+        }
+        renderStaticPreviewFrame();
+      });
+    }
+
+    if (els.bgTabMotion) {
+      els.bgTabMotion.addEventListener('click', () => {
+        state.bgType = 'video';
+        els.bgTabMotion.classList.add('bg-amber-500/20', 'text-amber-300', 'border', 'border-amber-500/30');
+        els.bgTabMotion.classList.remove('text-[var(--text-secondary)]');
+        if (els.bgTabThemes) {
+          els.bgTabThemes.classList.remove('bg-amber-500/20', 'text-amber-300', 'border', 'border-amber-500/30');
+          els.bgTabThemes.classList.add('text-[var(--text-secondary)]');
+        }
+        if (els.themeOptionsContainer) els.themeOptionsContainer.classList.add('hidden');
+        if (els.motionOptionsContainer) els.motionOptionsContainer.classList.remove('hidden');
+        if (els.bgModeLabel) els.bgModeLabel.innerText = 'فيديو متحرك (طبيعة وبحر)';
+        updateActiveMotionVideo();
+        renderStaticPreviewFrame();
+      });
+    }
+
+    // Motion Background Option Selected
+    if (els.motionContainer) {
+      els.motionContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.video-motion-pill');
+        if (!btn) return;
+        const motionId = btn.dataset.motionId;
+        if (motionId === 'custom') {
+          if (!state.customVideoFile && els.customFileInput) {
+            els.customFileInput.click();
+            return;
+          }
+        }
+        state.selectedMotionId = motionId;
+        populateMotionSelector();
+        updateActiveMotionVideo();
+        renderStaticPreviewFrame();
+      });
+    }
+
+    // Custom Video Upload Handler
+    if (els.customFileInput) {
+      els.customFileInput.addEventListener('change', () => {
+        const file = els.customFileInput.files && els.customFileInput.files[0];
+        if (file) {
+          if (state.customVideoUrl) {
+            URL.revokeObjectURL(state.customVideoUrl);
+          }
+          state.customVideoFile = file;
+          state.customVideoUrl = URL.createObjectURL(file);
+          state.selectedMotionId = 'custom';
+          if (els.customFilename) els.customFilename.innerText = file.name;
+          if (els.customStatusBox) els.customStatusBox.classList.remove('hidden');
+          populateMotionSelector();
+          updateActiveMotionVideo();
+          renderStaticPreviewFrame();
+          if (typeof showToast === 'function') {
+            showToast('تم تحميل خلفية الفيديو المخصصة بنجاح', 'success');
+          }
+        }
+      });
+    }
+
+    // Remove Custom Video
+    if (els.btnRemoveCustom) {
+      els.btnRemoveCustom.addEventListener('click', () => {
+        if (state.customVideoUrl) {
+          URL.revokeObjectURL(state.customVideoUrl);
+        }
+        state.customVideoFile = null;
+        state.customVideoUrl = null;
+        if (els.customFileInput) els.customFileInput.value = '';
+        if (els.customStatusBox) els.customStatusBox.classList.add('hidden');
+        state.selectedMotionId = 'sea';
+        populateMotionSelector();
+        updateActiveMotionVideo();
+        renderStaticPreviewFrame();
+      });
+    }
+
     // Stepper & Number Inputs
     if (els.fromAyahInput) {
       els.fromAyahInput.addEventListener('change', () => handleRangeInputChange('from'));
@@ -610,6 +848,39 @@
     if (els.audioMonitorToggle) {
       els.audioMonitorToggle.addEventListener('change', (e) => {
         state.monitorAudio = e.target.checked;
+      });
+    }
+
+    // Ambient Soundscape Selector & Volume Slider
+    if (els.ambientContainer) {
+      els.ambientContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.ambient-chip');
+        if (!btn) return;
+        state.ambientSound = btn.dataset.ambient || 'none';
+        els.ambientContainer.querySelectorAll('.ambient-chip').forEach(c => {
+          c.classList.remove('active', 'border-amber-500/50', 'bg-amber-500/20', 'text-amber-300', 'font-bold');
+          c.classList.add('border-emerald-500/20', 'bg-emerald-950/60', 'text-[var(--text-secondary)]');
+        });
+        btn.classList.add('active', 'border-amber-500/50', 'bg-amber-500/20', 'text-amber-300', 'font-bold');
+        btn.classList.remove('border-emerald-500/20', 'bg-emerald-950/60', 'text-[var(--text-secondary)]');
+
+        if (els.ambientVolumeContainer) {
+          if (state.ambientSound === 'none') {
+            els.ambientVolumeContainer.classList.add('hidden');
+          } else {
+            els.ambientVolumeContainer.classList.remove('hidden');
+          }
+        }
+      });
+    }
+
+    if (els.ambientVolumeSlider) {
+      els.ambientVolumeSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        state.ambientVolume = val / 100;
+        if (els.ambientVolumeLabel) {
+          els.ambientVolumeLabel.innerText = `${val}%`;
+        }
       });
     }
 
@@ -804,6 +1075,185 @@
     });
   }
 
+  function drawCoverVideo(ctx, video, w, h) {
+    if (!video || !video.videoWidth || !video.videoHeight) return false;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    const videoRatio = vw / vh;
+    const canvasRatio = w / h;
+    let dw, dh, dx, dy;
+    if (canvasRatio > videoRatio) {
+      dw = w;
+      dh = w / videoRatio;
+      dx = 0;
+      dy = (h - dh) / 2;
+    } else {
+      dh = h;
+      dw = h * videoRatio;
+      dx = (w - dw) / 2;
+      dy = 0;
+    }
+
+    // Ultra-smooth loop crossfade: gently dissolve near boundaries to avoid abrupt jump or cut
+    let alpha = 1.0;
+    if (video.duration && video.duration > 1.5) {
+      const cur = video.currentTime;
+      const dur = video.duration;
+      const fadeWindow = Math.min(0.75, dur * 0.12);
+      if (cur < fadeWindow) {
+        const t = cur / fadeWindow;
+        alpha = 0.35 + 0.65 * (t * t * (3 - 2 * t));
+      } else if (cur > dur - fadeWindow) {
+        const t = (dur - cur) / fadeWindow;
+        alpha = 0.35 + 0.65 * (t * t * (3 - 2 * t));
+      }
+    }
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.3, Math.min(1.0, alpha));
+    ctx.drawImage(video, dx, dy, dw, dh);
+    ctx.restore();
+    return true;
+  }
+
+  function drawProceduralNature(ctx, w, h, scale, motionId, time) {
+    ctx.save();
+    // Calming slow-motion multiplier for meditative atmosphere
+    const calmTime = time * 0.40;
+
+    if (motionId === 'sea') {
+      const seaGrad = ctx.createLinearGradient(0, 0, 0, h);
+      seaGrad.addColorStop(0, '#041624');
+      seaGrad.addColorStop(0.4, '#06283d');
+      seaGrad.addColorStop(0.75, '#0a3a40');
+      seaGrad.addColorStop(1, '#021019');
+      ctx.fillStyle = seaGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      for (let layer = 0; layer < 4; layer++) {
+        const speed = 0.45 + layer * 0.22;
+        const waveY = h * (0.55 + layer * 0.11);
+        const amp = 14 * scale * (layer + 1) * 0.45;
+        const freq = 0.0035 / scale;
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 12) {
+          const y = waveY + Math.sin(x * freq + calmTime * speed + layer) * amp
+                         + Math.cos(x * freq * 1.5 - calmTime * speed * 0.5) * (amp * 0.35);
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(56, 189, 248, ${0.12 + layer * 0.07})`;
+        ctx.fill();
+      }
+    } else if (motionId === 'sky') {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#020617');
+      skyGrad.addColorStop(0.5, '#070f2b');
+      skyGrad.addColorStop(1, '#1b1a55');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 45; i++) {
+        const sx = ((i * 137.5) % w);
+        const sy = ((i * 93.7) % (h * 0.7));
+        const sa = 0.35 + 0.55 * Math.sin(calmTime * 1.8 + i);
+        ctx.globalAlpha = Math.max(0.15, sa);
+        ctx.beginPath();
+        ctx.arc(sx, sy, (i % 3 === 0 ? 1.8 : 1.1) * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      const nebGrad = ctx.createRadialGradient(w * 0.7, h * 0.3, 10, w * 0.7, h * 0.3, w * 0.6);
+      nebGrad.addColorStop(0, 'rgba(129, 140, 248, 0.22)');
+      nebGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = nebGrad;
+      ctx.fillRect(0, 0, w, h);
+    } else if (motionId === 'rain') {
+      const rainGrad = ctx.createLinearGradient(0, 0, 0, h);
+      rainGrad.addColorStop(0, '#020b14');
+      rainGrad.addColorStop(0.6, '#081c2e');
+      rainGrad.addColorStop(1, '#05111d');
+      ctx.fillStyle = rainGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = 'rgba(147, 197, 253, 0.30)';
+      ctx.lineWidth = 1.1 * scale;
+      for (let i = 0; i < 50; i++) {
+        const rx = ((i * 123 + calmTime * 220) % (w + 100)) - 50;
+        const ry = ((i * 87 + calmTime * 550) % (h + 80)) - 40;
+        const len = 18 * scale;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx - 3 * scale, ry + len);
+        ctx.stroke();
+      }
+    } else if (motionId === 'forest') {
+      const forGrad = ctx.createLinearGradient(0, 0, 0, h);
+      forGrad.addColorStop(0, '#021810');
+      forGrad.addColorStop(0.5, '#052e1c');
+      forGrad.addColorStop(1, '#02130a');
+      ctx.fillStyle = forGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      for (let b = 0; b < 3; b++) {
+        const bx = w * (0.25 + b * 0.28);
+        const bGrad = ctx.createLinearGradient(bx, 0, bx + 60 * scale, h);
+        bGrad.addColorStop(0, 'rgba(52, 211, 153, 0.16)');
+        bGrad.addColorStop(1, 'rgba(52, 211, 153, 0)');
+        ctx.fillStyle = bGrad;
+        ctx.beginPath();
+        ctx.moveTo(bx - 30 * scale, 0);
+        ctx.lineTo(bx + 40 * scale, 0);
+        ctx.lineTo(bx + 110 * scale, h);
+        ctx.lineTo(bx - 10 * scale, h);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = 'rgba(2, 24, 14, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 30) {
+        const sway = Math.sin(calmTime * 0.8 + x * 0.02) * (5 * scale);
+        const ty = h * 0.72 + Math.sin(x * 0.01) * (20 * scale) + sway;
+        ctx.lineTo(x, ty);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Holy Sanctuary / Kaaba ambient
+      const kGrad = ctx.createRadialGradient(w / 2, h * 0.45, 40 * scale, w / 2, h * 0.5, Math.max(w, h) * 0.7);
+      kGrad.addColorStop(0, '#1c1505');
+      kGrad.addColorStop(0.45, '#0d0a03');
+      kGrad.addColorStop(1, '#050401');
+      ctx.fillStyle = kGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.translate(w / 2, h * 0.45);
+      for (let r = 0; r < 12; r++) {
+        const ang = (r * Math.PI * 2) / 12 + (calmTime * 0.03);
+        const rGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, w * 0.6);
+        rGrad.addColorStop(0, 'rgba(251, 191, 36, 0.12)');
+        rGrad.addColorStop(0.7, 'rgba(217, 119, 6, 0.04)');
+        rGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = rGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, w * 0.65, ang - 0.08, ang + 0.08);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   function drawSingleFrame(ctx, w, h, data) {
     const theme = VIDEO_THEMES[data.themeId || state.selectedThemeId] || VIDEO_THEMES.emerald;
     const scale = Math.min(w / 720, h / 1280);
@@ -813,16 +1263,35 @@
 
     ctx.clearRect(0, 0, w, h);
 
-    // 1. Luxury Royal Radial Gradient Background
-    const grad = ctx.createRadialGradient(w / 2, h * 0.5, 60 * scale, w / 2, h * 0.5, Math.max(w, h) * 0.65);
-    grad.addColorStop(0, theme.bgCenter);
-    grad.addColorStop(0.55, theme.bgMid);
-    grad.addColorStop(1, theme.bgOuter);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
+    if (state.bgType === 'video') {
+      // Render Motion Video or Procedural Nature
+      let videoDrawn = false;
+      if (els.bgVideoPlayer && els.bgVideoPlayer.readyState >= 2 && els.bgVideoPlayer.videoWidth > 0) {
+        videoDrawn = drawCoverVideo(ctx, els.bgVideoPlayer, w, h);
+      }
+      if (!videoDrawn) {
+        drawProceduralNature(ctx, w, h, scale, state.selectedMotionId, time);
+      }
 
-    // 2. Subtle Islamic Star Geometric Background Ambient
-    drawGeometricAura(ctx, w, h, scale, theme, time);
+      // Luxury dark veil over motion background so golden text & borders remain crystal clear & highly legible
+      const darkVeil = ctx.createRadialGradient(w / 2, h * 0.5, 80 * scale, w / 2, h * 0.5, Math.max(w, h) * 0.68);
+      darkVeil.addColorStop(0, 'rgba(4, 10, 8, 0.52)');
+      darkVeil.addColorStop(0.65, 'rgba(2, 6, 5, 0.72)');
+      darkVeil.addColorStop(1, 'rgba(1, 4, 3, 0.88)');
+      ctx.fillStyle = darkVeil;
+      ctx.fillRect(0, 0, w, h);
+    } else {
+      // 1. Luxury Royal Radial Gradient Background
+      const grad = ctx.createRadialGradient(w / 2, h * 0.5, 60 * scale, w / 2, h * 0.5, Math.max(w, h) * 0.65);
+      grad.addColorStop(0, theme.bgCenter);
+      grad.addColorStop(0.55, theme.bgMid);
+      grad.addColorStop(1, theme.bgOuter);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // 2. Subtle Islamic Star Geometric Background Ambient
+      drawGeometricAura(ctx, w, h, scale, theme, time);
+    }
 
     // 3. Floating Golden Dust Particles
     if (state.enableParticles && state.particles.length > 0) {
@@ -1383,6 +1852,68 @@
     return await audioCtx.decodeAudioData(arrayBuffer);
   }
 
+  // --- Procedural Spiritual Ambient Sound Synthesizer ---
+  function createProceduralAmbientBuffer(ctx, type, durationSec) {
+    const sampleRate = ctx.sampleRate || 44100;
+    const numFrames = Math.max(1, Math.floor(sampleRate * Math.max(1, durationSec)));
+    const buffer = ctx.createBuffer(2, numFrames, sampleRate);
+    const left = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+
+    if (type === 'rain') {
+      // Gentle rainfall patter & soothing wash (filtered pink noise + soft droplet taps)
+      let b0L = 0, b1L = 0, b2L = 0;
+      let b0R = 0, b1R = 0, b2R = 0;
+      for (let i = 0; i < numFrames; i++) {
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        b0L = 0.99765 * b0L + whiteL * 0.0555179;
+        b1L = 0.96300 * b1L + whiteL * 0.0750759;
+        b2L = 0.57000 * b2L + whiteL * 0.1538520;
+        b0R = 0.99765 * b0R + whiteR * 0.0555179;
+        b1R = 0.96300 * b1R + whiteR * 0.0750759;
+        b2R = 0.57000 * b2R + whiteR * 0.1538520;
+        let sL = (b0L + b1L + b2L + whiteL * 0.08) * 0.32;
+        let sR = (b0R + b1R + b2R + whiteR * 0.08) * 0.32;
+        if (Math.random() < 0.0006) {
+          const drop = (Math.random() * 0.3 + 0.1);
+          sL += drop;
+          sR += drop * 0.75;
+        }
+        left[i] = Math.max(-0.95, Math.min(0.95, sL));
+        right[i] = Math.max(-0.95, Math.min(0.95, sR));
+      }
+    } else if (type === 'sea') {
+      // Ebb and flow tidal ocean waves: Brown noise with slow 0.08Hz swell modulation
+      let lastL = 0, lastR = 0;
+      const swellFreq = 0.08;
+      for (let i = 0; i < numFrames; i++) {
+        const t = i / sampleRate;
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        lastL = (lastL + (0.022 * whiteL)) / 1.022;
+        lastR = (lastR + (0.022 * whiteR)) / 1.022;
+        const swell = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(2 * Math.PI * swellFreq * t));
+        left[i] = Math.max(-0.95, Math.min(0.95, lastL * 3.5 * swell));
+        right[i] = Math.max(-0.95, Math.min(0.95, lastR * 3.5 * swell));
+      }
+    } else if (type === 'breeze') {
+      // Soothing atmospheric mountain breeze
+      let bL = 0, bR = 0;
+      for (let i = 0; i < numFrames; i++) {
+        const t = i / sampleRate;
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        bL = 0.993 * bL + whiteL * 0.007;
+        bR = 0.993 * bR + whiteR * 0.007;
+        const breathe = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.05 * t));
+        left[i] = Math.max(-0.95, Math.min(0.95, bL * 5.5 * breathe));
+        right[i] = Math.max(-0.95, Math.min(0.95, bR * 5.5 * breathe));
+      }
+    }
+    return buffer;
+  }
+
   async function prepareTimeline(audioCtx, signal) {
     const allAyahs = await fetchSurahAyahs(state.selectedSurahId);
     const selectedAyahs = allAyahs.filter(a => a.numberInSurah >= state.fromAyah && a.numberInSurah <= state.toAyah);
@@ -1537,6 +2068,31 @@
       masterSource.start(startTime);
       state.activeSources.push(masterSource);
 
+      // Play soft spiritual ambient soundscape in preview if enabled
+      if (state.ambientSound && state.ambientSound !== 'none') {
+        try {
+          const ambBuf = createProceduralAmbientBuffer(audioCtx, state.ambientSound, totalDuration + 2.0);
+          const ambSource = audioCtx.createBufferSource();
+          ambSource.buffer = ambBuf;
+          const ambGain = audioCtx.createGain();
+          ambGain.gain.setValueAtTime(state.ambientVolume || 0.15, audioCtx.currentTime);
+          ambGain.connect(audioCtx.destination);
+          ambSource.connect(ambGain);
+          ambSource.start(startTime);
+          state.activeSources.push(ambSource);
+        } catch (e) {
+          console.warn('Ambient preview audio notice:', e);
+        }
+      }
+
+      // Start background motion video if selected
+      if (state.bgType === 'video' && els.bgVideoPlayer) {
+        try {
+          els.bgVideoPlayer.currentTime = 0;
+          els.bgVideoPlayer.play().catch(() => {});
+        } catch (e) {}
+      }
+
       // Run Animation Loop synchronized with audio playback
       runRenderLoop({
         audioCtx,
@@ -1626,6 +2182,23 @@
       masterSource.start(recordingStartTime);
       state.activeSources.push(masterSource);
 
+      // Mix soft spiritual ambient soundscape into final recorded stream
+      if (state.ambientSound && state.ambientSound !== 'none') {
+        try {
+          const ambBuf = createProceduralAmbientBuffer(audioCtx, state.ambientSound, totalDuration + 2.0);
+          const ambSource = audioCtx.createBufferSource();
+          ambSource.buffer = ambBuf;
+          const ambGain = audioCtx.createGain();
+          ambGain.gain.setValueAtTime(state.ambientVolume || 0.15, audioCtx.currentTime);
+          ambGain.connect(audioDest);
+          ambGain.connect(monitorGain);
+          ambSource.start(recordingStartTime);
+          state.activeSources.push(ambSource);
+        } catch (e) {
+          console.warn('Ambient recording audio notice:', e);
+        }
+      }
+
       // Combine Video & Audio Streams
       const combinedStream = new MediaStream([
         ...canvasStream.getVideoTracks(),
@@ -1669,6 +2242,14 @@
       });
 
       recorder.start(100);
+
+      // Start background motion video if selected
+      if (state.bgType === 'video' && els.bgVideoPlayer) {
+        try {
+          els.bgVideoPlayer.currentTime = 0;
+          els.bgVideoPlayer.play().catch(() => {});
+        } catch (e) {}
+      }
 
       // Run Render Loop synchronized with audioCtx.currentTime
       runRenderLoop({
@@ -1989,6 +2570,9 @@
     }
     if (state.recorder && state.recorder.state !== 'inactive') {
       try { state.recorder.stop(); } catch (e) {}
+    }
+    if (els.bgVideoPlayer) {
+      try { els.bgVideoPlayer.pause(); } catch (e) {}
     }
     stopAllAudioPlayback();
     state.isRecording = false;

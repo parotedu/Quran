@@ -395,13 +395,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const navBtnVideo = document.getElementById('nav-btn-video');
     const videoStudioView = document.getElementById('video-studio-view');
+    const btnServicesMenu = document.getElementById('btn-services-menu');
 
     if (navBtnPlayer) navBtnPlayer.className = tabInactive;
     if (navBtnMushaf) navBtnMushaf.className = tabInactive;
     if (navBtnSpiritual) navBtnSpiritual.className = tabInactive;
     if (navBtnPlaylist) navBtnPlaylist.className = tabInactive + ' lg:hidden';
-    if (navBtnMemorial) navBtnMemorial.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-rose-300 hover:text-rose-200 hover:bg-rose-500/10';
-    if (navBtnVideo) navBtnVideo.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/20';
+
+    if (btnServicesMenu) {
+      if (targetView === 'video') {
+        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 border border-amber-500/50 bg-amber-500/20 transition-all duration-200 shadow-md shadow-amber-500/10';
+      } else if (targetView === 'memorial') {
+        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-rose-300 border border-rose-500/50 bg-rose-500/20 transition-all duration-200 shadow-md shadow-rose-500/10';
+      } else {
+        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm';
+      }
+    }
 
     playerView.classList.add('hidden');
     mushafView.classList.add('hidden');
@@ -451,12 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
         khatmaCard.classList.add('hidden');
       }
     } else if (targetView === 'memorial') {
-      if (navBtnMemorial) navBtnMemorial.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-rose-500/25 text-rose-200 border border-rose-500/40 shadow-sm';
       if (memorialView) memorialView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       updateMemorialViewUI();
     } else if (targetView === 'video') {
-      if (navBtnVideo) navBtnVideo.className = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm';
       if (videoStudioView) videoStudioView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       if (window.initVideoStudioView) window.initVideoStudioView();
@@ -1314,6 +1321,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Header Memorial Pill
     if (btnHeaderMemorial) btnHeaderMemorial.addEventListener('click', () => switchView('memorial'));
+
+    // Services Menu Dropdown (صانع الفيديوهات + صدقة جارية)
+    const btnServicesMenu = document.getElementById('btn-services-menu');
+    const servicesDropdown = document.getElementById('services-dropdown');
+    const servicesMenuArrow = document.getElementById('services-menu-arrow');
+    const dropdownBtnVideo = document.getElementById('dropdown-btn-video');
+    const dropdownBtnMemorial = document.getElementById('dropdown-btn-memorial');
+    const servicesMenuContainer = document.getElementById('services-menu-container');
+
+    if (btnServicesMenu && servicesDropdown) {
+      btnServicesMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        servicesDropdown.classList.toggle('hidden');
+        if (servicesMenuArrow) servicesMenuArrow.classList.toggle('rotate-180');
+      });
+
+      if (dropdownBtnVideo) {
+        dropdownBtnVideo.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchView('video');
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
+      if (dropdownBtnMemorial) {
+        dropdownBtnMemorial.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchView('memorial');
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        if (servicesMenuContainer && !servicesMenuContainer.contains(e.target)) {
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        }
+      });
+    }
 
     // Mobile Floating Glass Navigator Tabs
     if (mNavPlayer) mNavPlayer.addEventListener('click', () => switchView('player'));
@@ -3205,22 +3253,41 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.playbackRate = 1.0;
     audio.load();
 
-    playerSurahNumber.innerText = 'بث مباشر 🔴';
-    playerSurahName.innerText = station.name;
-    playerSurahEnglish.innerText = 'Live Quran Radio 24/7';
-    playerRevelation.innerHTML = '<i class="fa-solid fa-tower-broadcast text-red-400"></i> بث مباشر على مدار الساعة';
-    playerVerses.innerHTML = `<i class="fa-solid fa-signal text-emerald-400"></i> جودة عالية`;
-    playerAudioSource.innerHTML = `<i class="fa-solid fa-radio"></i> ${station.subtitle}`;
-    playerSourceBadge.innerText = station.badge;
-    if (playerRadioLabel) playerRadioLabel.innerText = station.badge;
+    if (station.isAudioFile) {
+      playerSurahNumber.innerText = 'تسجيل خاص 🌿';
+      playerSurahName.innerText = station.name;
+      playerSurahEnglish.innerText = 'Al-Ruqyah Al-Shariyyah';
+      playerRevelation.innerHTML = '<i class="fa-solid fa-shield-halved text-emerald-400"></i> تحصين وشفاء بإذن الله';
+      playerVerses.innerHTML = `<i class="fa-solid fa-clock text-amber-400"></i> تسجيل نقي كامل`;
+      playerAudioSource.innerHTML = `<i class="fa-solid fa-microphone-lines"></i> ${station.reciter || 'مشاري العفاسي'}`;
+      playerSourceBadge.innerText = station.badge;
+      if (playerRadioLabel) playerRadioLabel.innerText = station.badge;
 
-    if (miniSurahName) miniSurahName.innerText = station.name;
-    if (miniReciterName) miniReciterName.innerText = 'بث مباشر';
+      if (miniSurahName) miniSurahName.innerText = 'الرقية الشرعية';
+      if (miniReciterName) miniReciterName.innerText = station.reciter || 'مشاري العفاسي';
 
-    updateMediaSession({ name: station.name }, { name: station.subtitle });
-    playAudio();
-    switchView('player');
-    showToast(`تم الاتصال بـ ${station.name} 🔴`);
+      updateMediaSession({ name: station.name }, { name: station.reciter || 'الشيخ مشاري راشد العفاسي' });
+      playAudio();
+      switchView('player');
+      showToast(`جاري تشغيل ${station.name} 🌿`);
+    } else {
+      playerSurahNumber.innerText = 'بث مباشر 🔴';
+      playerSurahName.innerText = station.name;
+      playerSurahEnglish.innerText = 'Live Quran Radio 24/7';
+      playerRevelation.innerHTML = '<i class="fa-solid fa-tower-broadcast text-red-400"></i> بث مباشر على مدار الساعة';
+      playerVerses.innerHTML = `<i class="fa-solid fa-signal text-emerald-400"></i> جودة عالية`;
+      playerAudioSource.innerHTML = `<i class="fa-solid fa-radio"></i> ${station.subtitle}`;
+      playerSourceBadge.innerText = station.badge;
+      if (playerRadioLabel) playerRadioLabel.innerText = station.badge;
+
+      if (miniSurahName) miniSurahName.innerText = station.name;
+      if (miniReciterName) miniReciterName.innerText = 'بث مباشر';
+
+      updateMediaSession({ name: station.name }, { name: station.subtitle });
+      playAudio();
+      switchView('player');
+      showToast(`تم الاتصال بـ ${station.name} 🔴`);
+    }
   }
 
   // --- Spiritual Companion Hub (Khatma, Mood Compass, Azkar, Sebha) ---
