@@ -14,6 +14,10 @@
   <title>مَنْصَةُ القُرآنِ الكَرِيمِ | تلاوات خاشعة، مصحف التتبع الذكي، وصانع الفيديوهات</title>
 
   <!-- Performance & Low-Bandwidth Optimizations: Resource Hints -->
+  <link rel="preconnect" href="https://archive.org" crossorigin>
+  <link rel="dns-prefetch" href="https://archive.org">
+  <link rel="preconnect" href="https://cdn.mp3quran.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.mp3quran.net">
   <link rel="preconnect" href="https://everyayah.com" crossorigin>
   <link rel="dns-prefetch" href="https://everyayah.com">
   <link rel="preconnect" href="https://api.alquran.cloud" crossorigin>
@@ -21,6 +25,7 @@
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap">
 
   <!-- Favicon & App Icons -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -218,6 +223,20 @@
                 <span class="text-[9px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.5 rounded">ريلز</span>
               </div>
               <p class="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">توليد فيديو بالآيات وصوت الشيخ للستوري</p>
+            </div>
+          </button>
+
+          <!-- Hadr Memorization Hub Item -->
+          <button id="dropdown-btn-hadr" type="button" class="w-full p-2.5 rounded-xl hover:bg-cyan-500/15 border border-transparent hover:border-cyan-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-110 transition-transform shadow-md border border-cyan-500/20">
+              <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-bold text-xs text-cyan-300 group-hover:text-cyan-200">مصحف الحدر للحُفّاظ</span>
+                <span class="text-[9px] bg-cyan-500/20 text-cyan-300 font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">تثبيت سريع</span>
+              </div>
+              <p class="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">تلاوة سريعة معتمدة لمراجعة الأوراد والأجزاء</p>
             </div>
           </button>
 
@@ -1097,7 +1116,7 @@
                 <video id="video-bg-player" loop muted playsinline crossOrigin="anonymous" class="hidden"></video>
 
                 <!-- Live Preview Audio Element for Guaranteed Cross-browser Audio Output -->
-                <audio id="video-preview-audio" preload="auto" class="hidden"></audio>
+                <audio id="video-preview-audio" preload="none" class="hidden"></audio>
 
                 <!-- Video Player for Reviewing the Final Recorded Video -->
                 <video id="video-result-player" controls playsinline class="hidden w-full h-full object-contain rounded-2xl bg-black"></video>
@@ -1164,9 +1183,15 @@
                 </button>
 
                 <!-- Audio Monitor Toggle -->
-                <label class="py-2 px-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-[11px] text-[var(--text-secondary)] font-semibold flex items-center justify-center gap-1.5 cursor-pointer select-none">
+                <label class="py-2 px-2 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-[10px] sm:text-[11px] text-[var(--text-secondary)] font-semibold flex items-center justify-center gap-1.5 cursor-pointer select-none">
                   <input type="checkbox" id="video-monitor-audio" class="accent-amber-500 rounded" checked>
                   <span>سماع الصوت</span>
+                </label>
+
+                <!-- TikTok & Reels Safe Zone Toggle -->
+                <label class="py-2 px-2 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-[10px] sm:text-[11px] text-[var(--text-secondary)] hover:text-amber-300 hover:border-amber-500/30 font-semibold flex items-center justify-center gap-1 cursor-pointer select-none transition-colors" title="إظهار حدود مناطق الأمان لتيك توك والريلز لضمان عدم حجب النص">
+                  <input type="checkbox" id="video-safezone-toggle" class="accent-amber-500 rounded">
+                  <span>🎯 منطقة الأمان</span>
                 </label>
               </div>
 
@@ -1435,6 +1460,32 @@
                 <input type="text" id="video-dedication-input" placeholder="مثال: صدقة جارية عن روح والدي رحمه الله • إهداء لوالدتي" maxlength="60" class="w-full bg-emerald-950/80 border border-emerald-500/25 rounded-xl px-3 py-1.5 text-xs text-amber-200 placeholder-emerald-700/60 outline-none focus:border-amber-400 transition-colors">
               </div>
 
+              <!-- Creator Options: Ayah Card Background & Visualizer Waveform Style -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-square-full text-amber-400 ml-1"></i>خلفية بطاقة الآيات (للتيك توك والريلز):
+                  </label>
+                  <select id="video-caption-style-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="frosted">صندوق زجاجي فاخر (Frosted Glass - وضوح فائق)</option>
+                    <option value="glow">وهج ذهبي روحاني (Golden Aura)</option>
+                    <option value="none">كلاسيكي حر (مباشر فوق الخلفية)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-chart-simple text-amber-400 ml-1"></i>شكل موجة الصوت التفاعلية:
+                  </label>
+                  <select id="video-visualizer-style-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="bars">أعمدة طيفية تفاعلية (Spectrum Bars)</option>
+                    <option value="wave">موجة انسيابية متصلة (Smooth Wave)</option>
+                    <option value="pulse">نبضات مركزية هادئة (Pulsing Aura)</option>
+                    <option value="hidden">إخفاء موجة الصوت</option>
+                  </select>
+                </div>
+              </div>
+
               <!-- Font Size & Quality Grid -->
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
@@ -1483,6 +1534,160 @@
               </div>
             </div>
 
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ======================================================================
+           VIEW 6: HADR MEMORIZATION HUB (مصحف الحدر لمراجعة وتثبيت الحُفّاظ)
+           ====================================================================== -->
+      <div id="hadr-view" class="glass-panel player-glow rounded-3xl p-3 sm:p-5 flex flex-col h-full relative overflow-hidden flex-1 min-h-0 hidden animate-fadeIn">
+        
+        <!-- View Header -->
+        <div class="flex items-center justify-between pb-2.5 mb-2 sm:mb-3 border-b border-emerald-500/15 flex-shrink-0">
+          <div class="flex items-center gap-2 sm:gap-2.5">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-cyan-500/20 border border-cyan-500/35 flex items-center justify-center text-cyan-300 shadow flex-shrink-0">
+              <i class="fa-solid fa-bolt-lightning text-sm sm:text-base text-amber-300 animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 sm:gap-2">
+                <h2 class="text-xs sm:text-sm font-bold text-cyan-300 font-quran">مصحف الحدر لمراجعة الحُفّاظ</h2>
+                <span class="text-[9px] bg-cyan-500/20 text-cyan-300 font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">تثبيت سريع</span>
+              </div>
+              <p class="text-[10px] text-[var(--text-secondary)] hidden sm:block">تلاوة سريعة مع تمام أحكام التجويد لتمكين مراجعة وتسميع الأوراد والأجزاء بتركيز</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Reciter Select (Dr. Ahmed Deiban & Yasser Salama) -->
+            <div class="relative">
+              <select id="hadr-reciter-select" class="bg-emerald-950/80 text-amber-300 text-[10px] sm:text-xs font-bold py-1.5 pr-2.5 pl-7 rounded-xl border border-emerald-500/30 outline-none appearance-none cursor-pointer hover:border-amber-500/40 transition-colors shadow">
+                <!-- Populated via JS -->
+              </select>
+              <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-400 text-[9px] pointer-events-none">
+                <i class="fa-solid fa-chevron-down"></i>
+              </span>
+            </div>
+
+            <!-- Back to Main Player -->
+            <button id="hadr-btn-back" type="button" class="py-1.5 px-2.5 rounded-xl bg-emerald-900/60 hover:bg-emerald-800/80 text-slate-200 text-xs font-semibold border border-emerald-500/20 flex items-center gap-1.5 transition-all active:scale-95">
+              <i class="fa-solid fa-arrow-left text-[11px]"></i>
+              <span class="hidden xs:inline">المشغل</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Partition Mode Tabs: Surahs | Ajza | Tehzeeb Al-Sahabah -->
+        <div class="flex items-center gap-1.5 p-1 bg-emerald-950/70 rounded-2xl border border-emerald-500/20 mb-2.5 flex-shrink-0 text-xs font-bold">
+          <button id="hadr-tab-surahs" type="button" class="flex-1 py-1.5 px-2 rounded-xl text-amber-300 bg-amber-500/20 border border-amber-500/30 transition-all text-center flex items-center justify-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-book-quran text-amber-400"></i>
+            <span>السور (114)</span>
+          </button>
+          <button id="hadr-tab-ajza" type="button" class="flex-1 py-1.5 px-2 rounded-xl text-[var(--text-secondary)] hover:text-amber-300 transition-all text-center flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-layer-group text-emerald-400"></i>
+            <span>الأجزاء (30)</span>
+          </button>
+          <button id="hadr-tab-tehzeeb" type="button" class="flex-1 py-1.5 px-2 rounded-xl text-[var(--text-secondary)] hover:text-amber-300 transition-all text-center flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-calendar-check text-cyan-400"></i>
+            <span>تحزيب الصحابة (7 أوراد)</span>
+          </button>
+        </div>
+
+        <!-- Surahs Search & Filter Bar (Shown in Surahs Mode) -->
+        <div id="hadr-search-bar" class="relative mb-2.5 flex-shrink-0">
+          <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input id="hadr-search-input" type="text" placeholder="ابحث باسم السورة أو رقمها في مصحف الحدر..." class="w-full bg-emerald-950/60 border border-emerald-500/20 rounded-xl pr-9 pl-4 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-500/50 transition-colors">
+        </div>
+
+        <!-- Main Scrollable Area for Hadr Tabs -->
+        <div class="flex-1 min-h-0 overflow-y-auto playlist-scroll pr-1 pb-1">
+          <!-- Panel 1: Surahs Grid (114 Surahs) -->
+          <div id="hadr-panel-surahs" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Panel 2: Ajza Grid (30 Ajza) -->
+          <div id="hadr-panel-ajza" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 hidden">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Panel 3: Tehzeeb Al-Sahabah (7 Aurad) -->
+          <div id="hadr-panel-tehzeeb" class="space-y-2.5 hidden">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Dedicated Bottom Hadr Player Dock -->
+        <div id="hadr-player-dock" class="mt-2.5 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-emerald-950/95 via-emerald-900/90 to-emerald-950/95 border border-amber-500/30 shadow-2xl flex-shrink-0 backdrop-blur-xl space-y-2">
+          
+          <!-- Dock Top Row: Currently Playing & Sync with Mushaf Button -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="hadr-now-surah-num" class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center justify-center border border-amber-500/30 flex-shrink-0">1</span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span id="hadr-now-surah-name" class="font-bold text-xs sm:text-sm text-amber-300 truncate">سورة الفاتحة</span>
+                  <span id="hadr-now-reciter-name" class="text-[10px] text-[var(--text-secondary)] truncate">• الشيخ د. أحمد ديبان</span>
+                </div>
+                <div id="hadr-now-meta" class="text-[9px] text-slate-400 truncate">تلاوة حدر سريعة للمراجعة</div>
+              </div>
+            </div>
+
+            <!-- Read Along in Mushaf Button -->
+            <button id="hadr-btn-sync-mushaf" type="button" class="py-1 px-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0" title="قراءة وتتبع الآيات في المصحف الشريف بالتزامن">
+              <i class="fa-solid fa-book-open-reader text-xs"></i>
+              <span class="hidden xs:inline">اقرأ في المصحف</span>
+            </button>
+          </div>
+
+          <!-- Dock Middle Row: Seeker & Time -->
+          <div class="flex items-center gap-2 text-[10px] text-slate-400">
+            <span id="hadr-current-time" class="font-mono w-9 text-right">00:00</span>
+            <input type="range" id="hadr-seek-bar" min="0" max="100" value="0" step="0.1" class="flex-1 h-1.5 bg-emerald-950 rounded-lg accent-amber-400 cursor-pointer">
+            <span id="hadr-total-time" class="font-mono w-9 text-left">--:--</span>
+          </div>
+
+          <!-- Dock Controls & Memorizer Toolchips (Playback Speed & Repetition) -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-emerald-500/15">
+            <!-- Audio Playback Buttons -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <button id="hadr-btn-prev" type="button" class="w-7 h-7 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/20 text-slate-300 hover:text-amber-300 flex items-center justify-center text-xs transition-all active:scale-95" title="السورة السابقة">
+                <i class="fa-solid fa-forward-step"></i>
+              </button>
+              <button id="hadr-btn-backward-10" type="button" class="w-7 h-7 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/20 text-slate-300 hover:text-amber-300 flex items-center justify-center text-[10px] transition-all active:scale-95" title="رجوع 10 ثواني">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+              <button id="hadr-btn-play" type="button" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-95" title="تشغيل / إيقاف">
+                <i class="fa-solid fa-play" id="hadr-play-icon"></i>
+              </button>
+              <button id="hadr-btn-forward-10" type="button" class="w-7 h-7 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/20 text-slate-300 hover:text-amber-300 flex items-center justify-center text-[10px] transition-all active:scale-95" title="تقديم 10 ثواني">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+              <button id="hadr-btn-next" type="button" class="w-7 h-7 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/20 text-slate-300 hover:text-amber-300 flex items-center justify-center text-xs transition-all active:scale-95" title="السورة التالية">
+                <i class="fa-solid fa-backward-step"></i>
+              </button>
+            </div>
+
+            <!-- Memorizer Speed Chips (1.0x to 1.5x) -->
+            <div class="flex items-center gap-1 bg-emerald-950/80 p-0.5 rounded-xl border border-emerald-500/20 text-[10px]">
+              <span class="text-[9px] text-slate-400 px-1 font-semibold hidden md:inline">السرعة:</span>
+              <button type="button" data-speed="1.0" class="hadr-speed-chip px-1.5 py-0.5 rounded-lg text-amber-300 bg-amber-500/20 font-bold">1.0x</button>
+              <button type="button" data-speed="1.15" class="hadr-speed-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300">1.15x</button>
+              <button type="button" data-speed="1.25" class="hadr-speed-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300">1.25x</button>
+              <button type="button" data-speed="1.4" class="hadr-speed-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300">1.4x</button>
+              <button type="button" data-speed="1.5" class="hadr-speed-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300">1.5x</button>
+            </div>
+
+            <!-- Memorizer Repeat Chips (1x, 3x, 5x, Loop) -->
+            <div class="flex items-center gap-1 bg-emerald-950/80 p-0.5 rounded-xl border border-emerald-500/20 text-[10px]">
+              <span class="text-[9px] text-slate-400 px-1 font-semibold hidden md:inline">تكرار التثبيت:</span>
+              <button type="button" data-repeat="1" class="hadr-repeat-chip px-1.5 py-0.5 rounded-lg text-amber-300 bg-amber-500/20 font-bold">1x</button>
+              <button type="button" data-repeat="3" class="hadr-repeat-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300">3x</button>
+              <button type="button" data-repeat="5" class="hadr-repeat-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300">5x</button>
+              <button type="button" data-repeat="loop" class="hadr-repeat-chip px-1.5 py-0.5 rounded-lg text-slate-300 hover:text-amber-300" title="تكرار مستمر">♾️</button>
+            </div>
           </div>
 
         </div>
@@ -2151,9 +2356,10 @@
     </button>
   </nav>
 
-  <!-- HTML5 Audio Elements (Main Surah Audio + Single Ayah Audio) -->
+  <!-- HTML5 Audio Elements (Main Surah Audio + Single Ayah Audio + Hadr Revision Audio) -->
   <audio id="main-audio" preload="metadata"></audio>
   <audio id="ayah-single-audio" preload="none"></audio>
+  <audio id="hadr-audio" preload="none"></audio>
 
   <!-- Toast Notification System -->
   <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:right-6 sm:bottom-6 sm:top-auto z-50 flex flex-col gap-2 pointer-events-none"></div>

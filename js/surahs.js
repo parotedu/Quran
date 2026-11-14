@@ -470,6 +470,15 @@ const RECITERS = [
     "serverUrl": "https://cdn.mp3quran.net/audio/khalifa-tunaiji/r1/",
     "shortName": "الطنيجي",
     "complete": true
+  },
+  {
+    "id": "ahmed_kaseb",
+    "name": "الشيخ أحمد كاسب",
+    "englishName": "Ahmed Kaseb",
+    "slug": "ahmed-kasab/",
+    "serverUrl": "https://archive.org/download/ahmed-kasab/",
+    "shortName": "أحمد كاسب",
+    "complete": true
   }
 ];
 

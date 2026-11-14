@@ -534,3 +534,119 @@ const MEMORIAL_DATA = {
     { id: 112, name: "الإخلاص", title: "تعدل ثلث القرآن", reason: "توحيد خالص لله جل وعلا وثواب عظيم يُهدى للمتوفى" }
   ]
 };
+
+// ==========================================================================
+// مصحف الحدر لمراجعة وتثبيت الحُفّاظ (Hadr Memorization & Fast Review)
+// ==========================================================================
+const HADR_RECITERS = [
+  {
+    id: "ahmed_deiban",
+    name: "الشيخ د. أحمد ديبان",
+    englishName: "Dr. Ahmed Deiban",
+    serverUrl: "https://archive.org/download/002_20250526/",
+    badge: "مصحف الحدر المعتمد (114 سورة)",
+    shortName: "د. أحمد ديبان",
+    desc: "تلاوة حدر نموذجية واضحة ومتقنة برواية حفص عن عاصم، لكامل المصحف الشريف 114 سورة، مثالية لمراجعة وتثبيت الحفظ."
+  },
+  {
+    id: "yasser_salama_hadr",
+    name: "الشيخ ياسر سلامة",
+    englishName: "Yasser Salama",
+    serverUrl: "https://archive.org/download/nordarby_20150917_1806/",
+    badge: "حدر سريع متصل",
+    shortName: "ياسر سلامة",
+    desc: "حدر سريع متقن بالأحكام لمراجعة وتسميع الأجزاء والأوراد اليومية بسرعة وسلاسة."
+  }
+];
+
+const HADR_AJZA = [
+  { juz: 1, name: "الجزء الأول", startSurahId: 1, endSurahId: 2, desc: "من الفاتحة إلى البقرة 141", surahIds: [1, 2] },
+  { juz: 2, name: "الجزء الثاني", startSurahId: 2, endSurahId: 2, desc: "من البقرة 142 إلى البقرة 252", surahIds: [2] },
+  { juz: 3, name: "الجزء الثالث", startSurahId: 2, endSurahId: 3, desc: "من البقرة 253 إلى آل عمران 92", surahIds: [2, 3] },
+  { juz: 4, name: "الجزء الرابع", startSurahId: 3, endSurahId: 4, desc: "من آل عمران 93 إلى النساء 23", surahIds: [3, 4] },
+  { juz: 5, name: "الجزء الخامس", startSurahId: 4, endSurahId: 4, desc: "من النساء 24 إلى النساء 147", surahIds: [4] },
+  { juz: 6, name: "الجزء السادس", startSurahId: 4, endSurahId: 5, desc: "من النساء 148 إلى المائدة 81", surahIds: [4, 5] },
+  { juz: 7, name: "الجزء السابع", startSurahId: 5, endSurahId: 6, desc: "من المائدة 82 إلى الأنعام 110", surahIds: [5, 6] },
+  { juz: 8, name: "الجزء الثامن", startSurahId: 6, endSurahId: 7, desc: "من الأنعام 111 إلى الأعراف 87", surahIds: [6, 7] },
+  { juz: 9, name: "الجزء التاسع", startSurahId: 7, endSurahId: 8, desc: "من الأعراف 88 إلى الأنفال 40", surahIds: [7, 8] },
+  { juz: 10, name: "الجزء العاشر", startSurahId: 8, endSurahId: 9, desc: "من الأنفال 41 إلى التوبة 92", surahIds: [8, 9] },
+  { juz: 11, name: "الجزء الحادي عشر", startSurahId: 9, endSurahId: 11, desc: "من التوبة 93 إلى هود 5", surahIds: [9, 10, 11] },
+  { juz: 12, name: "الجزء الثاني عشر", startSurahId: 11, endSurahId: 12, desc: "من هود 6 إلى يوسف 52", surahIds: [11, 12] },
+  { juz: 13, name: "الجزء الثالث عشر", startSurahId: 12, endSurahId: 14, desc: "من يوسف 53 إلى إبراهيم 52", surahIds: [12, 13, 14] },
+  { juz: 14, name: "الجزء الرابع عشر", startSurahId: 15, endSurahId: 16, desc: "من الحجر 1 إلى النحل 128", surahIds: [15, 16] },
+  { juz: 15, name: "الجزء الخامس عشر", startSurahId: 17, endSurahId: 18, desc: "من الإسراء 1 إلى الكهف 74", surahIds: [17, 18] },
+  { juz: 16, name: "الجزء السادس عشر", startSurahId: 18, endSurahId: 20, desc: "من الكهف 75 إلى طه 135", surahIds: [18, 19, 20] },
+  { juz: 17, name: "الجزء السابع عشر", startSurahId: 21, endSurahId: 22, desc: "من الأنبياء 1 إلى الحج 78", surahIds: [21, 22] },
+  { juz: 18, name: "الجزء الثامن عشر", startSurahId: 23, endSurahId: 25, desc: "من المؤمنون 1 إلى الفرقان 20", surahIds: [23, 24, 25] },
+  { juz: 19, name: "الجزء التاسع عشر", startSurahId: 25, endSurahId: 27, desc: "من الفرقان 21 إلى النمل 55", surahIds: [25, 26, 27] },
+  { juz: 20, name: "الجزء العشرون", startSurahId: 27, endSurahId: 29, desc: "من النمل 56 إلى العنكبوت 45", surahIds: [27, 28, 29] },
+  { juz: 21, name: "الجزء الحادي والعشرون", startSurahId: 29, endSurahId: 33, desc: "من العنكبوت 46 إلى الأحزاب 30", surahIds: [29, 30, 31, 32, 33] },
+  { juz: 22, name: "الجزء الثاني والعشرون", startSurahId: 33, endSurahId: 36, desc: "من الأحزاب 31 إلى يس 27", surahIds: [33, 34, 35, 36] },
+  { juz: 23, name: "الجزء الثالث والعشرون", startSurahId: 36, endSurahId: 39, desc: "من يس 28 إلى الزمر 31", surahIds: [36, 37, 38, 39] },
+  { juz: 24, name: "الجزء الرابع والعشرون", startSurahId: 39, endSurahId: 41, desc: "من الزمر 32 إلى فصلت 46", surahIds: [39, 40, 41] },
+  { juz: 25, name: "الجزء الخامس والعشرون", startSurahId: 41, endSurahId: 45, desc: "من فصلت 47 إلى الجاثية 37", surahIds: [41, 42, 43, 44, 45] },
+  { juz: 26, name: "الجزء السادس والعشرون", startSurahId: 46, endSurahId: 51, desc: "من الأحقاف 1 إلى الذاريات 30", surahIds: [46, 47, 48, 49, 50, 51] },
+  { juz: 27, name: "الجزء السابع والعشرون", startSurahId: 51, endSurahId: 57, desc: "من الذاريات 31 إلى الحديد 29", surahIds: [51, 52, 53, 54, 55, 56, 57] },
+  { juz: 28, name: "الجزء الثامن والعشرون", startSurahId: 58, endSurahId: 66, desc: "جزء قد سمع (المجادلة إلى التحريم)", surahIds: [58, 59, 60, 61, 62, 63, 64, 65, 66] },
+  { juz: 29, name: "الجزء التاسع والعشرون", startSurahId: 67, endSurahId: 77, desc: "جزء تبارك (الملك إلى المرسلات)", surahIds: [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77] },
+  { juz: 30, name: "الجزء الثلاثون", startSurahId: 78, endSurahId: 114, desc: "جزء عمّ (النبأ إلى الناس)", surahIds: Array.from({length: 37}, (_, i) => i + 78) }
+];
+
+const HADR_TEHZEEB = [
+  {
+    day: 1,
+    title: "الورد الأول (ثلاث سور)",
+    symbol: "فـ",
+    rangeName: "الفاتحة إلى النساء",
+    surahs: [1, 2, 3, 4],
+    desc: "سورة الفاتحة، البقرة، آل عمران، والنساء (أطول سور القرآن الكريم وأساس الأحكام)"
+  },
+  {
+    day: 2,
+    title: "الورد الثاني (خمس سور)",
+    symbol: "ـمـ",
+    rangeName: "المائدة إلى التوبة",
+    surahs: [5, 6, 7, 8, 9],
+    desc: "سورة المائدة، الأنعام، الأعراف، الأنفال، والتوبة"
+  },
+  {
+    day: 3,
+    title: "الورد الثالث (سبع سور)",
+    symbol: "ـي",
+    rangeName: "يونس إلى النحل",
+    surahs: [10, 11, 12, 13, 14, 15, 16],
+    desc: "سور يونس، هود، يوسف، الرعد، إبراهيم، الحجر، والنحل"
+  },
+  {
+    day: 4,
+    title: "الورد الرابع (تسع سور)",
+    symbol: "بـ",
+    rangeName: "الإسراء إلى الفرقان",
+    surahs: [17, 18, 19, 20, 21, 22, 23, 24, 25],
+    desc: "سور الإسراء، الكهف، مريم، طه، الأنبياء، الحج، المؤمنون، النور، والفرقان"
+  },
+  {
+    day: 5,
+    title: "الورد الخامس (إحدى عشرة سورة)",
+    symbol: "ـشـ",
+    rangeName: "الشعراء إلى يس",
+    surahs: [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
+    desc: "من سورة الشعراء إلى سورة يس (قلب القرآن)"
+  },
+  {
+    day: 6,
+    title: "الورد السادس (ثلاث عشرة سورة)",
+    symbol: "ـو",
+    rangeName: "الصافات إلى الحجرات",
+    surahs: [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+    desc: "من سورة الصافات إلى سورة الحجرات (تزكية الأخلاق والتوحيد)"
+  },
+  {
+    day: 7,
+    title: "الورد السابع (حزب المُفَصَّل)",
+    symbol: "ـق",
+    rangeName: "سورة ق إلى الناس",
+    surahs: Array.from({length: 65}, (_, i) => i + 50),
+    desc: "من سورة ق إلى سورة الناس (خاتمة القرآن الشريف والأذكار والمعوذات)"
+  }
+];

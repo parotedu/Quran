@@ -1,7 +1,7 @@
 // Service Worker for منصة القرآن الكريم
 // Enables instant offline loading, asset caching, and resilience on poor connections.
 
-const CACHE_NAME = 'quran-platform-v2.1';
+const CACHE_NAME = 'quran-platform-v2.2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -51,6 +51,24 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request).catch(() => {
         return caches.match(request);
+      })
+    );
+    return;
+  }
+
+  // For Quranic text API (api.alquran.cloud): Cache-first (Quran text never changes)
+  if (url.origin.includes('api.alquran.cloud')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          return fetch(request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          });
+        });
       })
     );
     return;
