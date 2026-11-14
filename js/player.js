@@ -395,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const navBtnVideo = document.getElementById('nav-btn-video');
     const videoStudioView = document.getElementById('video-studio-view');
+    const hadrView = document.getElementById('hadr-view');
     const btnServicesMenu = document.getElementById('btn-services-menu');
 
     if (navBtnPlayer) navBtnPlayer.className = tabInactive;
@@ -407,6 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 border border-amber-500/50 bg-amber-500/20 transition-all duration-200 shadow-md shadow-amber-500/10';
       } else if (targetView === 'memorial') {
         btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-rose-300 border border-rose-500/50 bg-rose-500/20 transition-all duration-200 shadow-md shadow-rose-500/10';
+      } else if (targetView === 'hadr') {
+        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-cyan-300 border border-cyan-500/50 bg-cyan-500/20 transition-all duration-200 shadow-md shadow-cyan-500/10';
       } else {
         btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm';
       }
@@ -417,9 +420,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (spiritualView) spiritualView.classList.add('hidden');
     if (memorialView) memorialView.classList.add('hidden');
     if (videoStudioView) videoStudioView.classList.add('hidden');
+    if (hadrView) hadrView.classList.add('hidden');
 
     if (isDesktop) {
-      if (targetView === 'video') {
+      if (targetView === 'video' || targetView === 'hadr') {
         playlistSection.classList.add('hidden');
       } else {
         playlistSection.classList.remove('hidden');
@@ -467,6 +471,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (videoStudioView) videoStudioView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       if (window.initVideoStudioView) window.initVideoStudioView();
+    } else if (targetView === 'hadr') {
+      if (hadrView) hadrView.classList.remove('hidden');
+      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
+      initHadrView();
     } else if (targetView === 'playlist' && !isDesktop) {
       if (navBtnPlaylist) navBtnPlaylist.className = tabActive + ' lg:hidden';
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
@@ -1341,6 +1349,16 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdownBtnVideo.addEventListener('click', (e) => {
           e.stopPropagation();
           switchView('video');
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
+      const dropdownBtnHadr = document.getElementById('dropdown-btn-hadr');
+      if (dropdownBtnHadr) {
+        dropdownBtnHadr.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchView('hadr');
           servicesDropdown.classList.add('hidden');
           if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
         });
@@ -4339,6 +4357,455 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       memorialSavedList.appendChild(item);
+    });
+  }
+
+  // ==========================================================================
+  // HADR MEMORIZATION & FAST REVISION ENGINE (مصحف الحدر لمراجعة وتثبيت الحُفّاظ)
+  // ==========================================================================
+  let hadrInitialized = false;
+  let currentHadrReciterId = 'ahmed_deiban';
+  let currentHadrSurahId = 1;
+  let currentHadrMode = 'surahs';
+  let hadrPlaybackSpeed = 1.0;
+  let hadrRepeatMode = '1';
+  let hadrRepeatCountLeft = 1;
+  let hadrPlaylistQueue = [];
+  let hadrQueueIndex = 0;
+
+  window.initHadrView = initHadrView;
+  function initHadrView() {
+    window.initHadrView = initHadrView;
+    const hadrView = document.getElementById('hadr-view');
+    if (!hadrView) return;
+
+    const hadrAudio = document.getElementById('hadr-audio');
+    const reciterSelect = document.getElementById('hadr-reciter-select');
+    const btnBack = document.getElementById('hadr-btn-back');
+    const tabSurahs = document.getElementById('hadr-tab-surahs');
+    const tabAjza = document.getElementById('hadr-tab-ajza');
+    const tabTehzeeb = document.getElementById('hadr-tab-tehzeeb');
+    const searchBar = document.getElementById('hadr-search-bar');
+    const searchInput = document.getElementById('hadr-search-input');
+    const panelSurahs = document.getElementById('hadr-panel-surahs');
+    const panelAjza = document.getElementById('hadr-panel-ajza');
+    const panelTehzeeb = document.getElementById('hadr-panel-tehzeeb');
+
+    const playBtn = document.getElementById('hadr-btn-play');
+    const playIcon = document.getElementById('hadr-play-icon');
+    const prevBtn = document.getElementById('hadr-btn-prev');
+    const nextBtn = document.getElementById('hadr-btn-next');
+    const back10Btn = document.getElementById('hadr-btn-backward-10');
+    const fwd10Btn = document.getElementById('hadr-btn-forward-10');
+    const seekBar = document.getElementById('hadr-seek-bar');
+    const currentTimeEl = document.getElementById('hadr-current-time');
+    const totalTimeEl = document.getElementById('hadr-total-time');
+    const syncMushafBtn = document.getElementById('hadr-btn-sync-mushaf');
+
+    if (!hadrInitialized) {
+      hadrInitialized = true;
+
+      // 1. Populate Reciters Select
+      if (reciterSelect && typeof HADR_RECITERS !== 'undefined') {
+        reciterSelect.innerHTML = HADR_RECITERS.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        reciterSelect.value = currentHadrReciterId;
+        reciterSelect.addEventListener('change', () => {
+          currentHadrReciterId = reciterSelect.value;
+          updateHadrNowPlayingUI();
+          if (hadrAudio && !hadrAudio.paused) {
+            playHadrSurah(currentHadrSurahId, true);
+          }
+        });
+      }
+
+      // 2. Return Button
+      if (btnBack) {
+        btnBack.addEventListener('click', () => switchView('player'));
+      }
+
+      // 3. Tabs
+      function switchHadrTab(mode) {
+        currentHadrMode = mode;
+        const activeClass = 'flex-1 py-1.5 px-2 rounded-xl text-amber-300 bg-amber-500/20 border border-amber-500/30 transition-all text-center flex items-center justify-center gap-1.5 shadow-sm';
+        const inactiveClass = 'flex-1 py-1.5 px-2 rounded-xl text-[var(--text-secondary)] hover:text-amber-300 transition-all text-center flex items-center justify-center gap-1.5';
+
+        if (tabSurahs) tabSurahs.className = mode === 'surahs' ? activeClass : inactiveClass;
+        if (tabAjza) tabAjza.className = mode === 'ajza' ? activeClass : inactiveClass;
+        if (tabTehzeeb) tabTehzeeb.className = mode === 'tehzeeb' ? activeClass : inactiveClass;
+
+        if (panelSurahs) panelSurahs.classList.toggle('hidden', mode !== 'surahs');
+        if (panelAjza) panelAjza.classList.toggle('hidden', mode !== 'ajza');
+        if (panelTehzeeb) panelTehzeeb.classList.toggle('hidden', mode !== 'tehzeeb');
+        if (searchBar) searchBar.classList.toggle('hidden', mode !== 'surahs');
+      }
+
+      if (tabSurahs) tabSurahs.addEventListener('click', () => switchHadrTab('surahs'));
+      if (tabAjza) tabAjza.addEventListener('click', () => switchHadrTab('ajza'));
+      if (tabTehzeeb) tabTehzeeb.addEventListener('click', () => switchHadrTab('tehzeeb'));
+
+      // 4. Search Filter
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const q = e.target.value.trim().toLowerCase();
+          const cards = panelSurahs ? panelSurahs.querySelectorAll('.hadr-surah-card') : [];
+          cards.forEach(card => {
+            const name = card.getAttribute('data-name') || '';
+            const num = card.getAttribute('data-id') || '';
+            const match = !q || name.includes(q) || num === q;
+            card.classList.toggle('hidden', !match);
+          });
+        });
+      }
+
+      // 5. Speed chips
+      const speedChips = hadrView.querySelectorAll('.hadr-speed-chip');
+      speedChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          speedChips.forEach(c => {
+            c.classList.remove('bg-amber-500/20', 'text-amber-300', 'font-bold');
+            c.classList.add('text-slate-300');
+          });
+          chip.classList.add('bg-amber-500/20', 'text-amber-300', 'font-bold');
+          chip.classList.remove('text-slate-300');
+          hadrPlaybackSpeed = parseFloat(chip.getAttribute('data-speed')) || 1.0;
+          if (hadrAudio) hadrAudio.playbackRate = hadrPlaybackSpeed;
+          showToast(`سرعة تلاوة الحدر: ${hadrPlaybackSpeed}x`);
+        });
+      });
+
+      // 6. Repeat chips
+      const repeatChips = hadrView.querySelectorAll('.hadr-repeat-chip');
+      repeatChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          repeatChips.forEach(c => {
+            c.classList.remove('bg-amber-500/20', 'text-amber-300', 'font-bold');
+            c.classList.add('text-slate-300');
+          });
+          chip.classList.add('bg-amber-500/20', 'text-amber-300', 'font-bold');
+          chip.classList.remove('text-slate-300');
+          hadrRepeatMode = chip.getAttribute('data-repeat');
+          hadrRepeatCountLeft = hadrRepeatMode === 'loop' ? Infinity : (parseInt(hadrRepeatMode, 10) || 1);
+          const repLabel = hadrRepeatMode === 'loop' ? 'تكرار لا نهائي ♾️' : `${hadrRepeatMode} مرات`;
+          showToast(`تكرار الحدر للحفظ والتثبيت: ${repLabel}`);
+        });
+      });
+
+      // 7. Dock controls
+      if (playBtn) {
+        playBtn.addEventListener('click', () => {
+          if (!hadrAudio.src) {
+            playHadrSurah(currentHadrSurahId, true);
+          } else if (hadrAudio.paused) {
+            hadrAudio.play().then(() => {
+              if (playIcon) playIcon.className = 'fa-solid fa-pause';
+            }).catch(() => {});
+          } else {
+            hadrAudio.pause();
+            if (playIcon) playIcon.className = 'fa-solid fa-play';
+          }
+        });
+      }
+
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          if (currentHadrSurahId > 1) {
+            playHadrSurah(currentHadrSurahId - 1, true);
+          }
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          if (currentHadrSurahId < 114) {
+            playHadrSurah(currentHadrSurahId + 1, true);
+          }
+        });
+      }
+
+      if (back10Btn) {
+        back10Btn.addEventListener('click', () => {
+          if (hadrAudio) hadrAudio.currentTime = Math.max(0, hadrAudio.currentTime - 10);
+        });
+      }
+
+      if (fwd10Btn) {
+        fwd10Btn.addEventListener('click', () => {
+          if (hadrAudio) hadrAudio.currentTime = Math.min(hadrAudio.duration || 0, hadrAudio.currentTime + 10);
+        });
+      }
+
+      if (seekBar) {
+        seekBar.addEventListener('input', () => {
+          if (hadrAudio && hadrAudio.duration) {
+            hadrAudio.currentTime = (seekBar.value / 100) * hadrAudio.duration;
+          }
+        });
+      }
+
+      if (syncMushafBtn) {
+        syncMushafBtn.addEventListener('click', () => {
+          switchView('mushaf');
+          if (typeof loadSurahMushaf === 'function') {
+            loadSurahMushaf(currentHadrSurahId);
+          }
+          const sName = (typeof SURAHS !== 'undefined' && SURAHS.find(s => s.id === currentHadrSurahId)?.name) || '';
+          showToast(`تم فتح سورة ${sName} في المصحف للقراءة مع تلاوة الحدر`);
+        });
+      }
+
+      if (hadrAudio) {
+        hadrAudio.addEventListener('timeupdate', () => {
+          if (!hadrAudio.duration) return;
+          const pct = (hadrAudio.currentTime / hadrAudio.duration) * 100;
+          if (seekBar) seekBar.value = pct;
+          if (currentTimeEl) currentTimeEl.innerText = formatTime(hadrAudio.currentTime);
+          if (totalTimeEl) totalTimeEl.innerText = formatTime(hadrAudio.duration);
+        });
+
+        hadrAudio.addEventListener('play', () => {
+          if (playIcon) playIcon.className = 'fa-solid fa-pause';
+          // Pause main player audio
+          const mainAudio = document.getElementById('main-audio');
+          if (mainAudio && !mainAudio.paused) mainAudio.pause();
+        });
+
+        hadrAudio.addEventListener('pause', () => {
+          if (playIcon) playIcon.className = 'fa-solid fa-play';
+        });
+
+        hadrAudio.addEventListener('ended', () => {
+          if (hadrRepeatMode === 'loop') {
+            hadrAudio.currentTime = 0;
+            hadrAudio.play().catch(() => {});
+            return;
+          }
+          hadrRepeatCountLeft--;
+          if (hadrRepeatCountLeft > 0) {
+            hadrAudio.currentTime = 0;
+            hadrAudio.play().catch(() => {});
+            showToast(`تكرار السورة للحفظ: متبقي ${hadrRepeatCountLeft} مرة`);
+            return;
+          }
+
+          hadrRepeatCountLeft = parseInt(hadrRepeatMode, 10) || 1;
+
+          if (hadrPlaylistQueue.length > 0 && hadrQueueIndex < hadrPlaylistQueue.length - 1) {
+            hadrQueueIndex++;
+            playHadrSurah(hadrPlaylistQueue[hadrQueueIndex], true);
+            return;
+          }
+
+          if (currentHadrSurahId < 114) {
+            playHadrSurah(currentHadrSurahId + 1, true);
+          }
+        });
+      }
+
+      // Initial Panel Renders
+      renderHadrSurahsPanel();
+      renderHadrAjzaPanel();
+      renderHadrTehzeebPanel();
+    }
+
+    updateHadrNowPlayingUI();
+  }
+
+  function playHadrSurah(surahId, autoPlay = true) {
+    currentHadrSurahId = surahId;
+    const hadrAudio = document.getElementById('hadr-audio');
+    const reciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
+    const reciter = reciters.find(r => r.id === currentHadrReciterId) || reciters[0];
+    const padded = String(surahId).padStart(3, '0');
+    const audioUrl = `${reciter.serverUrl}${padded}.mp3`;
+
+    if (hadrAudio) {
+      hadrAudio.src = audioUrl;
+      hadrAudio.playbackRate = hadrPlaybackSpeed;
+      if (autoPlay) {
+        hadrAudio.play().then(() => {
+          const playIcon = document.getElementById('hadr-play-icon');
+          if (playIcon) playIcon.className = 'fa-solid fa-pause';
+        }).catch(err => {
+          console.warn('Hadr autoplay prevented:', err);
+        });
+      }
+    }
+
+    updateHadrNowPlayingUI();
+    highlightHadrCard(surahId);
+  }
+
+  function updateHadrNowPlayingUI() {
+    const surah = (typeof SURAHS !== 'undefined' && SURAHS.find(s => s.id === currentHadrSurahId)) || { id: 1, name: 'الفاتحة', versesCount: 7 };
+    const reciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
+    const reciter = reciters.find(r => r.id === currentHadrReciterId) || reciters[0];
+
+    const nowSurahNum = document.getElementById('hadr-now-surah-num');
+    const nowSurahName = document.getElementById('hadr-now-surah-name');
+    const nowReciterName = document.getElementById('hadr-now-reciter-name');
+    const nowMeta = document.getElementById('hadr-now-meta');
+
+    if (nowSurahNum) nowSurahNum.innerText = surah.id;
+    if (nowSurahName) nowSurahName.innerText = `سُورَةُ ${surah.name}`;
+    if (nowReciterName) nowReciterName.innerText = `• ${reciter.name}`;
+    if (nowMeta) nowMeta.innerText = `${surah.versesCount} آية • ${surah.revelationPlace === 'makkah' ? 'مكية' : 'مدنية'} • ${reciter.badge}`;
+  }
+
+  function highlightHadrCard(surahId) {
+    const panelSurahs = document.getElementById('hadr-panel-surahs');
+    if (!panelSurahs) return;
+    const cards = panelSurahs.querySelectorAll('.hadr-surah-card');
+    cards.forEach(card => {
+      const id = parseInt(card.getAttribute('data-id'), 10);
+      card.classList.toggle('active-hadr', id === surahId);
+      const icon = card.querySelector('.hadr-card-play-icon');
+      if (icon) {
+        icon.className = id === surahId ? 'fa-solid fa-volume-high text-amber-400' : 'fa-solid fa-play text-slate-400';
+      }
+    });
+  }
+
+  function renderHadrSurahsPanel() {
+    const panel = document.getElementById('hadr-panel-surahs');
+    if (!panel || typeof SURAHS === 'undefined') return;
+
+    panel.innerHTML = SURAHS.map(s => {
+      const isMakkah = s.revelationPlace === 'makkah';
+      return `
+        <div class="hadr-surah-card p-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 hover:border-amber-500/40 cursor-pointer flex items-center justify-between gap-2.5 transition-all group" data-id="${s.id}" data-name="${s.name}">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-7 h-7 rounded-xl bg-emerald-900/60 text-amber-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs flex-shrink-0 group-hover:bg-amber-500/20 group-hover:border-amber-500/40 transition-colors">
+              ${s.id}
+            </span>
+            <div class="min-w-0">
+              <div class="font-bold text-xs sm:text-sm text-slate-100 group-hover:text-amber-300 truncate">
+                سورة ${s.name}
+              </div>
+              <div class="text-[10px] text-[var(--text-secondary)] flex items-center gap-1.5 mt-0.5">
+                <span>${s.versesCount} آية</span>
+                <span>•</span>
+                <span class="${isMakkah ? 'text-amber-400/80' : 'text-emerald-400/80'}">${isMakkah ? 'مكية' : 'مدنية'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button type="button" class="btn-read-mushaf-from-hadr p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-emerald-500/10 text-xs transition-colors" title="قراءة في المصحف">
+              <i class="fa-solid fa-book-open"></i>
+            </button>
+            <div class="w-8 h-8 rounded-xl bg-amber-500/15 group-hover:bg-amber-500 group-hover:text-slate-950 text-amber-300 border border-amber-500/30 flex items-center justify-center text-xs transition-all shadow-sm">
+              <i class="fa-solid fa-play hadr-card-play-icon"></i>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach Click Handlers
+    panel.querySelectorAll('.hadr-surah-card').forEach(card => {
+      const id = parseInt(card.getAttribute('data-id'), 10);
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-read-mushaf-from-hadr')) {
+          e.stopPropagation();
+          switchView('mushaf');
+          if (typeof loadSurahMushaf === 'function') loadSurahMushaf(id);
+          return;
+        }
+        hadrPlaylistQueue = [];
+        playHadrSurah(id, true);
+      });
+    });
+  }
+
+  function renderHadrAjzaPanel() {
+    const panel = document.getElementById('hadr-panel-ajza');
+    if (!panel || typeof HADR_AJZA === 'undefined') return;
+
+    panel.innerHTML = HADR_AJZA.map(j => {
+      return `
+        <div class="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 hover:border-amber-500/40 transition-all flex flex-col justify-between gap-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center">
+                ${j.juz}
+              </span>
+              <div>
+                <h4 class="font-bold text-xs sm:text-sm text-slate-100">${j.name}</h4>
+                <p class="text-[10px] text-slate-400 mt-0.5">${j.desc}</p>
+              </div>
+            </div>
+            <span class="text-[9px] bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              ${j.surahIds.length} ${j.surahIds.length === 1 ? 'سورة' : 'سور'}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-emerald-500/10">
+            <span class="text-[10px] text-[var(--text-secondary)]">تسميع ومراجعة متصلة</span>
+            <button type="button" class="btn-play-juz py-1.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold text-xs flex items-center gap-1.5 border border-amber-500/30 transition-all active:scale-95" data-juz="${j.juz}">
+              <i class="fa-solid fa-play text-[10px]"></i>
+              <span>تشغيل الجزء بالحدر</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    panel.querySelectorAll('.btn-play-juz').forEach(btn => {
+      const juzNum = parseInt(btn.getAttribute('data-juz'), 10);
+      const juzObj = HADR_AJZA.find(j => j.juz === juzNum);
+      if (juzObj) {
+        btn.addEventListener('click', () => {
+          hadrPlaylistQueue = [...juzObj.surahIds];
+          hadrQueueIndex = 0;
+          playHadrSurah(hadrPlaylistQueue[0], true);
+          showToast(`بدء تلاوة ${juzObj.name} بالحدر السريع`);
+        });
+      }
+    });
+  }
+
+  function renderHadrTehzeebPanel() {
+    const panel = document.getElementById('hadr-panel-tehzeeb');
+    if (!panel || typeof HADR_TEHZEEB === 'undefined') return;
+
+    panel.innerHTML = HADR_TEHZEEB.map(w => {
+      return `
+        <div class="p-3 sm:p-3.5 rounded-2xl bg-emerald-950/60 border border-cyan-500/20 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex flex-col items-center justify-center flex-shrink-0">
+              <span class="text-[10px] font-bold text-amber-300">اليوم</span>
+              <span class="text-xs font-black">${w.day}</span>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h4 class="font-bold text-xs sm:text-sm text-slate-100">${w.title}</h4>
+                <span class="text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold px-1.5 py-0.2 rounded border border-amber-500/30">${w.symbol}</span>
+              </div>
+              <p class="text-[10px] text-slate-400 mt-0.5 truncate">${w.desc}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button type="button" class="btn-play-wird py-1.5 px-3.5 rounded-xl bg-cyan-500/20 hover:bg-amber-500 text-cyan-300 hover:text-slate-950 font-bold text-xs flex items-center gap-1.5 border border-cyan-500/30 hover:border-amber-400 transition-all active:scale-95 shadow-sm" data-day="${w.day}">
+              <i class="fa-solid fa-play text-[10px]"></i>
+              <span>تشغيل الورد كاملاً (${w.surahs.length} سورة)</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    panel.querySelectorAll('.btn-play-wird').forEach(btn => {
+      const day = parseInt(btn.getAttribute('data-day'), 10);
+      const wirdObj = HADR_TEHZEEB.find(w => w.day === day);
+      if (wirdObj) {
+        btn.addEventListener('click', () => {
+          hadrPlaylistQueue = [...wirdObj.surahs];
+          hadrQueueIndex = 0;
+          playHadrSurah(hadrPlaylistQueue[0], true);
+          showToast(`بدء مراجعة ${wirdObj.title} - ${wirdObj.rangeName}`);
+        });
+      }
     });
   }
 

@@ -21,6 +21,8 @@
   const VIDEO_RECITERS = [
     { id: 'alafasy', name: 'الشيخ مشاري راشد العفاسي', folder: 'Alafasy_128kbps', format: '128k', shortName: 'العفاسي' },
     { id: 'hussein_alazzam', name: 'الشيخ حسين العزام', isSpecial: true, shortName: 'حسين العزام' },
+    { id: 'ahmed_kaseb', name: 'الشيخ أحمد كاسب', isSpecial: true, shortName: 'أحمد كاسب' },
+    { id: 'ahmed_deiban', name: 'الشيخ د. أحمد ديبان (حدر سريع)', isSpecial: true, shortName: 'أحمد ديبان' },
     { id: 'husary', name: 'الشيخ محمود خليل الحصري (مرتل)', folder: 'Husary_128kbps', format: '128k', shortName: 'الحصري' },
     { id: 'husary_mujawwad', name: 'الشيخ محمود خليل الحصري (مجوّد)', folder: 'Husary_128kbps_Mujawwad', format: '128k', shortName: 'الحصري مجود' },
     { id: 'husary_muallim', name: 'الشيخ محمود خليل الحصري (المعلم)', folder: 'Husary_Muallim_128kbps', format: '128k', shortName: 'الحصري معلم' },
@@ -306,6 +308,9 @@
     transitionStyle: 'cinematic', // 'cinematic' | 'radiant' | 'reverent'
     dedicationText: '',
     fontSizeMode: 'auto', // 'auto' | 'medium' | 'large'
+    captionStyle: 'frosted', // 'frosted' (glass box) | 'glow' | 'none'
+    visualizerStyle: 'bars', // 'bars' | 'wave' | 'pulse' | 'hidden'
+    showSafeZone: false, // TikTok & Reels Safe Zone Guide Overlay
     ambientSound: 'none', // 'none' | 'rain' | 'sea' | 'breeze'
     ambientVolume: 0.15, // 15% soft background
     enableParticles: true,
@@ -414,6 +419,9 @@
       particlesToggle: document.getElementById('video-particles-toggle'),
       waveToggle: document.getElementById('video-wave-toggle'),
       basmalaToggle: document.getElementById('video-basmala-toggle'),
+      safezoneToggle: document.getElementById('video-safezone-toggle'),
+      captionStyleSelect: document.getElementById('video-caption-style-select'),
+      visualizerStyleSelect: document.getElementById('video-visualizer-style-select'),
 
       // Quick Range Selectors
       quick1Ayah: document.getElementById('video-quick-1'),
@@ -513,7 +521,10 @@
   function populateRecitersDropdown() {
     if (!els.reciterSelect) return;
     els.reciterSelect.innerHTML = VIDEO_RECITERS.map(r => {
-      const extra = r.id === 'hussein_alazzam' ? ' ★ (تلاوات خاشعة حصرية)' : '';
+      let extra = '';
+      if (r.id === 'hussein_alazzam') extra = ' ★ (تلاوات خاشعة حصرية)';
+      else if (r.id === 'ahmed_kaseb') extra = ' ★ (جديد - كامل المصحف)';
+      else if (r.id === 'ahmed_deiban') extra = ' ⚡ (تلاوة حدر سريعة)';
       return `<option value="${r.id}">${r.name}${extra}</option>`;
     }).join('');
     els.reciterSelect.value = state.selectedReciterId;
@@ -851,6 +862,33 @@
       });
     }
 
+    // TikTok Safe Zone Guide Toggle
+    if (els.safezoneToggle) {
+      els.safezoneToggle.addEventListener('change', (e) => {
+        state.showSafeZone = e.target.checked;
+        renderStaticPreviewFrame();
+        if (typeof showToast === 'function') {
+          showToast(state.showSafeZone ? 'تم تفعيل منطقة الأمان لتيك توك والريلز 🎯' : 'تم إخفاء منطقة الأمان');
+        }
+      });
+    }
+
+    // Ayah Caption Presentation Style
+    if (els.captionStyleSelect) {
+      els.captionStyleSelect.addEventListener('change', (e) => {
+        state.captionStyle = e.target.value;
+        renderStaticPreviewFrame();
+      });
+    }
+
+    // Waveform Visualizer Style
+    if (els.visualizerStyleSelect) {
+      els.visualizerStyleSelect.addEventListener('change', (e) => {
+        state.visualizerStyle = e.target.value;
+        renderStaticPreviewFrame();
+      });
+    }
+
     // Ambient Soundscape Selector & Volume Slider
     if (els.ambientContainer) {
       els.ambientContainer.addEventListener('click', (e) => {
@@ -1002,12 +1040,28 @@
   // --- 8. Uthmani Quranic Text Fetching & Live Box ---
   async function fetchSurahAyahs(surahId) {
     if (ayahsCache[surahId]) return ayahsCache[surahId];
+
+    // Check LocalStorage cache first (Shared with Mushaf reader for 0ms offline load)
+    try {
+      const localMushaf = localStorage.getItem(`quran_mushaf_${surahId}`);
+      if (localMushaf) {
+        const parsed = JSON.parse(localMushaf);
+        if (parsed && parsed.ayahs) {
+          ayahsCache[surahId] = parsed.ayahs;
+          return parsed.ayahs;
+        }
+      }
+    } catch (e) {}
+
     try {
       const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}/quran-uthmani`);
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
       const json = await res.json();
       if (json && json.data && json.data.ayahs) {
         ayahsCache[surahId] = json.data.ayahs;
+        try {
+          localStorage.setItem(`quran_mushaf_${surahId}`, JSON.stringify(json.data));
+        } catch (e) {}
         return json.data.ayahs;
       }
     } catch (err) {
@@ -1324,6 +1378,11 @@
 
     // 9. Footer Watermark & Platform Identity (اسم المنصة والرابط بالصغير)
     drawFooterWatermark(ctx, w, h, scale, theme);
+
+    // 10. TikTok & Reels Safe Zone Guide (Live preview only, hidden on video export)
+    if (state.showSafeZone && !data.isRecording) {
+      drawTikTokSafeZone(ctx, w, h, scale);
+    }
   }
 
   function drawGeometricAura(ctx, w, h, scale, theme, time) {
@@ -1541,6 +1600,41 @@
     ctx.scale(animScale, animScale);
     ctx.translate(-w / 2, -centerY);
 
+    // Frosted Glass Card Box for 100% Readability on Any Video Background
+    if (state.captionStyle === 'frosted') {
+      const padX = 26 * scale;
+      const padY = 20 * scale;
+      const boxW = Math.min(w - (36 * scale), maxWidth + (padX * 2));
+      const boxH = totalHeight + (padY * 2);
+      const boxX = (w - boxW) / 2;
+      const boxY = centerY - (boxH / 2);
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(2, 28, 21, 0.74)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+      ctx.shadowBlur = 18 * scale;
+      ctx.beginPath();
+      ctx.roundRect(boxX, boxY, boxW, boxH, 18 * scale);
+      ctx.fill();
+
+      // Subtle Golden Border
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+      ctx.lineWidth = 1.5 * scale;
+      ctx.stroke();
+      ctx.restore();
+    } else if (state.captionStyle === 'glow') {
+      ctx.save();
+      const glowGrad = ctx.createRadialGradient(w / 2, centerY, 10 * scale, w / 2, centerY, (maxWidth / 2) + (24 * scale));
+      glowGrad.addColorStop(0, 'rgba(6, 78, 59, 0.75)');
+      glowGrad.addColorStop(0.55, 'rgba(4, 44, 34, 0.40)');
+      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(w / 2, centerY, (maxWidth / 2) + (24 * scale), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     // Glowing Ambient Shadow for Maximum Legibility
     if (state.transitionStyle === 'radiant') {
       ctx.shadowColor = theme.goldPrimary;
@@ -1560,9 +1654,46 @@
   }
 
   function drawAudioSoundwave(ctx, w, h, scale, theme, time, audioLevel) {
+    if (state.visualizerStyle === 'hidden') return;
     ctx.save();
     const isLandscape = state.aspectRatio === 'landscape';
     const waveY = h - (isLandscape ? 115 * scale : 160 * scale);
+
+    if (state.visualizerStyle === 'wave') {
+      // Smooth flowing continuous wave
+      const waveWidth = Math.min(w * 0.75, 420 * scale);
+      const startX = (w - waveWidth) / 2;
+      ctx.beginPath();
+      ctx.lineWidth = 3 * scale;
+      ctx.strokeStyle = theme.goldPrimary;
+      ctx.shadowColor = theme.glowColor;
+      ctx.shadowBlur = 10 * scale;
+      for (let x = 0; x <= waveWidth; x += 3 * scale) {
+        const norm = (x / waveWidth);
+        const env = Math.sin(norm * Math.PI);
+        const y = waveY + Math.sin((norm * 14) + (time * 6)) * (audioLevel * 22 * scale * env);
+        if (x === 0) ctx.moveTo(startX + x, y);
+        else ctx.lineTo(startX + x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    if (state.visualizerStyle === 'pulse') {
+      // Pulsing central beacon
+      const pulseRadius = (16 * scale) + (audioLevel * 18 * scale * (0.8 + 0.2 * Math.sin(time * 8)));
+      ctx.fillStyle = theme.goldPrimary;
+      ctx.shadowColor = theme.glowColor;
+      ctx.shadowBlur = 16 * scale;
+      ctx.beginPath();
+      ctx.arc(w / 2, waveY, pulseRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    // Default: Symmetrical Spectrum Bars
     const barsCount = isLandscape ? 40 : 28;
     const barWidth = 3.5 * scale;
     const spacing = 4.5 * scale;
@@ -1586,6 +1717,59 @@
       ctx.roundRect(bx, by, barWidth, dynamicHeight, 2 * scale);
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  // --- TikTok & Reels Safe Zone Guide Overlay ---
+  function drawTikTokSafeZone(ctx, w, h, scale) {
+    ctx.save();
+    const topUnsafeH = h * 0.13;
+    const bottomUnsafeH = h * 0.24;
+    const rightUnsafeW = w * 0.17;
+
+    // Top Unsafe Mask
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.14)';
+    ctx.fillRect(0, 0, w, topUnsafeH);
+    ctx.fillStyle = 'rgba(248, 113, 113, 0.95)';
+    ctx.font = `bold ${Math.round(11 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillText('منطقة شريط البحث والعنوان (تيك توك / ريلز)', w / 2, topUnsafeH - 12 * scale);
+
+    // Bottom Unsafe Mask
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.14)';
+    ctx.fillRect(0, h - bottomUnsafeH, w, bottomUnsafeH);
+    ctx.fillStyle = 'rgba(248, 113, 113, 0.95)';
+    ctx.fillText('منطقة وصف الفيديو واسم الحساب والصوت', w / 2, h - bottomUnsafeH + 20 * scale);
+
+    // Right Unsafe Mask
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.10)';
+    ctx.fillRect(w - rightUnsafeW, topUnsafeH, rightUnsafeW, h - topUnsafeH - bottomUnsafeH);
+    ctx.fillStyle = 'rgba(248, 113, 113, 0.85)';
+    ctx.font = `bold ${Math.round(9 * scale)}px sans-serif`;
+    ctx.fillText('أزرار التفاعل', w - (rightUnsafeW / 2), (h / 2));
+
+    // Green Dashed Safe Zone Box
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.9)';
+    ctx.lineWidth = 2 * scale;
+    ctx.setLineDash([8 * scale, 6 * scale]);
+    const safeX = 24 * scale;
+    const safeY = topUnsafeH + 8 * scale;
+    const safeW = w - rightUnsafeW - (32 * scale);
+    const safeH = h - topUnsafeH - bottomUnsafeH - (16 * scale);
+    ctx.strokeRect(safeX, safeY, safeW, safeH);
+
+    // Badge Tag
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(5, 150, 105, 0.92)';
+    ctx.beginPath();
+    ctx.roundRect(safeX + 8 * scale, safeY + 8 * scale, 150 * scale, 24 * scale, 6 * scale);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.round(10 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('✓ منطقة الأمان 100% للنصوص', safeX + (83 * scale), safeY + 24 * scale);
+
     ctx.restore();
   }
 
@@ -1843,13 +2027,25 @@
     return await audioCtx.decodeAudioData(arrayBuffer);
   }
 
-  async function loadHusseinAlAzzamFullSurahBuffer(audioCtx, surahId, signal) {
-    const url = HUSSEIN_ALAZZAM_FILES[surahId];
-    if (!url) throw new Error('تلاوة الشيخ حسين العزام غير متوفرة لهذه السورة');
+  async function loadDirectFullSurahAudioBuffer(audioCtx, reciterId, surahId, signal) {
+    let url = null;
+    if (reciterId === 'hussein_alazzam') {
+      url = HUSSEIN_ALAZZAM_FILES[surahId];
+      if (!url) throw new Error('تلاوة الشيخ حسين العزام غير متوفرة لهذه السورة');
+    } else if (reciterId === 'ahmed_kaseb') {
+      url = `https://archive.org/download/ahmed-kasab/${String(surahId).padStart(3, '0')}.mp3`;
+    } else if (reciterId === 'ahmed_deiban') {
+      url = `https://archive.org/download/002_20250526/${String(surahId).padStart(3, '0')}.mp3`;
+    }
+    if (!url) throw new Error('رابط التلاوة غير متوفر');
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error(`Audio fetch failed (${res.status})`);
     const arrayBuffer = await res.arrayBuffer();
     return await audioCtx.decodeAudioData(arrayBuffer);
+  }
+
+  async function loadHusseinAlAzzamFullSurahBuffer(audioCtx, surahId, signal) {
+    return await loadDirectFullSurahAudioBuffer(audioCtx, 'hussein_alazzam', surahId, signal);
   }
 
   // --- Procedural Spiritual Ambient Sound Synthesizer ---
@@ -1924,14 +2120,15 @@
 
     const reciter = getReciterMeta(state.selectedReciterId);
 
-    // Special handling for Sheikh Hussein Al-Azzam (Authentic full-surah recording)
-    if (reciter.id === 'hussein_alazzam' && HUSSEIN_ALAZZAM_FILES[state.selectedSurahId]) {
+    // Direct Full-Surah Reciters (Sheikh Hussein Al-Azzam, Sheikh Ahmed Kaseb, Sheikh Dr. Ahmed Deiban)
+    const isFullSurahReciter = reciter.id === 'hussein_alazzam' || reciter.id === 'ahmed_kaseb' || reciter.id === 'ahmed_deiban';
+    if (isFullSurahReciter) {
       updateProgressUI({
-        status: `جاري تنزيل التلاوة الخاشعة للشيخ حسين العزام لسورة ${getSurahMeta(state.selectedSurahId).name}...`,
+        status: `جاري تنزيل التلاوة بصوت ${reciter.name} لسورة ${getSurahMeta(state.selectedSurahId).name}...`,
         percent: 30
       });
 
-      const fullBuffer = await loadHusseinAlAzzamFullSurahBuffer(audioCtx, state.selectedSurahId, signal);
+      const fullBuffer = await loadDirectFullSurahAudioBuffer(audioCtx, reciter.id, state.selectedSurahId, signal);
       const totalSurahAyahs = getSurahMeta(state.selectedSurahId).versesCount;
       const durationPerAyah = fullBuffer.duration / totalSurahAyahs;
 
@@ -2378,7 +2575,8 @@
         time: elapsed,
         activeAyah: activeAyahData,
         audioLevel: activeAyahData ? (0.32 + 0.48 * Math.sin(elapsed * 7)) : 0.12,
-        themeId: state.selectedThemeId
+        themeId: state.selectedThemeId,
+        isRecording: isRecording
       });
 
       // Update Recording UI
