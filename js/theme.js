@@ -1,17 +1,21 @@
-// Multi-Theme Royal System for Quran Platform V2.0
+// Multi-Theme Royal System for Quran Platform V3.0 (Golden Edition)
 document.addEventListener('DOMContentLoaded', () => {
   const themeToggleBtn = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
 
-  const themesOrder = ['dark', 'kaaba', 'quds', 'light'];
+  const themesOrder = ['dark', 'kaaba', 'madinah', 'quds', 'light'];
   const themeMeta = {
     dark: {
       name: 'الزمرد الملكي',
       icon: 'fa-solid fa-gem text-emerald-400 text-base sm:text-lg transition-all duration-300'
     },
     kaaba: {
-      name: 'الكعبة المذهبة (OLED)',
+      name: 'كسوة الكعبة (OLED)',
       icon: 'fa-solid fa-kaaba text-amber-400 text-base sm:text-lg transition-all duration-300'
+    },
+    madinah: {
+      name: 'رحاب المسجد النبوي',
+      icon: 'fa-solid fa-mosque text-emerald-300 text-base sm:text-lg transition-all duration-300'
     },
     quds: {
       name: 'ليالي القدس',
@@ -44,11 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
       themeIcon.className = meta.icon;
     }
     if (themeToggleBtn) {
-      themeToggleBtn.setAttribute('title', `المظهر الحالي: ${meta.name} (انقر للتبديل)`);
+      themeToggleBtn.setAttribute('title', `المظهر الحالي: ${meta.name} (انقر للتبديل بين 5 ثيمات ملكية)`);
     }
 
     if (notify && window.showPlatformToast) {
       window.showPlatformToast(`تم تفعيل مظهر: ${meta.name}`, 'info');
     }
   }
+  window.setPlatformTheme = setTheme;
 });

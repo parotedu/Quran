@@ -96,6 +96,28 @@
   --mushaf-paper-bg: rgba(15, 23, 42, 0.65);
 }
 
+[data-theme="madinah"] {
+  /* Al-Masjid An-Nabawi Warm Sanctuary Green & Ivory Gold Theme */
+  --bg-primary: radial-gradient(circle at 50% 0%, #065f46 0%, #043927 42%, #021b13 100%);
+  --panel-bg: rgba(6, 65, 45, 0.56);
+  --panel-border: rgba(167, 243, 208, 0.22);
+  --panel-border-glow: rgba(251, 191, 36, 0.45);
+  --text-primary: #f0fdf4;
+  --text-secondary: #a7f3d0;
+  --text-accent: #fde68a;
+  --text-accent-hover: #fbbf24;
+  --text-gold-gradient: linear-gradient(135deg, #ecfdf5 0%, #6ee7b7 45%, #fbbf24 100%);
+  --card-bg: rgba(4, 52, 36, 0.55);
+  --card-bg-hover: rgba(6, 95, 70, 0.5);
+  --card-active: rgba(16, 185, 129, 0.32);
+  --glow-color: rgba(52, 211, 153, 0.35);
+  --slider-track: rgba(167, 243, 208, 0.2);
+  --scrollbar-thumb: #34d399;
+  --scrollbar-track: rgba(2, 44, 34, 0.6);
+  --input-bg: rgba(2, 32, 22, 0.8);
+  --mushaf-paper-bg: rgba(4, 48, 34, 0.55);
+}
+
 /* ==========================================================================
    GLOBAL RESET & TYPOGRAPHY
    ========================================================================== */
@@ -1054,6 +1076,70 @@ button, select, input {
   color: #fbbf24 !important;
   font-weight: 800 !important;
   border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+/* ==========================================================================
+   V3.0 GOLDEN EDITION: INLINE TAFSIR, HIFZ TESTER & PRAYER HUB
+   ========================================================================== */
+.mushaf-inline-tafsir-block {
+  display: block;
+  margin-bottom: 1.1rem;
+  padding: 0.9rem 1.15rem;
+  border-radius: 1rem;
+  background: rgba(2, 38, 29, 0.45);
+  border: 1px solid rgba(251, 191, 36, 0.18);
+  transition: all 0.2s ease;
+}
+[data-theme="light"] .mushaf-inline-tafsir-block {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(4, 120, 87, 0.2);
+}
+.mushaf-inline-tafsir-block:hover {
+  border-color: rgba(251, 191, 36, 0.42);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+.mushaf-inline-tafsir-text {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  line-height: 1.85;
+  color: var(--text-secondary);
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(251, 191, 36, 0.2);
+}
+
+/* Hifz Self-Test Modes (اختبر حفظك التفاعلي) */
+.hifz-masked-segment {
+  filter: blur(8px);
+  opacity: 0.32;
+  background: rgba(251, 191, 36, 0.12);
+  border-radius: 0.4rem;
+  padding: 0 0.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.35s ease, opacity 0.35s ease, background-color 0.35s ease;
+}
+.ayah-text:hover .hifz-masked-segment {
+  opacity: 0.5;
+  background: rgba(251, 191, 36, 0.22);
+}
+.hifz-revealed .hifz-masked-segment,
+.hifz-masked-segment.hifz-revealed {
+  filter: blur(0) !important;
+  opacity: 1 !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #fde68a;
+}
+
+/* Prayer Times Active Card */
+.prayer-time-card {
+  transition: all 0.25s ease;
+}
+.prayer-time-card.next-prayer-active {
+  border-color: rgba(251, 191, 36, 0.7) !important;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(6, 78, 59, 0.55) 100%) !important;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+  transform: translateY(-2px);
 }
 
 

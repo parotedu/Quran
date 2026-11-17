@@ -308,6 +308,7 @@
     transitionStyle: 'cinematic', // 'cinematic' | 'radiant' | 'reverent'
     dedicationText: '',
     fontSizeMode: 'auto', // 'auto' | 'medium' | 'large'
+    subtitleMode: 'none', // 'none' | 'en.sahih' | 'ar.muyassar'
     captionStyle: 'frosted', // 'frosted' (glass box) | 'glow' | 'none'
     visualizerStyle: 'bars', // 'bars' | 'wave' | 'pulse' | 'hidden'
     showSafeZone: false, // TikTok & Reels Safe Zone Guide Overlay
@@ -420,8 +421,10 @@
       waveToggle: document.getElementById('video-wave-toggle'),
       basmalaToggle: document.getElementById('video-basmala-toggle'),
       safezoneToggle: document.getElementById('video-safezone-toggle'),
+      subtitleModeSelect: document.getElementById('video-subtitle-mode-select'),
       captionStyleSelect: document.getElementById('video-caption-style-select'),
       visualizerStyleSelect: document.getElementById('video-visualizer-style-select'),
+      viralPresetsContainer: document.getElementById('video-viral-presets'),
 
       // Quick Range Selectors
       quick1Ayah: document.getElementById('video-quick-1'),
@@ -873,6 +876,77 @@
       });
     }
 
+    // Subtitle / Translation / Tafsir Overlay Mode (V3.0)
+    if (els.subtitleModeSelect) {
+      els.subtitleModeSelect.addEventListener('change', async (e) => {
+        state.subtitleMode = e.target.value;
+        if (state.subtitleMode !== 'none') {
+          await fetchSurahSubtitle(state.selectedSurahId, state.subtitleMode);
+        }
+        renderStaticPreviewFrame();
+      });
+    }
+
+    // 1-Click Viral Presets Bar (V3.0)
+    if (els.viralPresetsContainer) {
+      els.viralPresetsContainer.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.viral-preset-btn');
+        if (!btn) return;
+        const preset = btn.getAttribute('data-preset');
+
+        els.viralPresetsContainer.querySelectorAll('.viral-preset-btn').forEach(b => {
+          b.className = 'viral-preset-btn py-1.5 px-2 rounded-xl bg-emerald-950/80 border border-emerald-500/25 text-slate-200 hover:border-amber-400 hover:text-amber-300 font-semibold flex items-center justify-center gap-1 transition-all active:scale-95';
+        });
+        btn.className = 'viral-preset-btn py-1.5 px-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold flex items-center justify-center gap-1 transition-all active:scale-95';
+
+        if (preset === 'global_reel') {
+          state.aspectRatio = 'vertical';
+          state.bgType = 'theme';
+          state.selectedThemeId = 'emerald';
+          state.subtitleMode = 'en.sahih';
+          state.captionStyle = 'frosted';
+          state.visualizerStyle = 'bars';
+          state.ambientSound = 'none';
+        } else if (preset === 'kaaba_rain') {
+          state.aspectRatio = 'vertical';
+          state.bgType = 'video';
+          state.selectedMotionId = 'kaaba';
+          state.subtitleMode = 'none';
+          state.captionStyle = 'frosted';
+          state.visualizerStyle = 'wave';
+          state.ambientSound = 'rain';
+          loadSelectedMotionBackground('kaaba');
+        } else if (preset === 'sea_tafsir') {
+          state.aspectRatio = 'vertical';
+          state.bgType = 'video';
+          state.selectedMotionId = 'sea';
+          state.subtitleMode = 'ar.muyassar';
+          state.captionStyle = 'frosted';
+          state.visualizerStyle = 'wave';
+          state.ambientSound = 'sea';
+          loadSelectedMotionBackground('sea');
+        } else if (preset === 'royal_gold') {
+          state.aspectRatio = 'vertical';
+          state.bgType = 'theme';
+          state.selectedThemeId = 'gold';
+          state.subtitleMode = 'none';
+          state.captionStyle = 'glow';
+          state.visualizerStyle = 'bars';
+          state.ambientSound = 'none';
+        }
+
+        if (els.subtitleModeSelect) els.subtitleModeSelect.value = state.subtitleMode;
+        if (els.captionStyleSelect) els.captionStyleSelect.value = state.captionStyle;
+        if (els.visualizerStyleSelect) els.visualizerStyleSelect.value = state.visualizerStyle;
+
+        if (state.subtitleMode !== 'none') {
+          await fetchSurahSubtitle(state.selectedSurahId, state.subtitleMode);
+        }
+        setCanvasDimensions();
+        renderStaticPreviewFrame();
+      });
+    }
+
     // Ayah Caption Presentation Style
     if (els.captionStyleSelect) {
       els.captionStyleSelect.addEventListener('change', (e) => {
@@ -1070,6 +1144,39 @@
     return [];
   }
 
+  // V3.0 Subtitle & Tafsir Cache for Bilingual Video Rendering
+  const subtitleCache = {};
+  async function fetchSurahSubtitle(surahId, edition) {
+    if (!edition || edition === 'none') return [];
+    const key = `${edition}_${surahId}`;
+    if (subtitleCache[key]) return subtitleCache[key];
+
+    try {
+      const local = localStorage.getItem(`quran_surah_tafsir_${key}`);
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          subtitleCache[key] = parsed;
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}/${edition}`);
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const json = await res.json();
+      if (json && json.data && json.data.ayahs) {
+        subtitleCache[key] = json.data.ayahs;
+        try {
+          localStorage.setItem(`quran_surah_tafsir_${key}`, JSON.stringify(json.data.ayahs));
+        } catch (e) {}
+        return json.data.ayahs;
+      }
+    } catch (e) {}
+    return [];
+  }
+
   async function onSurahOrRangeChanged(forceFetch = false) {
     updateSummaryBadge();
     if (els.textPreviewBox) {
@@ -1077,6 +1184,9 @@
     }
 
     const allAyahs = await fetchSurahAyahs(state.selectedSurahId);
+    if (state.subtitleMode && state.subtitleMode !== 'none') {
+      await fetchSurahSubtitle(state.selectedSurahId, state.subtitleMode);
+    }
     const selectedAyahs = allAyahs.filter(a => a.numberInSurah >= state.fromAyah && a.numberInSurah <= state.toAyah);
 
     if (els.textPreviewBox) {
@@ -1590,7 +1700,47 @@
     if (currentLine) lines.push(currentLine);
 
     const lineHeight = fontSize * 1.82;
-    const totalHeight = lines.length * lineHeight;
+    const arabicBlockHeight = lines.length * lineHeight;
+
+    // V3.0 Bilingual Subtitle / Tafsir Calculation
+    const subLines = [];
+    const isSubEnabled = state.subtitleMode && state.subtitleMode !== 'none';
+    const isSubEnglish = isSubEnabled && state.subtitleMode.startsWith('en');
+    const subFontSize = Math.round((isSubEnglish ? 18 : 20) * scale);
+    const subLineHeight = subFontSize * 1.55;
+
+    if (isSubEnabled) {
+      const subKey = `${state.subtitleMode}_${state.selectedSurahId}`;
+      const subArr = subtitleCache[subKey] || [];
+      const subObj = subArr.find(a => a.numberInSurah === activeAyah.ayahNum);
+      if (subObj && subObj.text) {
+        ctx.save();
+        ctx.font = `600 ${subFontSize}px Cairo, sans-serif`;
+        const subWords = subObj.text.trim().split(/\s+/);
+        let curSub = '';
+        subWords.forEach(wrd => {
+          const test = curSub ? `${curSub} ${wrd}` : wrd;
+          if (ctx.measureText(test).width > maxWidth * 0.94 && curSub) {
+            subLines.push(curSub);
+            curSub = wrd;
+          } else {
+            curSub = test;
+          }
+        });
+        if (curSub) subLines.push(curSub);
+        if (subLines.length > 3) {
+          subLines.length = 3;
+          subLines[2] = subLines[2] + '...';
+        }
+        ctx.restore();
+      } else {
+        // Trigger background fetch if not yet in memory
+        fetchSurahSubtitle(state.selectedSurahId, state.subtitleMode);
+      }
+    }
+
+    const subBlockHeight = subLines.length > 0 ? (subLines.length * subLineHeight + fontSize * 0.85) : 0;
+    const totalHeight = arabicBlockHeight + subBlockHeight;
 
     const centerY = (h * (state.aspectRatio === 'landscape' ? 0.54 : 0.53)) + (activeAyah.offsetY || 0);
     const startY = centerY - (totalHeight / 2) + (fontSize * 0.75);
@@ -1603,7 +1753,7 @@
     // Frosted Glass Card Box for 100% Readability on Any Video Background
     if (state.captionStyle === 'frosted') {
       const padX = 26 * scale;
-      const padY = 20 * scale;
+      const padY = 24 * scale;
       const boxW = Math.min(w - (36 * scale), maxWidth + (padX * 2));
       const boxH = totalHeight + (padY * 2);
       const boxX = (w - boxW) / 2;
@@ -1649,6 +1799,31 @@
       ctx.fillStyle = theme.textColor;
       ctx.fillText(line, w / 2, lineY);
     });
+
+    // Render Subtitle / Translation / Tafsir Lines Below Verse
+    if (subLines.length > 0) {
+      const lastArabicY = startY + ((lines.length - 1) * lineHeight);
+      const dividerY = lastArabicY + (fontSize * 0.58);
+      const subStartY = lastArabicY + (fontSize * 1.12);
+      ctx.save();
+      // Delicate golden separator line
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+      ctx.lineWidth = 1 * scale;
+      ctx.beginPath();
+      ctx.moveTo(w / 2 - 70 * scale, dividerY);
+      ctx.lineTo(w / 2 + 70 * scale, dividerY);
+      ctx.stroke();
+
+      ctx.direction = isSubEnglish ? 'ltr' : 'rtl';
+      ctx.font = `600 ${subFontSize}px Cairo, sans-serif`;
+      ctx.fillStyle = 'rgba(253, 230, 138, 0.94)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+      ctx.shadowBlur = 8 * scale;
+      subLines.forEach((sLine, sIdx) => {
+        ctx.fillText(sLine, w / 2, subStartY + (sIdx * subLineHeight));
+      });
+      ctx.restore();
+    }
 
     ctx.restore();
   }
@@ -2112,6 +2287,9 @@
 
   async function prepareTimeline(audioCtx, signal) {
     const allAyahs = await fetchSurahAyahs(state.selectedSurahId);
+    if (state.subtitleMode && state.subtitleMode !== 'none') {
+      await fetchSurahSubtitle(state.selectedSurahId, state.subtitleMode);
+    }
     const selectedAyahs = allAyahs.filter(a => a.numberInSurah >= state.fromAyah && a.numberInSurah <= state.toAyah);
 
     if (selectedAyahs.length === 0) {

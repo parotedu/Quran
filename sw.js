@@ -1,7 +1,7 @@
 // Service Worker for منصة القرآن الكريم
 // Enables instant offline loading, asset caching, and resilience on poor connections.
 
-const CACHE_NAME = 'quran-platform-v2.2';
+const CACHE_NAME = 'quran-platform-v3.0';
 const CORE_ASSETS = [
   './',
   './index.html',

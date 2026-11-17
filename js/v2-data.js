@@ -650,3 +650,25 @@ const HADR_TEHZEEB = [
     desc: "من سورة ق إلى سورة الناس (خاتمة القرآن الشريف والأذكار والمعوذات)"
   }
 ];
+
+// ==========================================================================
+// V3.0 GOLDEN EDITION: ISLAMIC CITIES FOR PRAYER TIMES & QIBLA COMPASS
+// ==========================================================================
+const ISLAMIC_CITIES = [
+  { id: "cairo", name: "القاهرة - مصر", lat: 30.0444, lng: 31.2357, method: 5, qibla: 136, fallback: { Fajr: "04:58", Sunrise: "06:26", Dhuhr: "11:46", Asr: "14:47", Maghrib: "17:06", Isha: "18:27" } },
+  { id: "makkah", name: "مكة المكرمة - السعودية", lat: 21.4225, lng: 39.8262, method: 4, qibla: 0, fallback: { Fajr: "05:12", Sunrise: "06:30", Dhuhr: "12:06", Asr: "15:21", Maghrib: "17:42", Isha: "19:12" } },
+  { id: "madinah", name: "المدينة المنورة - السعودية", lat: 24.4672, lng: 39.6112, method: 4, qibla: 177, fallback: { Fajr: "05:18", Sunrise: "06:39", Dhuhr: "12:08", Asr: "15:18", Maghrib: "17:37", Isha: "19:07" } },
+  { id: "riyadh", name: "الرياض - السعودية", lat: 24.7136, lng: 46.6753, method: 4, qibla: 244, fallback: { Fajr: "04:51", Sunrise: "06:12", Dhuhr: "11:39", Asr: "14:48", Maghrib: "17:06", Isha: "18:36" } },
+  { id: "quds", name: "القدس الشريف - فلسطين", lat: 31.7683, lng: 35.2137, method: 3, qibla: 157, fallback: { Fajr: "04:46", Sunrise: "06:14", Dhuhr: "11:31", Asr: "14:29", Maghrib: "16:48", Isha: "18:08" } },
+  { id: "amman", name: "عمّان - الأردن", lat: 31.9454, lng: 35.9284, method: 3, qibla: 161, fallback: { Fajr: "04:44", Sunrise: "06:12", Dhuhr: "11:28", Asr: "14:26", Maghrib: "16:45", Isha: "18:05" } },
+  { id: "doha", name: "الدوحة - قطر", lat: 25.2854, lng: 51.5310, method: 4, qibla: 253, fallback: { Fajr: "04:33", Sunrise: "05:54", Dhuhr: "11:20", Asr: "14:28", Maghrib: "16:46", Isha: "18:16" } },
+  { id: "dubai", name: "دبي - الإمارات", lat: 25.2048, lng: 55.2708, method: 4, qibla: 258, fallback: { Fajr: "05:17", Sunrise: "06:38", Dhuhr: "12:05", Asr: "15:13", Maghrib: "17:32", Isha: "19:02" } },
+  { id: "kuwait", name: "مدينة الكويت - الكويت", lat: 29.3759, lng: 47.9774, method: 4, qibla: 225, fallback: { Fajr: "04:53", Sunrise: "06:19", Dhuhr: "11:35", Asr: "14:37", Maghrib: "16:51", Isha: "18:21" } },
+  { id: "baghdad", name: "بغداد - العراق", lat: 33.3152, lng: 44.3661, method: 3, qibla: 200, fallback: { Fajr: "05:12", Sunrise: "06:42", Dhuhr: "11:49", Asr: "14:43", Maghrib: "16:56", Isha: "18:18" } },
+  { id: "damascus", name: "دمشق - سوريا", lat: 33.5138, lng: 36.2765, method: 3, qibla: 165, fallback: { Fajr: "05:45", Sunrise: "07:15", Dhuhr: "12:22", Asr: "15:16", Maghrib: "17:29", Isha: "18:51" } },
+  { id: "rabat", name: "الرباط - المغرب", lat: 34.0209, lng: -6.8416, method: 3, qibla: 95, fallback: { Fajr: "06:39", Sunrise: "08:09", Dhuhr: "13:14", Asr: "16:07", Maghrib: "18:20", Isha: "19:41" } },
+  { id: "algiers", name: "الجزائر العاصمة - الجزائر", lat: 36.7538, lng: 3.0588, method: 3, qibla: 105, fallback: { Fajr: "06:06", Sunrise: "07:40", Dhuhr: "12:35", Asr: "15:23", Maghrib: "17:31", Isha: "18:56" } },
+  { id: "tunis", name: "تونس العاصمة - تونس", lat: 36.8065, lng: 10.1815, method: 3, qibla: 113, fallback: { Fajr: "05:38", Sunrise: "07:12", Dhuhr: "12:07", Asr: "14:54", Maghrib: "17:02", Isha: "18:28" } },
+  { id: "khartoum", name: "الخرطوم - السودان", lat: 15.5007, lng: 32.5599, method: 5, qibla: 49, fallback: { Fajr: "04:39", Sunrise: "05:54", Dhuhr: "11:41", Asr: "15:02", Maghrib: "17:28", Isha: "18:40" } },
+  { id: "istanbul", name: "إسطنبول - تركيا", lat: 41.0082, lng: 28.9784, method: 13, qibla: 152, fallback: { Fajr: "06:28", Sunrise: "08:02", Dhuhr: "12:52", Asr: "15:30", Maghrib: "17:42", Isha: "19:08" } }
+];

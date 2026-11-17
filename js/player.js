@@ -276,6 +276,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentMemorialCardBlob = null;
   let currentMemorialCardFile = null;
 
+  // V3.0 Golden Edition State Variables (Declared before init() to avoid TDZ)
+  let mushafInlineTafsirEdition = localStorage.getItem('quran_inline_tafsir') || 'none';
+  let mushafHifzMode = 'off';
+  let hifzRevealedCount = 0;
+  const surahTafsirCache = {};
+  let prayerCountdownTimer = null;
+  let currentPrayerTimings = null;
+
+  // Hadr Revision Hub State Variables
+  let hadrInitialized = false;
+  let currentHadrReciterId = 'ahmed_deiban';
+  let currentHadrSurahId = 1;
+  let currentHadrMode = 'surahs';
+  let hadrPlaybackSpeed = 1.0;
+  let hadrRepeatMode = '1';
+  let hadrRepeatCountLeft = 1;
+  let hadrPlaylistQueue = [];
+  let hadrQueueIndex = 0;
+
   // --- Initial Setup ---
   init();
 
@@ -385,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  window.switchView = switchView;
   function switchView(targetView, shouldScroll = true) {
     window.switchView = switchView;
     currentView = targetView;
@@ -1071,11 +1091,35 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // V3.0 Golden Edition: Inline Tafsir & Interactive Hifz Self-Test Helpers
+  function formatAyahForHifzMode(text, ayahNum) {
+    if (!mushafHifzMode || mushafHifzMode === 'off') return text;
+    const words = text.trim().split(/\s+/);
+    if (mushafHifzMode === 'full' || words.length <= 3) {
+      return `<span class="hifz-masked-segment" data-ayah="${ayahNum}">${text}</span>`;
+    }
+    if (mushafHifzMode === 'endings') {
+      const visibleCount = Math.min(2, Math.floor(words.length / 2));
+      const head = words.slice(0, visibleCount).join(' ');
+      const tail = words.slice(visibleCount).join(' ');
+      return `${head} <span class="hifz-masked-segment" data-ayah="${ayahNum}">${tail}</span>`;
+    }
+    if (mushafHifzMode === 'starts') {
+      const maskCount = Math.min(3, Math.ceil(words.length / 2));
+      const head = words.slice(0, maskCount).join(' ');
+      const tail = words.slice(maskCount).join(' ');
+      return `<span class="hifz-masked-segment" data-ayah="${ayahNum}">${head}</span> ${tail}`;
+    }
+    return text;
+  }
+
   function renderMushafVerses(surahData, targetAyahToScroll = null) {
     const ayahs = surahData.ayahs || [];
     const surahObj = SURAHS.find(s => s.id === surahData.number) || { name: surahData.name };
     let html = '';
-    
+    const isInlineTafsir = mushafInlineTafsirEdition && mushafInlineTafsirEdition !== 'none';
+    const isLtr = mushafInlineTafsirEdition && mushafInlineTafsirEdition.startsWith('en');
+
     ayahs.forEach(ayah => {
       let text = ayah.text;
       // If not Fatihah & not Tawbah, strip initial Bismillah from verse 1 because of top header banner
@@ -1084,11 +1128,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const isBookmarked = khatmaBookmark && khatmaBookmark.surahId === surahData.number && khatmaBookmark.ayahNum === ayah.numberInSurah;
       const bookmarkClass = isBookmarked ? 'ayah-bookmarked' : '';
-      
-      html += `<span class="ayah-text ${bookmarkClass}" id="mushaf-ayah-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="انقر لفتح استوديو الآية (أو للانتقال إليها في وضع التحفيظ)">${text}</span><span class="ayah-badge" id="mushaf-badge-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="آية رقم ${ayah.numberInSurah}">﴿${toArabicNumerals(ayah.numberInSurah)}﴾</span> `;
+      const displayHtml = formatAyahForHifzMode(text, ayah.numberInSurah);
+
+      if (isInlineTafsir) {
+        html += `
+          <div class="mushaf-inline-tafsir-block">
+            <div class="leading-[2.5]">
+              <span class="ayah-text ${bookmarkClass}" id="mushaf-ayah-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="انقر للاستماع أو كشف الآية">${displayHtml}</span>
+              <span class="ayah-badge" id="mushaf-badge-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="انقر لفتح استوديو التفسير والفيديو للآية ${ayah.numberInSurah}">﴿${toArabicNumerals(ayah.numberInSurah)}﴾</span>
+            </div>
+            <div class="mushaf-inline-tafsir-text" id="inline-tafsir-${surahData.number}-${ayah.numberInSurah}" dir="${isLtr ? 'ltr' : 'rtl'}">
+              <span class="text-xs text-slate-400">جاري تحميل التفسير...</span>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `<span class="ayah-text ${bookmarkClass}" id="mushaf-ayah-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="انقر لفتح استوديو الآية (أو لكشفها في وضع الاختبار)">${displayHtml}</span><span class="ayah-badge" id="mushaf-badge-${ayah.numberInSurah}" data-ayah="${ayah.numberInSurah}" data-global="${ayah.number}" title="انقر لفتح استوديو وتفسير الآية رقم ${ayah.numberInSurah}">﴿${toArabicNumerals(ayah.numberInSurah)}﴾</span> `;
+      }
     });
 
     mushafContent.innerHTML = html;
+
+    if (isInlineTafsir) {
+      populateInlineMushafTafsir(surahData.number, mushafInlineTafsirEdition);
+    }
+
     if (targetAyahToScroll) {
       setTimeout(() => {
         const targetEl = document.getElementById(`mushaf-ayah-${targetAyahToScroll}`);
@@ -1102,9 +1166,9 @@ document.addEventListener('DOMContentLoaded', () => {
       mushafScrollArea.scrollTop = 0;
     }
 
-    // Attach Interactive Ayah Studio / Memorization Seek Listener on Ayahs
+    // Attach Interactive Ayah Studio / Hifz Reveal / Memorization Seek Listener on Ayahs
     mushafContent.querySelectorAll('.ayah-text, .ayah-badge').forEach(elem => {
-      elem.addEventListener('click', () => {
+      elem.addEventListener('click', (e) => {
         const ayahNum = parseInt(elem.getAttribute('data-ayah'));
         const globalNum = parseInt(elem.getAttribute('data-global'));
         const ayahObj = ayahs.find(a => a.numberInSurah === ayahNum);
@@ -1122,6 +1186,31 @@ document.addEventListener('DOMContentLoaded', () => {
           text: cleanText
         };
 
+        // If user clicked the Ayah Badge ﴿١﴾, always open Ayah Studio Modal
+        if (elem.classList.contains('ayah-badge')) {
+          e.stopPropagation();
+          openAyahStudio(surahData.number, surahObj.name, ayahNum, globalNum, cleanText);
+          return;
+        }
+
+        // If Hifz Self-Test Mode is active, reveal the masked segment on click!
+        if (mushafHifzMode !== 'off') {
+          const maskedSeg = elem.querySelector('.hifz-masked-segment');
+          if (maskedSeg && !maskedSeg.classList.contains('hifz-revealed')) {
+            maskedSeg.classList.add('hifz-revealed');
+            elem.classList.add('hifz-revealed');
+            hifzRevealedCount++;
+            const scoreBadge = document.getElementById('mushaf-hifz-score-badge');
+            const scoreText = document.getElementById('mushaf-hifz-score-text');
+            if (scoreBadge) {
+              scoreBadge.classList.remove('hidden');
+              scoreBadge.classList.add('flex');
+            }
+            if (scoreText) scoreText.innerText = `تم تسميع: ${hifzRevealedCount}`;
+            return;
+          }
+        }
+
         if (isMemorizationMode) {
           seekReciterToAyah(surahData.number, ayahNum);
         } else {
@@ -1135,6 +1224,46 @@ document.addEventListener('DOMContentLoaded', () => {
       loadSurahTimestamps(surahData.number);
       setTimeout(() => updateLiveMushafAyahHover(true), 80);
     }
+  }
+
+  function populateInlineMushafTafsir(surahId, edition) {
+    const cacheKey = `${edition}_${surahId}`;
+    if (surahTafsirCache[cacheKey]) {
+      applyInlineTafsirData(surahId, surahTafsirCache[cacheKey]);
+      return;
+    }
+    try {
+      const local = localStorage.getItem(`quran_surah_tafsir_${cacheKey}`);
+      if (local) {
+        const parsed = JSON.parse(local);
+        surahTafsirCache[cacheKey] = parsed;
+        applyInlineTafsirData(surahId, parsed);
+        return;
+      }
+    } catch (e) {}
+
+    fetch(`https://api.alquran.cloud/v1/surah/${surahId}/${edition}`)
+      .then(r => r.json())
+      .then(json => {
+        if (json && json.data && json.data.ayahs) {
+          surahTafsirCache[cacheKey] = json.data.ayahs;
+          try {
+            localStorage.setItem(`quran_surah_tafsir_${cacheKey}`, JSON.stringify(json.data.ayahs));
+          } catch (e) {}
+          applyInlineTafsirData(surahId, json.data.ayahs);
+        }
+      })
+      .catch(() => {});
+  }
+
+  function applyInlineTafsirData(surahId, tafsirAyahs) {
+    if (!Array.isArray(tafsirAyahs)) return;
+    tafsirAyahs.forEach(item => {
+      const el = document.getElementById(`inline-tafsir-${surahId}-${item.numberInSurah}`);
+      if (el) {
+        el.innerText = item.text;
+      }
+    });
   }
 
   function toArabicNumerals(num) {
@@ -1370,6 +1499,25 @@ document.addEventListener('DOMContentLoaded', () => {
           switchView('memorial');
           servicesDropdown.classList.add('hidden');
           if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
+      const dropdownBtnPrayer = document.getElementById('dropdown-btn-prayer');
+      if (dropdownBtnPrayer) {
+        dropdownBtnPrayer.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchView('spiritual');
+          const spTabPrayer = document.getElementById('sp-tab-prayer');
+          if (spTabPrayer) spTabPrayer.click();
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
+      const btnHeaderStreak = document.getElementById('btn-header-streak');
+      if (btnHeaderStreak) {
+        btnHeaderStreak.addEventListener('click', () => {
+          switchView('spiritual');
         });
       }
 
@@ -2186,6 +2334,67 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    // V3.0 Inline Tafsir & Translation Selectors (Desktop + Mobile)
+    const inlineTafsirSelect = document.getElementById('mushaf-inline-tafsir-select');
+    const mInlineTafsirSelect = document.getElementById('m-options-inline-tafsir-select');
+    [inlineTafsirSelect, mInlineTafsirSelect].forEach(sel => {
+      if (!sel) return;
+      sel.value = mushafInlineTafsirEdition;
+      sel.addEventListener('change', (e) => {
+        mushafInlineTafsirEdition = e.target.value;
+        localStorage.setItem('quran_inline_tafsir', mushafInlineTafsirEdition);
+        if (inlineTafsirSelect) inlineTafsirSelect.value = mushafInlineTafsirEdition;
+        if (mInlineTafsirSelect) mInlineTafsirSelect.value = mushafInlineTafsirEdition;
+        if (mushafCache[currentMushafSurahId]) {
+          renderMushafVerses(mushafCache[currentMushafSurahId]);
+        }
+        const labelMap = {
+          'none': 'تم تفعيل وضع المصحف الصافي بدون حواشٍ',
+          'ar.muyassar': 'تم عرض التفسير الميسر تحت آيات المصحف 💡',
+          'ar.jalalayn': 'تم عرض تفسير الجلالين تحت آيات المصحف 📚',
+          'ar.waseet': 'تم عرض التفسير الوسيط تحت آيات المصحف 📘',
+          'en.sahih': 'تم عرض الترجمة الإنجليزية تحت آيات المصحف 🌍'
+        };
+        showToast(labelMap[mushafInlineTafsirEdition] || 'تم تحديث وضع العرض');
+      });
+    });
+
+    // V3.0 Hifz Self-Test Mode Selectors (Desktop + Mobile)
+    const hifzModeSelect = document.getElementById('mushaf-hifz-mode-select');
+    const mHifzModeSelect = document.getElementById('m-options-hifz-mode-select');
+    [hifzModeSelect, mHifzModeSelect].forEach(sel => {
+      if (!sel) return;
+      sel.value = mushafHifzMode;
+      sel.addEventListener('change', (e) => {
+        mushafHifzMode = e.target.value;
+        hifzRevealedCount = 0;
+        if (hifzModeSelect) hifzModeSelect.value = mushafHifzMode;
+        if (mHifzModeSelect) mHifzModeSelect.value = mushafHifzMode;
+        const scoreBadge = document.getElementById('mushaf-hifz-score-badge');
+        const scoreText = document.getElementById('mushaf-hifz-score-text');
+        if (scoreBadge) {
+          if (mushafHifzMode === 'off') {
+            scoreBadge.classList.add('hidden');
+            scoreBadge.classList.remove('flex');
+          } else {
+            scoreBadge.classList.remove('hidden');
+            scoreBadge.classList.add('flex');
+          }
+        }
+        if (scoreText) scoreText.innerText = 'تم تسميع: 0';
+        if (mushafCache[currentMushafSurahId]) {
+          renderMushafVerses(mushafCache[currentMushafSurahId]);
+        }
+        const hifzLabels = {
+          'off': 'تم إظهار نص المصحف بالكامل',
+          'full': 'تم إخفاء الآيات بالكامل — انقر على أي آية لكشفها والتأكد من حفظك 🎯',
+          'endings': 'اختبار خواتيم الآيات مفعل — انقر على الآية لكشف خاتمتها 🧩',
+          'starts': 'اختبار بدايات الآيات مفعل — انقر على الآية لكشف مطلعها 🔑'
+        };
+        showToast(hifzLabels[mushafHifzMode] || 'تم تحديث وضع الاختبار');
+      });
+    });
 
     if (btnMemorizeOpenStudio) {
       btnMemorizeOpenStudio.addEventListener('click', () => {
@@ -3308,8 +3517,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Spiritual Companion Hub (Khatma, Mood Compass, Azkar, Sebha) ---
+  // --- Spiritual Companion Hub (Khatma, Mood Compass, Azkar, Sebha, Prayer & Qibla) ---
   function initSpiritualCompanionHub() {
+    updateDailyStreak();
     updateKhatmaDashboard();
 
     // Sub-tabs navigation inside #spiritual-view
@@ -3317,6 +3527,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const spTabs = [
       { id: 'sebha', btn: document.getElementById('sp-tab-sebha'), panel: document.getElementById('sp-panel-sebha') },
       { id: 'azkar', btn: document.getElementById('sp-tab-azkar'), panel: document.getElementById('sp-panel-azkar') },
+      { id: 'prayer', btn: document.getElementById('sp-tab-prayer'), panel: document.getElementById('sp-panel-prayer') },
       { id: 'compass', btn: document.getElementById('sp-tab-compass'), panel: document.getElementById('sp-panel-compass') }
     ];
 
@@ -3404,6 +3615,245 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Initialize Digital Sebha
     initDigitalSebha();
+
+    // 4. Initialize V3.0 Prayer Times & Qibla Compass Hub
+    initPrayerAndQiblaHub();
+  }
+
+  function updateDailyStreak() {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      let data = { streak: 1, lastDate: today };
+      const raw = localStorage.getItem('quran_streak_data');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.lastDate === today) {
+          data = parsed;
+        } else {
+          const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+          if (parsed.lastDate === yesterday) {
+            data = { streak: (parsed.streak || 1) + 1, lastDate: today };
+          } else {
+            data = { streak: 1, lastDate: today };
+          }
+        }
+      }
+      localStorage.setItem('quran_streak_data', JSON.stringify(data));
+      const labelText = `${data.streak} ${data.streak >= 3 && data.streak <= 10 ? 'أيام' : 'يوم'}`;
+      const headerStreak = document.getElementById('header-streak-label');
+      const khatmaStreak = document.getElementById('khatma-streak-count');
+      if (headerStreak) headerStreak.innerText = labelText;
+      if (khatmaStreak) khatmaStreak.innerText = labelText;
+    } catch (e) {}
+  }
+
+  // ==========================================================================
+  // V3.0 PRAYER TIMES, LIVE COUNTDOWN & QIBLA COMPASS ENGINE
+  // ==========================================================================
+  function calculateQiblaAngle(lat, lng) {
+    const kaabaLat = 21.4225 * (Math.PI / 180);
+    const kaabaLng = 39.8262 * (Math.PI / 180);
+    const phi = lat * (Math.PI / 180);
+    const dLng = kaabaLng - (lng * (Math.PI / 180));
+    const y = Math.sin(dLng);
+    const x = Math.cos(phi) * Math.tan(kaabaLat) - Math.sin(phi) * Math.cos(dLng);
+    let brng = Math.atan2(y, x) * (180 / Math.PI);
+    return Math.round((brng + 360) % 360);
+  }
+
+  function initPrayerAndQiblaHub() {
+    const citySelect = document.getElementById('prayer-city-select');
+    const btnGps = document.getElementById('btn-prayer-gps');
+    if (!citySelect || typeof ISLAMIC_CITIES === 'undefined') return;
+
+    const savedCityId = localStorage.getItem('quran_prayer_city') || 'cairo';
+    citySelect.innerHTML = ISLAMIC_CITIES.map(c => `<option value="${c.id}" class="bg-emerald-950 text-white">${c.name}</option>`).join('');
+    if (ISLAMIC_CITIES.some(c => c.id === savedCityId)) {
+      citySelect.value = savedCityId;
+    }
+
+    function loadCityPrayerData(cityObj) {
+      if (!cityObj) return;
+      const titleEl = document.getElementById('prayer-city-title');
+      if (titleEl) titleEl.innerText = `مواقيت الصلاة • ${cityObj.name}`;
+
+      // Update Qibla Compass immediately
+      const qiblaDeg = cityObj.qibla !== undefined ? cityObj.qibla : calculateQiblaAngle(cityObj.lat, cityObj.lng);
+      const degLabel = document.getElementById('qibla-degree-label');
+      const needle = document.getElementById('qibla-compass-needle');
+      if (degLabel) degLabel.innerText = `${qiblaDeg}°`;
+      if (needle) needle.style.transform = `rotate(${qiblaDeg}deg)`;
+
+      // Render fallback/cached timings immediately for 0ms latency
+      currentPrayerTimings = { ...(cityObj.fallback || ISLAMIC_CITIES[0].fallback) };
+      const cachedKey = `quran_prayer_timings_${cityObj.id}_${new Date().toISOString().slice(0, 10)}`;
+      try {
+        const cached = localStorage.getItem(cachedKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.timings) currentPrayerTimings = parsed.timings;
+          if (parsed.hijriText) {
+            const hijriEl = document.getElementById('prayer-hijri-date');
+            if (hijriEl) hijriEl.innerText = parsed.hijriText;
+          }
+        }
+      } catch (e) {}
+
+      renderPrayerTimesGrid(currentPrayerTimings);
+
+      // Fetch live astronomical timings from AlAdhan API
+      fetch(`https://api.aladhan.com/v1/timings?latitude=${cityObj.lat}&longitude=${cityObj.lng}&method=${cityObj.method || 5}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json && json.data && json.data.timings) {
+            const t = json.data.timings;
+            currentPrayerTimings = {
+              Fajr: (t.Fajr || '').slice(0, 5),
+              Sunrise: (t.Sunrise || '').slice(0, 5),
+              Dhuhr: (t.Dhuhr || '').slice(0, 5),
+              Asr: (t.Asr || '').slice(0, 5),
+              Maghrib: (t.Maghrib || '').slice(0, 5),
+              Isha: (t.Isha || '').slice(0, 5)
+            };
+            let hijriText = '';
+            if (json.data.date && json.data.date.hijri) {
+              const h = json.data.date.hijri;
+              hijriText = `${h.weekday?.ar || ''} • ${h.day} ${h.month?.ar || ''} ${h.year} هـ`;
+              const hijriEl = document.getElementById('prayer-hijri-date');
+              if (hijriEl) hijriEl.innerText = hijriText;
+            }
+            try {
+              localStorage.setItem(cachedKey, JSON.stringify({ timings: currentPrayerTimings, hijriText }));
+            } catch (e) {}
+            renderPrayerTimesGrid(currentPrayerTimings);
+          }
+        })
+        .catch(() => {});
+    }
+
+    citySelect.addEventListener('change', () => {
+      const selected = ISLAMIC_CITIES.find(c => c.id === citySelect.value) || ISLAMIC_CITIES[0];
+      localStorage.setItem('quran_prayer_city', selected.id);
+      loadCityPrayerData(selected);
+      showToast(`تم تحديث مواقيت الصلاة واتجاه القبلة لمدينة: ${selected.name} 🕌`);
+    });
+
+    if (btnGps) {
+      btnGps.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+          showToast('المتصفح لا يدعم تحديد الموقع الجغرافي', 'info');
+          return;
+        }
+        showToast('جاري تحديد موقعك الجغرافي وحساب المواقيت والقبلة...');
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const customCity = {
+              id: 'gps_custom',
+              name: 'موقعك الحالي (GPS)',
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              method: 5,
+              qibla: calculateQiblaAngle(pos.coords.latitude, pos.coords.longitude),
+              fallback: ISLAMIC_CITIES[0].fallback
+            };
+            loadCityPrayerData(customCity);
+            showToast('تم تحديد مواقيت الصلاة واتجاه القبلة حسب موقعك بدقة ✨');
+          },
+          () => {
+            showToast('تعذر الوصول للموقع، يمكنك اختيار مدينتك من القائمة مباشرة', 'info');
+          }
+        );
+      });
+    }
+
+    const initialCity = ISLAMIC_CITIES.find(c => c.id === savedCityId) || ISLAMIC_CITIES[0];
+    loadCityPrayerData(initialCity);
+
+    if (prayerCountdownTimer) clearInterval(prayerCountdownTimer);
+    prayerCountdownTimer = setInterval(() => {
+      if (currentPrayerTimings) updateNextPrayerCountdown(currentPrayerTimings);
+    }, 1000);
+  }
+
+  function formatTime12Ar(hm) {
+    if (!hm) return '--:--';
+    const [hStr, mStr] = hm.split(':');
+    let h = parseInt(hStr, 10);
+    const suffix = h >= 12 ? 'م' : 'ص';
+    h = h % 12 || 12;
+    return `${String(h).padStart(2, '0')}:${mStr} ${suffix}`;
+  }
+
+  function renderPrayerTimesGrid(timings) {
+    const grid = document.getElementById('prayer-times-grid');
+    if (!grid || !timings) return;
+
+    const prayers = [
+      { key: 'Fajr', name: 'الفجر', icon: 'fa-cloud-moon' },
+      { key: 'Sunrise', name: 'الشروق', icon: 'fa-sun-plant-wilt' },
+      { key: 'Dhuhr', name: 'الظهر', icon: 'fa-sun' },
+      { key: 'Asr', name: 'العصر', icon: 'fa-cloud-sun' },
+      { key: 'Maghrib', name: 'المغرب', icon: 'fa-mountain-sun' },
+      { key: 'Isha', name: 'العشاء', icon: 'fa-moon' }
+    ];
+
+    grid.innerHTML = prayers.map(p => `
+      <div class="prayer-time-card p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 text-center flex flex-col items-center justify-center gap-1" data-prayer-key="${p.key}">
+        <i class="fa-solid ${p.icon} text-amber-400 text-sm"></i>
+        <span class="text-xs font-bold text-slate-200">${p.name}</span>
+        <span class="text-xs sm:text-sm font-black text-amber-300 font-mono">${formatTime12Ar(timings[p.key])}</span>
+      </div>
+    `).join('');
+
+    updateNextPrayerCountdown(timings);
+  }
+
+  function updateNextPrayerCountdown(timings) {
+    const now = new Date();
+    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const order = [
+      { key: 'Fajr', name: 'صلاة الفجر' },
+      { key: 'Dhuhr', name: 'صلاة الظهر' },
+      { key: 'Asr', name: 'صلاة العصر' },
+      { key: 'Maghrib', name: 'صلاة المغرب' },
+      { key: 'Isha', name: 'صلاة العشاء' }
+    ];
+
+    let nextPrayer = null;
+    let diffSec = 0;
+
+    for (const p of order) {
+      const hm = timings[p.key];
+      if (!hm) continue;
+      const [h, m] = hm.split(':').map(Number);
+      const targetSec = h * 3600 + m * 60;
+      if (targetSec > nowSec) {
+        nextPrayer = p;
+        diffSec = targetSec - nowSec;
+        break;
+      }
+    }
+
+    if (!nextPrayer) {
+      nextPrayer = order[0];
+      const [h, m] = (timings.Fajr || '04:58').split(':').map(Number);
+      diffSec = (24 * 3600 - nowSec) + (h * 3600 + m * 60);
+    }
+
+    const hrs = String(Math.floor(diffSec / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
+    const secs = String(diffSec % 60).padStart(2, '0');
+
+    const nameEl = document.getElementById('next-prayer-name');
+    const timeLabelEl = document.getElementById('next-prayer-time-label');
+    const countdownEl = document.getElementById('next-prayer-countdown');
+    if (nameEl) nameEl.innerText = nextPrayer.name;
+    if (timeLabelEl) timeLabelEl.innerText = `موعد الأذان: ${formatTime12Ar(timings[nextPrayer.key])}`;
+    if (countdownEl) countdownEl.innerText = `${hrs}:${mins}:${secs}`;
+
+    document.querySelectorAll('.prayer-time-card').forEach(card => {
+      card.classList.toggle('next-prayer-active', card.getAttribute('data-prayer-key') === nextPrayer.key);
+    });
   }
 
   function updateKhatmaDashboard() {
@@ -4363,16 +4813,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   // HADR MEMORIZATION & FAST REVISION ENGINE (مصحف الحدر لمراجعة وتثبيت الحُفّاظ)
   // ==========================================================================
-  let hadrInitialized = false;
-  let currentHadrReciterId = 'ahmed_deiban';
-  let currentHadrSurahId = 1;
-  let currentHadrMode = 'surahs';
-  let hadrPlaybackSpeed = 1.0;
-  let hadrRepeatMode = '1';
-  let hadrRepeatCountLeft = 1;
-  let hadrPlaylistQueue = [];
-  let hadrQueueIndex = 0;
-
   window.initHadrView = initHadrView;
   function initHadrView() {
     window.initHadrView = initHadrView;
