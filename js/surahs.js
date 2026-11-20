@@ -5,10 +5,10 @@ const RECITERS = [
     "name": "الشيخ محمود خليل الحصري",
     "englishName": "Mahmoud Khalil Al-Husary",
     "slug": "mahmood_khaleel_al-husaree/",
-    "serverUrl": "https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/mahmoud-husary/r1/",
     "shortName": "الحصري",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/mahmoud-husary/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/"
   },
   {
     "id": "islam_sobhi",
@@ -482,120 +482,120 @@ const RECITERS = [
     "name": "الشيخ محمد صديق المنشاوي (مرتل)",
     "englishName": "Muhammad Siddiq al-Minshawi (Murattal)",
     "slug": "muhammad_siddeeq_al-minshaawee/",
-    "serverUrl": "https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/muhammad-minshawi/r1/",
     "shortName": "المنشاوي",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/muhammad-minshawi/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/muhammad_siddeeq_al-minshaawee/"
   },
   {
     "id": "minshawi_mujawwad",
     "name": "الشيخ محمد صديق المنشاوي (مجود)",
     "englishName": "Muhammad Siddiq al-Minshawi (Mujawwad)",
     "slug": "minshawi_mujawwad/",
-    "serverUrl": "https://download.quranicaudio.com/quran/minshawi_mujawwad/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/muhammad-minshawi/r2/",
     "shortName": "المنشاوي (مجود)",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/muhammad-minshawi/r2/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/minshawi_mujawwad/"
   },
   {
     "id": "abdulbasit_murattal",
     "name": "الشيخ عبد الباسط عبد الصمد (مرتل)",
     "englishName": "AbdulBaset AbdulSamad (Murattal)",
     "slug": "abdul_basit_murattal/",
-    "serverUrl": "https://download.quranicaudio.com/quran/abdul_basit_murattal/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3/",
     "shortName": "عبد الباسط",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/abdul_basit_murattal/"
   },
   {
     "id": "abdulbasit_mujawwad",
     "name": "الشيخ عبد الباسط عبد الصمد (مجود)",
     "englishName": "AbdulBaset AbdulSamad (Mujawwad)",
     "slug": "abdulbaset_mujawwad/",
-    "serverUrl": "https://download.quranicaudio.com/quran/abdulbaset_mujawwad/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/",
     "shortName": "عبد الباسط (مجود)",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/abdulbaset_mujawwad/"
   },
   {
     "id": "alafasy",
     "name": "الشيخ مشاري راشد العفاسي",
     "englishName": "Mishari Rashid al-`Afasy",
     "slug": "mishaari_raashid_al_3afaasee/",
-    "serverUrl": "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/mishary-alafasy/r1/",
     "shortName": "العفاسي",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/mishary-alafasy/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/"
   },
   {
     "id": "maher",
     "name": "الشيخ ماهر المعيقلي",
     "englishName": "Maher al-Muaiqly",
     "slug": "maher_256/",
-    "serverUrl": "https://download.quranicaudio.com/quran/maher_256/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/maher-muaiqly/r1/",
     "shortName": "المعيقلي",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/maher-muaiqly/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/maher_256/"
   },
   {
     "id": "shatri",
     "name": "الشيخ أبو بكر الشاطري",
     "englishName": "Abu Bakr al-Shatri",
     "slug": "abu_bakr_ash-shaatree/",
-    "serverUrl": "https://download.quranicaudio.com/quran/abu_bakr_ash-shaatree/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abubakr-shatri/r1/",
     "shortName": "الشاطري",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/abubakr-shatri/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/abu_bakr_ash-shaatree/"
   },
   {
     "id": "sudais",
     "name": "الشيخ عبد الرحمن السديس",
     "englishName": "Abdur-Rahman as-Sudais",
     "slug": "abdurrahmaan_as-sudays/",
-    "serverUrl": "https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdulrahman-sudais/r1/",
     "shortName": "السديس",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/abdulrahman-sudais/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/"
   },
   {
     "id": "shuraym",
     "name": "الشيخ سعود الشريم",
     "englishName": "Sa`ud ash-Shuraym",
     "slug": "sa3ood_al-shuraym/",
-    "serverUrl": "https://download.quranicaudio.com/quran/sa3ood_al-shuraym/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/saud-shuraim/r1/",
     "shortName": "الشريم",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/saud-shuraim/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/sa3ood_al-shuraym/"
   },
   {
     "id": "ghamdi",
     "name": "الشيخ سعد الغامدي",
     "englishName": "Saad al-Ghamdi",
     "slug": "sa3d_al-ghaamidi/complete/",
-    "serverUrl": "https://download.quranicaudio.com/quran/sa3d_al-ghaamidi/complete/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/saad-ghamdi/r1/",
     "shortName": "الغامدي",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/saad-ghamdi/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/sa3d_al-ghaamidi/complete/"
   },
   {
     "id": "ajmy",
     "name": "الشيخ أحمد بن علي العجمي",
     "englishName": "Ahmed al-Ajmy",
     "slug": "ahmed_ibn_3ali_al-3ajamy/",
-    "serverUrl": "https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/ahmad-ajmi/r1/",
     "shortName": "العجمي",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/ahmad-ajmi/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/"
   },
   {
     "id": "dussary",
     "name": "الشيخ ياسر الدوسري",
     "englishName": "Yasser ad-Dussary",
     "slug": "yasser_ad-dussary/",
-    "serverUrl": "https://download.quranicaudio.com/quran/yasser_ad-dussary/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/yasser-dosari/r1/",
     "shortName": "الدوسري",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/yasser-dosari/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/yasser_ad-dussary/"
   },
   {
     "id": "hussein_alazzam",
@@ -657,20 +657,20 @@ const RECITERS = [
     "name": "الشيخ علي جابر",
     "englishName": "Ali Jaber",
     "slug": "ali_jaber/",
-    "serverUrl": "https://download.quranicaudio.com/quran/ali_jaber/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/ali-jaber/r1/",
     "shortName": "علي جابر",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/ali-jaber/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/ali_jaber/"
   },
   {
     "id": "ayyoob",
     "name": "الشيخ محمد أيوب",
     "englishName": "Muhammad Ayyoub",
     "slug": "muhammad_ayyoob/",
-    "serverUrl": "https://download.quranicaudio.com/quran/muhammad_ayyoob/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/muhammad-ayyub/r1/",
     "shortName": "محمد أيوب",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/muhammad-ayyub/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/muhammad_ayyoob/"
   },
   {
     "id": "rifai",
@@ -686,10 +686,10 @@ const RECITERS = [
     "name": "الشيخ فارس عباد",
     "englishName": "Fares Abbad",
     "slug": "fares/",
-    "serverUrl": "https://download.quranicaudio.com/quran/fares/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/fares-abbad/r1/",
     "shortName": "فارس عباد",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/fares-abbad/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/fares/"
   },
   {
     "id": "tablaway",
@@ -714,10 +714,10 @@ const RECITERS = [
     "name": "الشيخ عبد الله عواد الجهني",
     "englishName": "Abdullah Awad Al-Juhany",
     "slug": "abdullaah_3awwaad_al-juhaynee/",
-    "serverUrl": "https://download.quranicaudio.com/quran/abdullaah_3awwaad_al-juhaynee/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdullah-juhani/r1/",
     "shortName": "الجهني",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/abdullah-juhani/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/abdullaah_3awwaad_al-juhaynee/"
   },
   {
     "id": "basfar",
@@ -733,10 +733,10 @@ const RECITERS = [
     "name": "الشيخ محمد جبريل",
     "englishName": "Muhammad Jibreel",
     "slug": "muhammad_jibreel/",
-    "serverUrl": "https://download.quranicaudio.com/quran/muhammad_jibreel/complete/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/muhammad-jibreel/r1/",
     "shortName": "جبريل",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/muhammad-jibreel/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/muhammad_jibreel/complete/"
   },
   {
     "id": "mustafa_ismail",
@@ -797,20 +797,20 @@ const RECITERS = [
     "name": "الشيخ أحمد بن علي العجمي",
     "englishName": "Ahmed Al-Ajamy",
     "slug": "ahmed_ibn_3ali_al-3ajamy/",
-    "serverUrl": "https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/ahmad-ajmi/r1/",
     "shortName": "العجمي",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/ahmad-ajmi/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/ahmed_ibn_3ali_al-3ajamy/"
   },
   {
     "id": "matroud",
     "name": "الشيخ عبد الله مطرود",
     "englishName": "Abdullah Matroud",
     "slug": "abdullah_matroud/",
-    "serverUrl": "https://download.quranicaudio.com/quran/abdullah_matroud/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/abdullah-matrood/r1/",
     "shortName": "مطرود",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/abdullah-matrood/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/abdullah_matroud/"
   },
   {
     "id": "akhdar",
@@ -835,10 +835,10 @@ const RECITERS = [
     "name": "الشيخ صلاح البدير",
     "englishName": "Salah Al-Budair",
     "slug": "salahbudair/",
-    "serverUrl": "https://download.quranicaudio.com/quran/salahbudair/",
+    "serverUrl": "https://cdn.mp3quran.net/audio/salah-budair/r1/",
     "shortName": "البدير",
     "complete": true,
-    "fallbackServerUrl": "https://cdn.mp3quran.net/audio/salah-budair/r1/"
+    "fallbackServerUrl": "https://download.quranicaudio.com/quran/salahbudair/"
   },
   {
     "id": "qasim",

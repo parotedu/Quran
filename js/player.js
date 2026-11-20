@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isAvailable = !activeReciter.availableSurahs || activeReciter.availableSurahs.includes(surah.id);
 
       const card = document.createElement('div');
-      card.className = `surah-card p-3 sm:p-3.5 rounded-2xl flex items-center justify-between cursor-pointer mb-2 animate-slide-in ${isCurrent ? 'active' : ''}`;
+      card.className = `surah-card p-3 sm:p-3.5 rounded-2xl flex items-center justify-between cursor-pointer mb-2 ${isCurrent ? 'active' : ''}`;
       card.setAttribute('data-id', surah.id);
       
       card.innerHTML = `
@@ -757,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videoStudioLoadPromise) {
       videoStudioLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/video-studio.js';
+        script.src = 'js/video-studio.js?v=3.3';
         script.onload = resolve;
         script.onerror = reject;
         document.body.appendChild(script);
@@ -1686,8 +1686,28 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdownBtnAzkar.addEventListener('click', (e) => {
           e.stopPropagation();
           switchView('spiritual');
-          const spTabAzkar = document.getElementById('sp-tab-azkar');
-          if (spTabAzkar) spTabAzkar.click();
+          if (typeof window.openSpiritualSubTab === 'function') {
+            window.openSpiritualSubTab('azkar');
+          } else {
+            const spTabAzkar = document.getElementById('sp-tab-azkar');
+            if (spTabAzkar) spTabAzkar.click();
+          }
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
+      const dropdownBtnSebha = document.getElementById('dropdown-btn-sebha');
+      if (dropdownBtnSebha) {
+        dropdownBtnSebha.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchView('spiritual');
+          if (typeof window.openSpiritualSubTab === 'function') {
+            window.openSpiritualSubTab('sebha');
+          } else {
+            const spTabSebha = document.getElementById('sp-tab-sebha');
+            if (spTabSebha) spTabSebha.click();
+          }
           servicesDropdown.classList.add('hidden');
           if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
         });
@@ -1698,8 +1718,12 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdownBtnPrayer.addEventListener('click', (e) => {
           e.stopPropagation();
           switchView('spiritual');
-          const spTabPrayer = document.getElementById('sp-tab-prayer');
-          if (spTabPrayer) spTabPrayer.click();
+          if (typeof window.openSpiritualSubTab === 'function') {
+            window.openSpiritualSubTab('prayer');
+          } else {
+            const spTabPrayer = document.getElementById('sp-tab-prayer');
+            if (spTabPrayer) spTabPrayer.click();
+          }
           servicesDropdown.classList.add('hidden');
           if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
         });
@@ -1824,6 +1848,12 @@ document.addEventListener('DOMContentLoaded', () => {
         miniTotalDuration.innerText = formatTime(audio.duration);
       }
 
+      if (pendingResumeTime > 2 && isFinite(audio.duration) && pendingResumeTime < audio.duration - 2) {
+        const resumeTo = pendingResumeTime;
+        pendingResumeTime = 0;
+        try { audio.currentTime = resumeTo; } catch (e) {}
+      }
+
       if (isMemorizationMode && currentView === 'mushaf') {
         updateLiveMushafAyahHover();
       }
@@ -1891,12 +1921,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    audio.addEventListener('waiting', () => {
+    const onBufferWait = () => {
       if (!isPlaying) return;
       playIcon.className = 'fa-solid fa-spinner animate-spin text-lg sm:text-xl text-slate-900';
       if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-spinner animate-spin text-sm text-slate-900';
       startAudioStallWatchdog(currentAudioLoadToken);
-    });
+    };
+    audio.addEventListener('waiting', onBufferWait);
+    audio.addEventListener('stalled', onBufferWait);
 
     audio.addEventListener('canplay', () => {
       clearAudioStallWatchdog();
@@ -1907,8 +1939,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    let resumeOnReconnectSec = 0;
+    window.addEventListener('online', () => {
+      if (resumeOnReconnectSec > 0 && !isPlaying && audio.getAttribute('src')) {
+        pendingResumeTime = resumeOnReconnectSec;
+        resumeOnReconnectSec = 0;
+        currentSurahCandidateIndex = 0;
+        if (currentSurahCandidates.length > 0) {
+          audio.src = currentSurahCandidates[0].url;
+        }
+        playAudio();
+        showToast('تم استعادة الاتصال — جاري استكمال التلاوة', 'info');
+      }
+    });
+
     audio.addEventListener('playing', () => {
       clearAudioStallWatchdog();
+      resumeOnReconnectSec = 0;
       playIcon.className = 'fa-solid fa-pause text-lg sm:text-xl text-slate-900';
       if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-pause text-sm text-slate-900';
       if ('mediaSession' in navigator) {
@@ -1919,7 +1966,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 8. Resilient Multi-CDN & Reciter Fallback on Audio Error
     audio.addEventListener('error', () => {
       if (!audio.getAttribute('src')) return;
-      tryNextAudioCandidate('error');
+      const savedSec = (audio.currentTime > 2 && isFinite(audio.currentTime)) ? audio.currentTime : 0;
+      const recovered = tryNextAudioCandidate('error');
+      if (!recovered && savedSec > 0) {
+        resumeOnReconnectSec = savedSec;
+      }
     });
 
     // 9. Seek Slider Interaction
@@ -2089,9 +2140,9 @@ document.addEventListener('DOMContentLoaded', () => {
         filterTabs.forEach(f => {
           if (!f.elem) return;
           if (f.id === currentTab) {
-            f.elem.className = 'filter-tab px-2.5 py-1.5 rounded-xl font-semibold transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0';
+            f.elem.className = 'filter-tab px-2 py-1 rounded-xl font-semibold transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0 flex items-center gap-1';
           } else {
-            f.elem.className = 'filter-tab px-2.5 py-1.5 rounded-xl font-semibold transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/10 flex-shrink-0';
+            f.elem.className = 'filter-tab px-2 py-1 rounded-xl font-semibold transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/10 flex-shrink-0 flex items-center gap-1';
           }
         });
 
@@ -3737,26 +3788,28 @@ document.addEventListener('DOMContentLoaded', () => {
       { id: 'compass', btn: document.getElementById('sp-tab-compass'), panel: document.getElementById('sp-panel-compass') }
     ];
 
-    spTabs.forEach(({ id, btn, panel }) => {
-      if (!btn || !panel) return;
-      btn.addEventListener('click', () => {
-        spTabs.forEach(t => {
-          if (!t.btn || !t.panel) return;
-          t.panel.classList.add('hidden');
-          t.btn.className = 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40 border border-emerald-500/15 flex-shrink-0';
-        });
-        panel.classList.remove('hidden');
-        btn.className = 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0';
-        
-        // Full focus on Sebha on mobile: collapse or minimize khatma card when in Sebha mode
-        if (khatmaCard) {
-          if (id === 'sebha' && window.innerWidth < 1024) {
-            khatmaCard.classList.add('hidden');
-          } else {
-            khatmaCard.classList.remove('hidden');
-          }
-        }
+    function openSpiritualSubTab(id) {
+      spTabs.forEach(t => {
+        if (!t.btn || !t.panel) return;
+        const isTarget = t.id === id;
+        t.panel.classList.toggle('hidden', !isTarget);
+        t.btn.className = isTarget
+          ? 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0'
+          : 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40 border border-emerald-500/15 flex-shrink-0';
       });
+      if (khatmaCard) {
+        if (id === 'sebha' && window.innerWidth < 1024) {
+          khatmaCard.classList.add('hidden');
+        } else {
+          khatmaCard.classList.remove('hidden');
+        }
+      }
+    }
+    window.openSpiritualSubTab = openSpiritualSubTab;
+
+    spTabs.forEach(({ id, btn }) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => openSpiritualSubTab(id));
     });
 
     // Jump to Memorial Page from Spiritual Companion Hub Tab

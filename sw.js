@@ -1,21 +1,24 @@
 // Service Worker for منصة القرآن الكريم
 // Enables instant offline loading, asset caching, and resilience on poor connections.
 
-const CACHE_NAME = 'quran-platform-v3.2';
+const CACHE_NAME = 'quran-platform-v3.3';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './favicon.ico',
-  './css/tailwind.min.css',
-  './css/style.css',
-  './js/surahs.js',
-  './js/v2-data.js',
-  './js/theme.js',
-  './js/player.js',
+  './favicon.ico?v=3.3',
+  './assets/logo.svg?v=3.3',
+  './css/tailwind.min.css?v=3.3',
+  './css/style.css?v=3.3',
+  './js/surahs.js?v=3.3',
+  './js/v2-data.js?v=3.3',
+  './js/theme.js?v=3.3',
+  './js/player.js?v=3.3',
+  './assets/favicon-32.png?v=3.3',
+  './assets/favicon-16.png?v=3.3',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/apple-touch-icon.png'
+  './assets/apple-touch-icon.png?v=3.3'
 ];
 
 const MEDIA_HOST_MARKERS = [
@@ -112,31 +115,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML navigations: Network-first with cache fallback so updates arrive immediately
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).then((response) => {
-        if (response && response.status === 200) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-        }
-        return response;
-      }).catch(() => caches.match(request).then((c) => c || caches.match('./index.html')))
-    );
-    return;
-  }
-
-  // Same-origin JS/CSS/images: Stale-While-Revalidate (instant paint + background update)
+  // Same-origin code/styles/HTML/assets: Network-first with cache fallback
+  // Prevents mixed stale CSS/JS from previous deployments while keeping offline support.
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(request).then((cached) => {
-        const networkPromise = fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        }).catch(() => cached);
-        return cached || networkPromise;
+    fetch(request).then((response) => {
+      if (response && response.status === 200) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(request).then((cached) => {
+        if (cached) return cached;
+        if (request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
       });
     })
   );

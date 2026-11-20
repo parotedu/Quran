@@ -25,14 +25,15 @@
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap"></noscript>
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <!-- Favicon & App Icons (Unified Sacred Mushaf Emblem) -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=3.3">
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=3.3">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=3.3">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=3.3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=3.3">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
   <link rel="manifest" href="manifest.json">
@@ -98,11 +99,13 @@
   }
   </script>
 
-  <!-- Service Worker Registration for Instant Offline Loading -->
+  <!-- Service Worker Registration for Instant Offline Loading & Clean Updates -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => {
+        navigator.serviceWorker.register('./sw.js?v=3.3').then(reg => {
+          if (reg && reg.update) reg.update();
+        }).catch(err => {
           console.warn('Service Worker registration skipped:', err);
         });
       });
@@ -112,18 +115,18 @@
   <!-- Prevent Theme Flash Before First Paint -->
   <script>try{var t=localStorage.getItem('quran_theme');if(t&&t!=='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 
-  <!-- Precompiled Purged Tailwind CSS & Custom Styles (Zero Runtime Compilation) -->
-  <link rel="stylesheet" href="css/tailwind.min.css">
-  <link rel="stylesheet" href="css/style.css">
+  <!-- Precompiled Purged Tailwind CSS & Custom Styles (Versioned to Bypass Stale Caches) -->
+  <link rel="stylesheet" href="css/tailwind.min.css?v=3.3">
+  <link rel="stylesheet" href="css/style.css?v=3.3">
   <!-- Non-blocking FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
   <!-- Core JavaScript Database & Controls (Non-Blocking Deferred Load; video-studio.js lazy-loaded on demand) -->
-  <script src="js/surahs.js" defer></script>
-  <script src="js/v2-data.js" defer></script>
-  <script src="js/theme.js" defer></script>
-  <script src="js/player.js" defer></script>
+  <script src="js/surahs.js?v=3.3" defer></script>
+  <script src="js/v2-data.js?v=3.3" defer></script>
+  <script src="js/theme.js?v=3.3" defer></script>
+  <script src="js/player.js?v=3.3" defer></script>
 </head>
 
 <body class="h-full min-h-screen flex flex-col antialiased selection:bg-amber-500/30 selection:text-amber-300 overflow-hidden">
@@ -134,9 +137,18 @@
   <header class="glass-panel mx-1.5 xs:mx-3 sm:mx-6 mt-1 sm:mt-3 mb-1 sm:mb-2 rounded-2xl py-1 sm:py-2 px-2 xs:px-3 sm:px-5 flex items-center justify-between gap-1.5 sm:gap-3 z-20 flex-shrink-0">
     <!-- Brand Logo / Title -->
     <div class="flex items-center gap-1.5 sm:gap-3 cursor-pointer select-none flex-shrink-0" id="brand-logo" title="منصة القرآن الكريم">
-      <div class="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-400/35 flex items-center justify-center text-amber-400 shadow-md flex-shrink-0 p-1.5">
-        <svg viewBox="0 0 36 36" class="w-full h-full" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="شعار منصة القرآن الكريم">
-          <path d="M18 26.5V12.5C14.5 9.8 9.2 9.5 5.5 11.2V24.8C9.2 23.1 14.5 23.5 18 26.5C21.5 23.5 26.8 23.1 30.5 24.8V11.2C26.8 9.5 21.5 9.8 18 12.5" />
+      <div class="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-center shadow-md flex-shrink-0 p-1">
+        <svg viewBox="5 6 54 52" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" aria-label="شعار منصة القرآن الكريم">
+          <defs>
+            <linearGradient id="brandGold" x1="15%" y1="10%" x2="85%" y2="90%">
+              <stop offset="0%" stop-color="#fef08a"/>
+              <stop offset="50%" stop-color="#fbbf24"/>
+              <stop offset="100%" stop-color="#d97706"/>
+            </linearGradient>
+          </defs>
+          <path d="M35.5 10.8a5.8 5.8 0 1 0 0 9 4.5 4.5 0 1 1 0-9z" fill="url(#brandGold)"/>
+          <path d="M32 35.5 C27.5 23.5 18.5 19.5 10.5 21.5 L15 39 C22 38 27.5 40 32 43.5 C36.5 40 42 38 49 39 L53.5 21.5 C45.5 19.5 36.5 23.5 32 35.5 Z M32 35.5 V43.5 M19.5 53 L32 43.5 L44.5 53"
+            fill="none" stroke="url(#brandGold)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <div class="min-w-0">
@@ -151,19 +163,15 @@
       </div>
     </div>
 
-    <!-- Desktop Mode Navigation Tabs: Only the 3 core spiritual tabs for maximum eye comfort & spaciousness -->
+    <!-- Desktop Mode Navigation Tabs: Clean 2 Core Tabs (الاستماع و المصحف) -->
     <nav class="hidden lg:flex items-center gap-1 xl:gap-2 bg-emerald-950/50 p-1 rounded-xl border border-emerald-500/15 text-[11px] xl:text-xs shadow-inner flex-shrink-0">
-      <button id="nav-btn-player" class="nav-tab-btn px-2.5 xl:px-3.5 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30">
+      <button id="nav-btn-player" class="nav-tab-btn px-3 xl:px-4 py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all duration-200 bg-amber-500/20 text-amber-400 border border-amber-500/30">
         <i class="fa-solid fa-headphones-simple"></i>
         <span>الاستماع</span>
       </button>
-      <button id="nav-btn-mushaf" class="nav-tab-btn px-2.5 xl:px-3.5 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
+      <button id="nav-btn-mushaf" class="nav-tab-btn px-3 xl:px-4 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
         <i class="fa-solid fa-book-open-reader"></i>
         <span>المصحف</span>
-      </button>
-      <button id="nav-btn-spiritual" class="nav-tab-btn px-2.5 xl:px-3.5 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5">
-        <i class="fa-solid fa-heart-pulse"></i>
-        <span>الورد والأذكار</span>
       </button>
       <button id="nav-btn-playlist" class="nav-tab-btn px-2 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1 xl:gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5 lg:hidden">
         <i class="fa-solid fa-list-ul"></i>
@@ -173,46 +181,61 @@
 
     <!-- Invisible compatibility hooks completely outside flex layout -->
     <div class="hidden" aria-hidden="true" style="display:none!important">
+      <button id="nav-btn-spiritual" tabindex="-1"></button>
       <button id="nav-btn-memorial" tabindex="-1"></button>
       <button id="nav-btn-video" tabindex="-1"></button>
     </div>
 
     <!-- Controls & Separate Services Launcher (Spacious, balanced, calming) -->
     <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
-      <!-- Separate Services Launcher Dropdown for Video Creator & Memorial (Quiet, non-intrusive) -->
+      <!-- Separate Services Launcher Dropdown -->
       <div class="relative" id="services-menu-container">
         <button id="btn-services-menu" type="button"
           class="h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-          title="خدمات المنصة الإضافية (صانع الفيديوهات، صدقة جارية)">
+          title="خدمات المنصة (الأذكار، السبحة، صانع الفيديوهات، الحدر، صدقة جارية)">
           <i class="fa-solid fa-shapes text-amber-400 text-xs"></i>
           <span class="text-[11px] sm:text-xs font-semibold">خدمات المنصة</span>
           <i class="fa-solid fa-chevron-down text-[8px] text-amber-400/80 transition-transform duration-200" id="services-menu-arrow"></i>
         </button>
 
         <!-- Floating Solid Services Dropdown Card -->
-        <div id="services-dropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] rounded-2xl solid-dropdown-panel p-2.5 z-50 animate-fadeIn space-y-1.5">
+        <div id="services-dropdown" style="background-color: var(--dropdown-bg, #03221a);" class="hidden absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] rounded-2xl solid-dropdown-panel bg-[#03221a] p-2 z-50 animate-fadeIn space-y-1">
           <div class="px-2.5 py-1 text-[11px] text-[var(--text-secondary)] font-semibold border-b border-emerald-500/15 flex items-center justify-between">
             <span>خدمات وأدوات المنصة</span>
             <span class="text-amber-400 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded font-bold">مختارات</span>
           </div>
 
           <!-- Azkar Daily Item -->
-          <button id="dropdown-btn-azkar" type="button" class="w-full p-2.5 rounded-xl hover:bg-amber-500/15 border border-transparent hover:border-amber-500/30 text-right flex items-center gap-3 transition-all group">
-            <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-110 transition-transform shadow-md border border-amber-500/25">
+          <button id="dropdown-btn-azkar" type="button" class="w-full p-2 rounded-xl hover:bg-amber-500/15 border border-transparent hover:border-amber-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition-transform border border-amber-500/25">
               <i class="fa-solid fa-sun"></i>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-1">
                 <span class="font-bold text-xs text-amber-300 group-hover:text-amber-200">أذكار المسلم اليومية</span>
-                <span class="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-500/30">الورد</span>
+                <span class="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-500/30">الأذكار</span>
               </div>
               <p class="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">أذكار الصباح والمساء والنوم وبعد الصلاة</p>
             </div>
           </button>
 
+          <!-- Sebha & Spiritual Hub Item -->
+          <button id="dropdown-btn-sebha" type="button" class="w-full p-2 rounded-xl hover:bg-teal-500/15 border border-transparent hover:border-teal-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition-transform border border-teal-500/25">
+              <i class="fa-solid fa-circle-dot"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-bold text-xs text-teal-300 group-hover:text-teal-200">السبحة والورد وبوصلة القلوب</span>
+                <span class="text-[9px] bg-teal-500/20 text-teal-300 font-bold px-1.5 py-0.5 rounded border border-teal-500/30">الورد</span>
+              </div>
+              <p class="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">مسبحة إلكترونية ومتابعة الختمة اليومية</p>
+            </div>
+          </button>
+
           <!-- Video Studio Item -->
-          <button id="dropdown-btn-video" type="button" class="w-full p-2.5 rounded-xl hover:bg-amber-500/15 border border-transparent hover:border-amber-500/30 text-right flex items-center gap-3 transition-all group">
-            <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-110 transition-transform shadow-md border border-amber-500/20">
+          <button id="dropdown-btn-video" type="button" class="w-full p-2 rounded-xl hover:bg-amber-500/15 border border-transparent hover:border-amber-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition-transform border border-amber-500/20">
               <i class="fa-solid fa-clapperboard"></i>
             </div>
             <div class="min-w-0 flex-1">
@@ -225,8 +248,8 @@
           </button>
 
           <!-- Hadr Memorization Hub Item -->
-          <button id="dropdown-btn-hadr" type="button" class="w-full p-2.5 rounded-xl hover:bg-cyan-500/15 border border-transparent hover:border-cyan-500/30 text-right flex items-center gap-3 transition-all group">
-            <div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-110 transition-transform shadow-md border border-cyan-500/20">
+          <button id="dropdown-btn-hadr" type="button" class="w-full p-2 rounded-xl hover:bg-cyan-500/15 border border-transparent hover:border-cyan-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition-transform border border-cyan-500/20">
               <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
             </div>
             <div class="min-w-0 flex-1">
@@ -239,8 +262,8 @@
           </button>
 
           <!-- Memorial / Sadaqah Jariyah Item -->
-          <button id="dropdown-btn-memorial" type="button" class="w-full p-2.5 rounded-xl hover:bg-rose-500/15 border border-transparent hover:border-rose-500/30 text-right flex items-center gap-3 transition-all group">
-            <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-110 transition-transform shadow-md border border-rose-500/20">
+          <button id="dropdown-btn-memorial" type="button" class="w-full p-2 rounded-xl hover:bg-rose-500/15 border border-transparent hover:border-rose-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition-transform border border-rose-500/20">
               <i class="fa-solid fa-hands-praying"></i>
             </div>
             <div class="min-w-0 flex-1">
@@ -253,14 +276,14 @@
           </button>
 
           <!-- Prayer Times & Qibla Compass Item -->
-          <button id="dropdown-btn-prayer" type="button" class="w-full p-2.5 rounded-xl hover:bg-emerald-500/15 border border-transparent hover:border-emerald-500/30 text-right flex items-center gap-3 transition-all group">
-            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-110 transition-transform shadow-md border border-emerald-500/20">
+          <button id="dropdown-btn-prayer" type="button" class="w-full p-2 rounded-xl hover:bg-emerald-500/15 border border-transparent hover:border-emerald-500/30 text-right flex items-center gap-3 transition-all group">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition-transform border border-emerald-500/20">
               <i class="fa-solid fa-mosque text-amber-400"></i>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-1">
                 <span class="font-bold text-xs text-emerald-300 group-hover:text-emerald-200">مواقيت الصلاة واتجاه القبلة</span>
-                <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">V3</span>
+                <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">الصلاة</span>
               </div>
               <p class="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">العد التنازلي للصلاة القادمة وبوصلة القبلة</p>
             </div>
@@ -345,27 +368,27 @@
         </div>
 
         <!-- Filter Chips (All, Favorites + Quick Sunnah Surahs: Al-Kahf, Ya-Sin, Al-Mulk) -->
-        <div class="flex items-center gap-1.5 mb-2.5 border-b border-emerald-500/10 pb-2 overflow-x-auto text-xs no-scrollbar">
+        <div class="flex items-center gap-1 mb-2.5 border-b border-emerald-500/10 pb-2 overflow-x-auto text-[11px] no-scrollbar">
           <button id="tab-all"
-            class="filter-tab px-2.5 py-1.5 rounded-xl font-semibold transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0 flex items-center gap-1">
+            class="filter-tab px-2 py-1 rounded-xl font-semibold transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/25 flex-shrink-0 flex items-center gap-1">
             <span>الكل</span>
             <span id="all-count" class="text-[10px] bg-amber-500/20 px-1.5 py-0.5 rounded-full">114</span>
           </button>
           <button id="tab-favorites"
-            class="filter-tab px-2.5 py-1.5 rounded-xl font-semibold transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/10 flex-shrink-0 flex items-center gap-1">
+            class="filter-tab px-2 py-1 rounded-xl font-semibold transition-all duration-200 text-[var(--text-secondary)] hover:bg-emerald-500/10 flex-shrink-0 flex items-center gap-1">
             <i class="fa-regular fa-heart text-[10px] text-rose-400"></i>
             <span>المفضلة</span>
             <span id="fav-count" class="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded-full">0</span>
           </button>
-          <button data-quick-surah="18" class="btn-quick-surah px-2.5 py-1.5 rounded-xl font-semibold text-amber-400/90 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex-shrink-0 transition-all flex items-center gap-1.5" title="تشغيل سورة الكهف">
+          <button data-quick-surah="18" class="btn-quick-surah px-2 py-1 rounded-xl font-semibold text-amber-400/90 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex-shrink-0 transition-all flex items-center gap-1" title="تشغيل سورة الكهف">
             <i class="fa-solid fa-book-quran text-[10px]"></i>
             <span>الكهف</span>
           </button>
-          <button data-quick-surah="36" class="btn-quick-surah px-2.5 py-1.5 rounded-xl font-semibold text-amber-300/90 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex-shrink-0 transition-all flex items-center gap-1.5" title="تشغيل سورة يس">
+          <button data-quick-surah="36" class="btn-quick-surah px-2 py-1 rounded-xl font-semibold text-amber-300/90 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 flex-shrink-0 transition-all flex items-center gap-1" title="تشغيل سورة يس">
             <i class="fa-solid fa-heart text-[10px]"></i>
             <span>يس</span>
           </button>
-          <button data-quick-surah="67" class="btn-quick-surah px-2.5 py-1.5 rounded-xl font-semibold text-emerald-400/90 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex-shrink-0 transition-all flex items-center gap-1.5" title="تشغيل سورة الملك">
+          <button data-quick-surah="67" class="btn-quick-surah px-2 py-1 rounded-xl font-semibold text-emerald-400/90 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex-shrink-0 transition-all flex items-center gap-1" title="تشغيل سورة الملك">
             <i class="fa-solid fa-shield-halved text-[10px]"></i>
             <span>الملك</span>
           </button>
