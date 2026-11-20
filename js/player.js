@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Filter Tabs
   const tabAll = document.getElementById('tab-all');
   const tabFavorites = document.getElementById('tab-favorites');
-  const tabMakki = document.getElementById('tab-makki');
-  const tabMadani = document.getElementById('tab-madani');
   
   // Header Elements
   const reciterSelect = document.getElementById('reciter-select');
@@ -214,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSurahList = [...SURAHS];
   let currentIndex = 0;
   let isPlaying = false;
-  let currentTab = 'all'; // 'all', 'favorites', 'makki', 'madani'
+  let currentTab = 'all'; // 'all', 'favorites'
   let searchQuery = '';
   let searchMode = 'surahs'; // 'surahs' | 'ayahs'
   let ayahSearchTimer = null;
@@ -615,10 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (currentTab === 'favorites') {
       list = list.filter(s => favorites.includes(s.id));
-    } else if (currentTab === 'makki') {
-      list = list.filter(s => s.revelationPlace === 'makkah');
-    } else if (currentTab === 'madani') {
-      list = list.filter(s => s.revelationPlace === 'madinah');
     }
     
     if (searchQuery) {
@@ -1687,6 +1681,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
+      const dropdownBtnAzkar = document.getElementById('dropdown-btn-azkar');
+      if (dropdownBtnAzkar) {
+        dropdownBtnAzkar.addEventListener('click', (e) => {
+          e.stopPropagation();
+          switchView('spiritual');
+          const spTabAzkar = document.getElementById('sp-tab-azkar');
+          if (spTabAzkar) spTabAzkar.click();
+          servicesDropdown.classList.add('hidden');
+          if (servicesMenuArrow) servicesMenuArrow.classList.remove('rotate-180');
+        });
+      }
+
       const dropdownBtnPrayer = document.getElementById('dropdown-btn-prayer');
       if (dropdownBtnPrayer) {
         dropdownBtnPrayer.addEventListener('click', (e) => {
@@ -1842,7 +1848,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (isRadioMode) {
         currentTimeLabel.innerText = formatTime(cur);
-        totalDurationLabel.innerText = 'مباشر 🔴';
+        totalDurationLabel.innerText = 'بث مباشر';
         if (miniTimeDisplay) miniTimeDisplay.innerText = 'بث إذاعي مباشر 24/7';
         return;
       }
@@ -1994,7 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setSleepTimer(0);
         pauseAudio();
         setNatureAmbience('none');
-        showToast('انتهت السورة وتم إيقاف المشغل تلقائياً حسب مؤقت النوم 🌙');
+        showToast('انتهت السورة وتم إيقاف المشغل تلقائياً حسب مؤقت النوم');
         return;
       }
 
@@ -2071,9 +2077,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 14. Playlist Filter Tabs
     const filterTabs = [
       { elem: tabAll, id: 'all' },
-      { elem: tabFavorites, id: 'favorites' },
-      { elem: tabMakki, id: 'makki' },
-      { elem: tabMadani, id: 'madani' }
+      { elem: tabFavorites, id: 'favorites' }
     ];
 
     filterTabs.forEach(({ elem, id }) => {
@@ -2372,7 +2376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.ayah-text').forEach(el => el.classList.remove('ayah-bookmarked'));
         const activeEl = document.getElementById(`mushaf-ayah-${currentStudioContext.ayahNum}`);
         if (activeEl) activeEl.classList.add('ayah-bookmarked');
-        showToast(`تم حفظ فاصل الختمة عند سورة ${currentStudioContext.surahName} - الآية ${currentStudioContext.ayahNum} 🔖`);
+        showToast(`تم حفظ فاصل الختمة عند سورة ${currentStudioContext.surahName} - الآية ${currentStudioContext.ayahNum}`);
       });
     }
 
@@ -2455,7 +2459,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isPlaying && !isRadioMode) {
         playAudio();
       }
-      showToast('تم تفعيل وضع التحفيظ والتتبع الحي للآيات مع القارئ ✨');
+      showToast('تم تفعيل وضع التحفيظ والتتبع الحي للآيات مع القارئ');
     };
 
     if (btnPlayerMemorize) {
@@ -2471,7 +2475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('quran_memorize_mode', isMemorizationMode ? 'true' : 'false');
         updateMemorizationModeUI();
         if (isMemorizationMode) {
-          showToast('تم تفعيل وضع التحفيظ — سيتم عمل Hover وتتبع تلقائي للآية التي يقرؤها الشيخ 🎯');
+          showToast('تم تفعيل وضع التحفيظ — سيتم تتبع الآية التي يقرؤها الشيخ تلقائياً');
           if (!isPlaying && !isRadioMode) {
             playAudio();
           }
@@ -2506,7 +2510,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           mushafContent.classList.add('mushaf-memorize-blur');
           btnMemorizeBlur.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500 text-slate-900 font-bold text-[11px] flex items-center gap-1.5 transition-all shadow';
-          showToast('تم تفعيل اختبار الحفظ (تمويه النص) — الآية التي يتلوها القارئ أو تلمسها تظهر بوضوح ✨');
+          showToast('تم تفعيل اختبار الحفظ (تمويه النص) — الآية التي يتلوها القارئ أو تلمسها تظهر بوضوح');
         } else {
           mushafContent.classList.remove('mushaf-memorize-blur');
           btnMemorizeBlur.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-950/70 border border-emerald-500/20 text-[var(--text-secondary)] hover:text-amber-400 font-semibold text-[11px] flex items-center gap-1.5 transition-all';
@@ -2531,10 +2535,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const labelMap = {
           'none': 'تم تفعيل وضع المصحف الصافي بدون حواشٍ',
-          'ar.muyassar': 'تم عرض التفسير الميسر تحت آيات المصحف 💡',
-          'ar.jalalayn': 'تم عرض تفسير الجلالين تحت آيات المصحف 📚',
-          'ar.waseet': 'تم عرض التفسير الوسيط تحت آيات المصحف 📘',
-          'en.sahih': 'تم عرض الترجمة الإنجليزية تحت آيات المصحف 🌍'
+          'ar.muyassar': 'تم عرض التفسير الميسر تحت آيات المصحف',
+          'ar.jalalayn': 'تم عرض تفسير الجلالين تحت آيات المصحف',
+          'ar.waseet': 'تم عرض التفسير الوسيط تحت آيات المصحف',
+          'en.sahih': 'تم عرض الترجمة الإنجليزية تحت آيات المصحف'
         };
         showToast(labelMap[mushafInlineTafsirEdition] || 'تم تحديث وضع العرض');
       });
@@ -2568,9 +2572,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const hifzLabels = {
           'off': 'تم إظهار نص المصحف بالكامل',
-          'full': 'تم إخفاء الآيات بالكامل — انقر على أي آية لكشفها والتأكد من حفظك 🎯',
-          'endings': 'اختبار خواتيم الآيات مفعل — انقر على الآية لكشف خاتمتها 🧩',
-          'starts': 'اختبار بدايات الآيات مفعل — انقر على الآية لكشف مطلعها 🔑'
+          'full': 'تم إخفاء الآيات بالكامل — انقر على أي آية لكشفها والتأكد من حفظك',
+          'endings': 'اختبار خواتيم الآيات مفعل — انقر على الآية لكشف خاتمتها',
+          'starts': 'اختبار بدايات الآيات مفعل — انقر على الآية لكشف مطلعها'
         };
         showToast(hifzLabels[mushafHifzMode] || 'تم تحديث وضع الاختبار');
       });
@@ -2647,7 +2651,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMemorizationModeUI();
         switchView('mushaf');
         if (!isPlaying && !isRadioMode) playAudio();
-        showToast('تم تفعيل وضع التحفيظ والتتبع الحي للآيات مع القارئ ✨');
+        showToast('تم تفعيل وضع التحفيظ والتتبع الحي للآيات مع القارئ');
       });
     }
 
@@ -3144,7 +3148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const repeatSuffix = memorizeRepeatTarget > 1
           ? ` • تكرار (${memorizeRepeatTarget === 99 ? '∞' : `${currentAyahRepeatCount}/${memorizeRepeatTarget}`})`
           : '';
-        memorizeLiveAyahText.innerText = `🔊 تلاوة الاستفتاح: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ${repeatSuffix}`;
+        memorizeLiveAyahText.innerText = `تلاوة الاستفتاح: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ${repeatSuffix}`;
       }
       return;
     }
@@ -3169,7 +3173,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const repeatSuffix = memorizeRepeatTarget > 1
         ? ` • تكرار (${memorizeRepeatTarget === 99 ? '∞' : `${currentAyahRepeatCount}/${memorizeRepeatTarget}`})`
         : '';
-      memorizeLiveAyahText.innerText = `${isPlaying ? '🔊 القارئ يتلو الآن:' : '🎯 الآية المحددة:'} آية ${targetAyahNum} من ${playingSurah.versesCount}${repeatSuffix}`;
+      memorizeLiveAyahText.innerText = `${isPlaying ? 'القارئ يتلو الآن:' : 'الآية المحددة:'} آية ${targetAyahNum} من ${playingSurah.versesCount}${repeatSuffix}`;
     }
   }
 
@@ -3207,7 +3211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateLiveMushafAyahHover(true);
     }
 
-    showToast(`انتقال القارئ لتلاوة الآية (${ayahNum}) — اضغط "تفسير الآية" بالأعلى لعرض التفسير 🎯`);
+    showToast(`انتقال القارئ لتلاوة الآية (${ayahNum}) — اضغط "تفسير الآية" بالأعلى لعرض التفسير`);
   }
 
   // --- Full-Text Quran Ayah Search ---
@@ -3508,9 +3512,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (mode === 'end') {
       sleepTimerMode = 'end';
-      if (sleepTimerBadge) sleepTimerBadge.innerText = 'نهاية السورة 🌙';
+      if (sleepTimerBadge) sleepTimerBadge.innerText = 'نهاية السورة';
       if (statusEl) statusEl.innerText = 'يتوقف بنهاية السورة';
-      showToast('سيتم إيقاف التلاوة تلقائياً فور انتهاء السورة الحالية 🌙');
+      showToast('سيتم إيقاف التلاوة تلقائياً فور انتهاء السورة الحالية');
       return;
     }
 
@@ -3521,11 +3525,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateTimerLabels = () => {
       const m = Math.floor(sleepRemainingSec / 60);
       const s = (sleepRemainingSec % 60).toString().padStart(2, '0');
-      if (sleepTimerBadge) sleepTimerBadge.innerText = `${m}:${s} 🌙`;
+      if (sleepTimerBadge) sleepTimerBadge.innerText = `${m}:${s}`;
       if (statusEl) statusEl.innerText = `متبقي ${m}:${s}`;
     };
     updateTimerLabels();
-    showToast(`تم ضبط مؤقت النوم على ${mode} دقيقة مع خفض تدريجي للصوت 🌙`);
+    showToast(`تم ضبط مؤقت النوم على ${mode} دقيقة مع خفض تدريجي للصوت`);
 
     sleepIntervalId = setInterval(() => {
       sleepRemainingSec--;
@@ -3542,7 +3546,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.volume = savedUserVol;
         if (sleepTimerBadge) sleepTimerBadge.innerText = 'مؤقت / سكينة';
         if (statusEl) statusEl.innerText = 'انتهى المؤقت';
-        showToast('تصبحون على خير وطمأنينة — تم إيقاف المشغل تلقائياً 🌙');
+        showToast('تصبحون على خير وطمأنينة — تم إيقاف المشغل تلقائياً');
       } else {
         updateTimerLabels();
       }
@@ -3607,7 +3611,7 @@ document.addEventListener('DOMContentLoaded', () => {
       filter.type = 'bandpass';
       filter.frequency.value = 1100;
       filter.Q.value = 0.65;
-      showToast('تم تشغيل خلفية صوت المطر الهادئ 🌧️ (بدون استهلاك إنترنت)');
+      showToast('تم تشغيل خلفية صوت المطر الهادئ (بدون استهلاك إنترنت)');
     } else if (type === 'breeze') {
       filter.type = 'lowpass';
       filter.frequency.value = 420;
@@ -3620,11 +3624,11 @@ document.addEventListener('DOMContentLoaded', () => {
       lfoGain.connect(filter.frequency);
       lfo.start();
       ambienceSourceNodes.push(lfo);
-      showToast('تم تشغيل خلفية نسيم الفجر الهادئ 🍃');
+      showToast('تم تشغيل خلفية نسيم الفجر الهادئ');
     } else if (type === 'night') {
       filter.type = 'lowpass';
       filter.frequency.value = 240;
-      showToast('تم تشغيل خلفية سكون الليل العميق 🌌');
+      showToast('تم تشغيل خلفية سكون الليل العميق');
     }
 
     whiteNoise.connect(filter);
@@ -3683,7 +3687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.playbackRate = 1.0;
 
     if (station.isAudioFile) {
-      playerSurahNumber.innerText = 'تسجيل خاص 🌿';
+      playerSurahNumber.innerHTML = '<i class="fa-solid fa-leaf text-emerald-400"></i> تسجيل خاص';
       playerSurahName.innerText = station.name;
       playerSurahEnglish.innerText = 'Al-Ruqyah Al-Shariyyah';
       playerRevelation.innerHTML = '<i class="fa-solid fa-shield-halved text-emerald-400"></i> تحصين وشفاء بإذن الله';
@@ -3698,9 +3702,9 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMediaSession({ name: station.name }, { name: station.reciter || 'الشيخ مشاري راشد العفاسي' });
       playAudio();
       switchView('player');
-      showToast(`جاري تشغيل ${station.name} 🌿`);
+      showToast(`جاري تشغيل ${station.name}`);
     } else {
-      playerSurahNumber.innerText = 'بث مباشر 🔴';
+      playerSurahNumber.innerHTML = '<i class="fa-solid fa-tower-broadcast text-red-400"></i> بث مباشر';
       playerSurahName.innerText = station.name;
       playerSurahEnglish.innerText = 'Live Quran Radio 24/7';
       playerRevelation.innerHTML = '<i class="fa-solid fa-tower-broadcast text-red-400"></i> بث مباشر على مدار الساعة';
@@ -3715,7 +3719,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMediaSession({ name: station.name }, { name: station.subtitle });
       playAudio();
       switchView('player');
-      showToast(`تم الاتصال بـ ${station.name} 🔴`);
+      showToast(`تم الاتصال بـ ${station.name}`);
     }
   }
 
@@ -3942,7 +3946,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const selected = ISLAMIC_CITIES.find(c => c.id === citySelect.value) || ISLAMIC_CITIES[0];
       localStorage.setItem('quran_prayer_city', selected.id);
       loadCityPrayerData(selected);
-      showToast(`تم تحديث مواقيت الصلاة واتجاه القبلة لمدينة: ${selected.name} 🕌`);
+      showToast(`تم تحديث مواقيت الصلاة واتجاه القبلة لمدينة: ${selected.name}`);
     });
 
     if (btnGps) {
@@ -3964,7 +3968,7 @@ document.addEventListener('DOMContentLoaded', () => {
               fallback: ISLAMIC_CITIES[0].fallback
             };
             loadCityPrayerData(customCity);
-            showToast('تم تحديد مواقيت الصلاة واتجاه القبلة حسب موقعك بدقة ✨');
+            showToast('تم تحديد مواقيت الصلاة واتجاه القبلة حسب موقعك بدقة');
           },
           () => {
             showToast('تعذر الوصول للموقع، يمكنك اختيار مدينتك من القائمة مباشرة', 'info');
@@ -4243,7 +4247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.vibrate(currentCount % 33 === 0 ? [40, 60, 40] : 20);
       }
       if (currentCount % 33 === 0) {
-        showToast(`ما شاء الله! أتممت ${currentCount} تسبيحة في هذه الدورة ✨`);
+        showToast(`ما شاء الله! أتممت ${currentCount} تسبيحة في هذه الدورة`);
       }
     });
 
@@ -4398,7 +4402,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (memorialRoundCounter % 33 === 0) {
       triggerHapticFeedback([40, 70, 40]);
       const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
-      showToast(`ما شاء الله! أتممت ${memorialRoundCounter} تسبيحة مهداة لروح ${targetName} 🌿`);
+      showToast(`ما شاء الله! أتممت ${memorialRoundCounter} تسبيحة مهداة لروح ${targetName}`);
     } else {
       triggerHapticFeedback(15);
     }
@@ -4563,8 +4567,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="flex items-center justify-between pt-2 border-t border-emerald-500/15 gap-2">
           <button class="btn-pray-dua flex-1 py-1.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
-            <i class="fa-solid fa-heart text-rose-400"></i>
-            <span>آمين، دعوتُ ${isFemale ? 'لها' : 'له'} 🤲</span>
+            <i class="fa-solid fa-hands-praying text-amber-300"></i>
+            <span>آمين، دعوتُ ${isFemale ? 'لها' : 'له'}</span>
           </button>
           <button class="btn-copy-dua py-1.5 px-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-[var(--text-secondary)] hover:text-amber-400 border border-emerald-500/20 text-xs flex items-center justify-center gap-1 transition-all active:scale-95" title="نسخ الدعاء">
             <i class="fa-regular fa-copy"></i>
@@ -4579,17 +4583,17 @@ document.addEventListener('DOMContentLoaded', () => {
       btnPray.addEventListener('click', () => {
         triggerHapticFeedback([25, 40]);
         btnPray.className = 'btn-pray-dua flex-1 py-1.5 px-3 rounded-xl bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all';
-        btnPray.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> <span>تقبّل الله، تم الدعاء وإهداء الثواب ✓</span>';
+        btnPray.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>تقبّل الله، تم الدعاء وإهداء الثواب</span>';
         card.classList.add('border-emerald-500/50');
         const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
-        showToast(`تقبل الله منا ومنكم صالح الدعاء لروح ${targetName} 🤲`);
+        showToast(`تقبل الله منا ومنكم صالح الدعاء لروح ${targetName}`);
       });
 
       btnCopy.addEventListener('click', () => {
-        const fullShareText = `🕊️ دعاء لروح المغفور ${isFemale ? 'لها' : 'له'} بإذن الله: ${currentMemorial.name}\n\n«${duaText}»\n\n- المصدر: ${dua.source}\n- منصة القرآن الكريم`;
+        const fullShareText = `دعاء لروح المغفور ${isFemale ? 'لها' : 'له'} بإذن الله: ${currentMemorial.name}\n\n«${duaText}»\n\n- المصدر: ${dua.source}\n- منصة القرآن الكريم`;
         if (navigator.clipboard) {
           navigator.clipboard.writeText(fullShareText);
-          showToast('تم نسخ الدعاء إلى الحافظة بنجاح 📋');
+          showToast('تم نسخ الدعاء إلى الحافظة بنجاح');
         }
       });
 
@@ -4613,8 +4617,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="text-[11px] text-[var(--text-secondary)] mt-1.5 leading-snug line-clamp-2">${s.reason}</p>
         </div>
         <button class="btn-play-memorial-surah w-full py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
-          <i class="fa-solid fa-play text-[10px]"></i>
-          <span>تلاوة وإهداء الثواب 🎧</span>
+          <i class="fa-solid fa-headphones-simple text-[11px]"></i>
+          <span>تلاوة وإهداء الثواب</span>
         </button>
       `;
 
@@ -4627,7 +4631,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         triggerHapticFeedback([30, 50]);
         const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
-        showToast(`بدأت تلاوة سورة ${s.name} بنية إهداء ثواب الاستماع لروح ${targetName} 🌿`);
+        showToast(`بدأت تلاوة سورة ${s.name} بنية إهداء ثواب الاستماع لروح ${targetName}`);
       });
 
       memorialSurahsGrid.appendChild(card);
@@ -4641,7 +4645,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : `${window.location.origin}${window.location.pathname}?memorial=${encodeURIComponent(currentMemorial.name)}&gender=${currentMemorial.gender}`;
     const pronoun = currentMemorial.gender === 'm' ? 'له' : 'لها';
     const targetName = isGeneric ? 'موتانا وموتى المسلمين' : `المغفور ${pronoun} بإذن الله: *${currentMemorial.name}*`;
-    const message = `🕊️ صدقة جارية وإهداء ثواب على روح ${targetName}\n\nقال رسول الله ﷺ: «إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، وَعِلْمٍ يُنْتَفَعُ بِهِ، وَوَلَدٍ صَالِحٍ يَدْعُو لَهُ».\n\nشاركونا الأجر بقراءة سورة من القرآن، أو التسبيح والدعاء عبر الرابط التالي:\n${url}`;
+    const message = `صدقة جارية وإهداء ثواب على روح ${targetName}\n\nقال رسول الله ﷺ: «إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، وَعِلْمٍ يُنْتَفَعُ بِهِ، وَوَلَدٍ صَالِحٍ يَدْعُو لَهُ».\n\nشاركونا الأجر بقراءة سورة من القرآن، أو التسبيح والدعاء عبر الرابط التالي:\n${url}`;
 
     if (channel === 'whatsapp') {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
@@ -4649,7 +4653,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (navigator.clipboard) {
         navigator.clipboard.writeText(url);
-        showToast('تم نسخ رابط صفحة الصدقة الجارية بنجاح! 📋');
+        showToast('تم نسخ رابط صفحة الصدقة الجارية بنجاح');
       } else if (navigator.share) {
         navigator.share({
           title: `صدقة جارية لروح ${currentMemorial.name}`,
@@ -4681,9 +4685,9 @@ document.addEventListener('DOMContentLoaded', () => {
             await navigator.share({
               files: [currentMemorialCardFile],
               title: `صدقة جارية لروح ${currentMemorial.name}`,
-              text: `🕊️ صدقة جارية وإهداء ثواب لروح ${currentMemorial.name}`
+              text: `صدقة جارية وإهداء ثواب لروح ${currentMemorial.name}`
             });
-            showToast('تمت مشاركة البطاقة بنجاح! 🖼️');
+            showToast('تمت مشاركة البطاقة بنجاح');
           } catch (e) {
             if (e.name !== 'AbortError') showToast('تعذرت المشاركة المباشرة', 'info');
           }
@@ -4859,7 +4863,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
         if (isMobile) {
           showImagePreviewModal(blob, fileName);
-          showToast('تم تجهيز البطاقة المصورة للموبايل! 🖼️');
+          showToast('تم تجهيز البطاقة المصورة للموبايل');
         } else {
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -4869,7 +4873,7 @@ document.addEventListener('DOMContentLoaded', () => {
           link.click();
           document.body.removeChild(link);
           setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
-          showToast('تم توليد وتنزيل بطاقة الصدقة الجارية بنجاح! 🖼️');
+          showToast('تم توليد وتنزيل بطاقة الصدقة الجارية بنجاح');
         }
       }, 'image/png');
 
@@ -4945,7 +4949,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين.';
 
     memorialPreviewText.innerHTML = `
-      🕊️ صدقة جارية وإهداء ثواب على روح المغفور ${pronoun} بإذن الله: <strong class="text-amber-400">${name}</strong>.<br>
+      <i class="fa-solid fa-seedling text-emerald-400 ml-1"></i> صدقة جارية وإهداء ثواب على روح المغفور ${pronoun} بإذن الله: <strong class="text-amber-400">${name}</strong>.<br>
       <span class="text-emerald-300 italic">«${note || defaultDua}»</span>
     `;
   }
@@ -4975,7 +4979,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeMemorialModal();
     openMemorialPage(newMemorial.name, newMemorial.gender, newMemorial.note, true);
-    showToast(`تم إنشاء وتفعيل صفحة الصدقة الجارية لروح ${name} بنجاح ✨`);
+    showToast(`تم إنشاء وتفعيل صفحة الصدقة الجارية لروح ${name} بنجاح`);
   }
 
   function renderSavedMemorials() {
@@ -5136,7 +5140,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chip.classList.remove('text-slate-300');
           hadrRepeatMode = chip.getAttribute('data-repeat');
           hadrRepeatCountLeft = hadrRepeatMode === 'loop' ? Infinity : (parseInt(hadrRepeatMode, 10) || 1);
-          const repLabel = hadrRepeatMode === 'loop' ? 'تكرار لا نهائي ♾️' : `${hadrRepeatMode} مرات`;
+          const repLabel = hadrRepeatMode === 'loop' ? 'تكرار لا نهائي' : `${hadrRepeatMode} مرات`;
           showToast(`تكرار الحدر للحفظ والتثبيت: ${repLabel}`);
         });
       });

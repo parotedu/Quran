@@ -528,9 +528,9 @@
     if (!els.reciterSelect) return;
     els.reciterSelect.innerHTML = VIDEO_RECITERS.map(r => {
       let extra = '';
-      if (r.id === 'hussein_alazzam') extra = ' ★ (تلاوات خاشعة حصرية)';
-      else if (r.id === 'ahmed_kaseb') extra = ' ★ (جديد - كامل المصحف)';
-      else if (r.id === 'ahmed_deiban') extra = ' ⚡ (تلاوة حدر سريعة)';
+      if (r.id === 'hussein_alazzam') extra = ' • تلاوات خاشعة حصرية';
+      else if (r.id === 'ahmed_kaseb') extra = ' • كامل المصحف';
+      else if (r.id === 'ahmed_deiban') extra = ' • تلاوة حدر سريعة';
       return `<option value="${r.id}">${r.name}${extra}</option>`;
     }).join('');
     els.reciterSelect.value = state.selectedReciterId;
@@ -874,7 +874,7 @@
         state.showSafeZone = e.target.checked;
         renderStaticPreviewFrame();
         if (typeof showToast === 'function') {
-          showToast(state.showSafeZone ? 'تم تفعيل منطقة الأمان لتيك توك والريلز 🎯' : 'تم إخفاء منطقة الأمان');
+          showToast(state.showSafeZone ? 'تم تفعيل منطقة الأمان لتيك توك والريلز' : 'تم إخفاء منطقة الأمان');
         }
       });
     }
@@ -2820,7 +2820,7 @@
     if (els.btnLivePreview) els.btnLivePreview.disabled = false;
 
     if (typeof showToast === 'function') {
-      showToast('🎉 تم إنشاء الفيديو بنجاح بتلاوة سلسة وجودة عالية!');
+      showToast('تم إنشاء الفيديو بنجاح بتلاوة سلسة وجودة عالية');
     }
   }
 

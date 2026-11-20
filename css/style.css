@@ -6,11 +6,13 @@
 :root {
   --font-arabic: 'Amiri', serif;
   --font-quran: 'Amiri Quran', 'Amiri', serif;
-  --font-sans: 'Cairo', sans-serif;
+  --font-sans: 'IBM Plex Sans Arabic', 'Cairo', system-ui, -apple-system, sans-serif;
   
   /* Deep Spiritual Emerald & Amber Theme (Default Dark) */
   --bg-primary: radial-gradient(circle at 50% 0%, #064e3b 0%, #03251c 35%, #01140f 100%);
   --panel-bg: rgba(4, 44, 34, 0.45);
+  --dropdown-bg: #03221a;
+  --dropdown-border: rgba(251, 191, 36, 0.42);
   --panel-border: rgba(251, 191, 36, 0.16);
   --panel-border-glow: rgba(251, 191, 36, 0.35);
   --text-primary: #f8fafc;
@@ -34,6 +36,8 @@
   /* Warm Spiritual Sand/Ivory Cream Theme */
   --bg-primary: radial-gradient(circle at 50% 0%, #fffbf0 0%, #f7f3e8 45%, #ede7d8 100%);
   --panel-bg: rgba(255, 255, 255, 0.85);
+  --dropdown-bg: #fffdf7;
+  --dropdown-border: rgba(4, 120, 87, 0.25);
   --panel-border: rgba(4, 120, 87, 0.14);
   --panel-border-glow: rgba(4, 120, 87, 0.3);
   --text-primary: #0f172a;
@@ -56,6 +60,8 @@
   /* Kaaba Kiswah Pitch Black & Royal Gold Theme */
   --bg-primary: radial-gradient(circle at 50% 0%, #1c1917 0%, #09090b 45%, #000000 100%);
   --panel-bg: rgba(18, 18, 20, 0.72);
+  --dropdown-bg: #111114;
+  --dropdown-border: rgba(251, 191, 36, 0.42);
   --panel-border: rgba(251, 191, 36, 0.24);
   --panel-border-glow: rgba(251, 191, 36, 0.5);
   --text-primary: #fafafa;
@@ -78,6 +84,8 @@
   /* Al-Quds Midnight Sapphire & Warm Gold Theme */
   --bg-primary: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 45%, #020617 100%);
   --panel-bg: rgba(15, 23, 42, 0.62);
+  --dropdown-bg: #0b1426;
+  --dropdown-border: rgba(56, 189, 248, 0.38);
   --panel-border: rgba(56, 189, 248, 0.18);
   --panel-border-glow: rgba(251, 191, 36, 0.4);
   --text-primary: #f1f5f9;
@@ -100,6 +108,8 @@
   /* Al-Masjid An-Nabawi Warm Sanctuary Green & Ivory Gold Theme */
   --bg-primary: radial-gradient(circle at 50% 0%, #065f46 0%, #043927 42%, #021b13 100%);
   --panel-bg: rgba(6, 65, 45, 0.56);
+  --dropdown-bg: #032b1e;
+  --dropdown-border: rgba(167, 243, 208, 0.35);
   --panel-border: rgba(167, 243, 208, 0.22);
   --panel-border-glow: rgba(251, 191, 36, 0.45);
   --text-primary: #f0fdf4;
@@ -133,11 +143,13 @@ body {
 
 .font-quran {
   font-family: var(--font-arabic);
+  letter-spacing: 0;
 }
 
 .font-quran-text {
   font-family: var(--font-quran);
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  word-spacing: 0.08em;
 }
 
 /* ==========================================================================
@@ -150,6 +162,26 @@ body {
   border: 1px solid var(--panel-border);
   box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.06), 0 12px 36px 0 rgba(0, 0, 0, 0.25);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* High-opacity solid surface for header dropdowns so underlying text never bleeds through */
+.solid-dropdown-panel {
+  background: var(--dropdown-bg, rgba(3, 31, 24, 0.98));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--dropdown-border, rgba(251, 191, 36, 0.35));
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .solid-dropdown-panel {
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
+}
+
+[data-theme="light"] .solid-dropdown-panel .text-amber-300,
+[data-theme="light"] .solid-dropdown-panel .text-cyan-300,
+[data-theme="light"] .solid-dropdown-panel .text-rose-300,
+[data-theme="light"] .solid-dropdown-panel .text-emerald-300 {
+  color: #064e3b !important;
 }
 
 .glass-panel:hover {
@@ -1029,12 +1061,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  letter-spacing: 0.012em;
+  letter-spacing: 0;
 }
 
 .font-quran {
-  letter-spacing: 0.015em;
-  line-height: 2.15;
+  letter-spacing: 0;
+  line-height: 1.65;
 }
 
 /* Enhanced micro-transitions for interactive buttons and cards */
