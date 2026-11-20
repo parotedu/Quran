@@ -218,7 +218,18 @@ document.addEventListener('DOMContentLoaded', () => {
   let searchQuery = '';
   let searchMode = 'surahs'; // 'surahs' | 'ayahs'
   let ayahSearchTimer = null;
-  let favorites = JSON.parse(localStorage.getItem('quran_favorites')) || [];
+  function safeJsonParse(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed !== null && parsed !== undefined ? parsed : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  let favorites = safeJsonParse('quran_favorites', []);
   let currentReciterId = localStorage.getItem('quran_reciter') || 'hussary';
   let currentView = 'player'; // 'player', 'mushaf', 'spiritual', 'playlist'
   
@@ -231,13 +242,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let tafsirCache = {};
   let currentMushafSurahId = 1;
   let mushafFontSize = parseInt(localStorage.getItem('quran_mushaf_font_size')) || 100;
-  let khatmaBookmark = JSON.parse(localStorage.getItem('quran_khatma_bookmark')) || null;
-  let listenedSurahs = JSON.parse(localStorage.getItem('quran_listened_surahs')) || [];
+  let khatmaBookmark = safeJsonParse('quran_khatma_bookmark', null);
+  let listenedSurahs = safeJsonParse('quran_listened_surahs', []);
   let listeningSeconds = parseInt(localStorage.getItem('quran_listening_seconds')) || 0;
 
   // V2 Audio & Studio State
   let isRadioMode = false;
   let activeRadioStation = null;
+  let radioCandidateIndex = 0;
+  let currentSurahCandidates = [];
+  let currentSurahCandidateIndex = 0;
+  let currentAudioLoadToken = 0;
+  let audioStallTimer = null;
+  let pendingResumeTime = 0;
   let abLoopState = 'off'; // 'off' | 'A' | 'AB'
   let abLoopA = 0;
   let abLoopB = 0;
@@ -272,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isTasbeehSoundEnabled = localStorage.getItem('quran_tasbeeh_sound') !== 'false';
   let tasbeehAudioCtx = null;
   let modalSelectedGender = 'm';
-  let savedMemorials = JSON.parse(localStorage.getItem('quran_saved_memorials')) || [];
+  let savedMemorials = safeJsonParse('quran_saved_memorials', []);
   let currentMemorialCardBlob = null;
   let currentMemorialCardFile = null;
 
@@ -476,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (navBtnSpiritual) navBtnSpiritual.className = tabActive;
       if (spiritualView) spiritualView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
+      if (window.ensurePrayerHubLoaded) window.ensurePrayerHubLoaded();
       updateKhatmaDashboard();
       // Auto-collapse khatma card on mobile when in Sebha panel to focus 100% on Sebha
       const khatmaCard = document.getElementById('khatma-dashboard-card');
@@ -490,7 +508,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (targetView === 'video') {
       if (videoStudioView) videoStudioView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
-      if (window.initVideoStudioView) window.initVideoStudioView();
+      ensureVideoStudioLoaded(() => {
+        if (window.initVideoStudioView) window.initVideoStudioView();
+      });
     } else if (targetView === 'hadr') {
       if (hadrView) hadrView.classList.remove('hidden');
       if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
@@ -644,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const fragment = document.createDocumentFragment();
     currentSurahList.forEach((surah) => {
       const isFav = favorites.includes(surah.id);
       const isCurrent = SURAHS[currentIndex].id === surah.id;
@@ -728,57 +749,191 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleFavorite(surah.id);
       });
 
-      playlistContainer.appendChild(card);
+      fragment.appendChild(card);
+    });
+    playlistContainer.appendChild(fragment);
+  }
+
+  let videoStudioLoadPromise = null;
+  function ensureVideoStudioLoaded(onReady) {
+    if (typeof window.initVideoStudioView === 'function') {
+      if (onReady) onReady();
+      return;
+    }
+    if (!videoStudioLoadPromise) {
+      videoStudioLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'js/video-studio.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    }
+    videoStudioLoadPromise.then(() => {
+      if (onReady) onReady();
+    }).catch(() => {
+      videoStudioLoadPromise = null;
+      showToast('تعذر تحميل استوديو الفيديو، يرجى المحاولة مرة أخرى.', 'error');
     });
   }
 
-  // --- Audio URL Resolver with Safe Fallback ---
-  function getSurahAudioUrl(reciter, surahId) {
+  // --- Audio URL Resolver with Multi-CDN Fallback Chain ---
+  function buildSurahAudioCandidates(reciter, surahId) {
     const paddedId = surahId.toString().padStart(3, '0');
-    
-    // Direct surahFiles mapping (e.g. archive.org custom uploads)
-    if (reciter.surahFiles && reciter.surahFiles[surahId]) {
-      return {
-        url: reciter.surahFiles[surahId],
-        isFallback: false,
-        reciter: reciter,
-        fallbackReciter: null
-      };
-    }
+    const hussary = RECITERS.find(r => r.id === 'hussary') || RECITERS[0];
+    const candidates = [];
+    const seen = new Set();
 
-    // Check if reciter has recorded this surah
-    if (reciter.availableSurahs && !reciter.availableSurahs.includes(surahId)) {
-      const fallbackReciter = RECITERS.find(r => r.id === 'hussary') || RECITERS[0];
-      return {
-        url: `${fallbackReciter.serverUrl}${paddedId}.mp3`,
-        isFallback: true,
-        reciter: reciter,
-        fallbackReciter: fallbackReciter
-      };
-    }
-
-    const baseUrl = reciter.serverUrl || `https://download.quranicaudio.com/quran/${reciter.slug}`;
-    return {
-      url: `${baseUrl}${paddedId}.mp3`,
-      isFallback: false,
-      reciter: reciter,
-      fallbackReciter: null
+    const pushCandidate = (url, activeReciter, isReciterFallback) => {
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      candidates.push({ url, reciter: activeReciter, isReciterFallback });
     };
+
+    const hasSurah = !reciter.availableSurahs || reciter.availableSurahs.includes(surahId);
+
+    if (hasSurah) {
+      const mappedUrl = reciter.surahFiles && reciter.surahFiles[surahId];
+      const tokenFile = (reciter.surahTokens && reciter.surahTokens[surahId - 1] && reciter.surahSuffix)
+        ? encodeURIComponent(`${paddedId}  ${reciter.surahTokens[surahId - 1]}${reciter.surahSuffix}`)
+        : null;
+
+      if (tokenFile) {
+        const primaryBase = reciter.serverUrl || '';
+        pushCandidate(`${primaryBase}${tokenFile}`, reciter, false);
+        if (reciter.fallbackServerUrl) {
+          pushCandidate(`${reciter.fallbackServerUrl}${tokenFile}`, reciter, false);
+        }
+      } else if (mappedUrl) {
+        pushCandidate(mappedUrl, reciter, false);
+        if (reciter.fallbackServerUrl) {
+          const filename = mappedUrl.split('/').pop();
+          if (filename) pushCandidate(`${reciter.fallbackServerUrl}${filename}`, reciter, false);
+        }
+      } else {
+        const primaryBase = reciter.serverUrl || `https://download.quranicaudio.com/quran/${reciter.slug}`;
+        pushCandidate(`${primaryBase}${paddedId}.mp3`, reciter, false);
+        if (reciter.fallbackServerUrl) {
+          pushCandidate(`${reciter.fallbackServerUrl}${paddedId}.mp3`, reciter, false);
+        }
+      }
+    }
+
+    // Cross-reciter ultimate reliability chain (Hussary primary + Cloudflare CDN mirror)
+    const isFallbackFromOriginal = !hasSurah || reciter.id !== hussary.id;
+    pushCandidate(`${hussary.serverUrl}${paddedId}.mp3`, hussary, isFallbackFromOriginal);
+    if (hussary.fallbackServerUrl) {
+      pushCandidate(`${hussary.fallbackServerUrl}${paddedId}.mp3`, hussary, isFallbackFromOriginal);
+    }
+
+    return candidates;
+  }
+
+  function getSurahAudioUrl(reciter, surahId) {
+    const candidates = buildSurahAudioCandidates(reciter, surahId);
+    const first = candidates[0];
+    return {
+      url: first.url,
+      isFallback: first.isReciterFallback,
+      reciter: reciter,
+      fallbackReciter: first.isReciterFallback ? first.reciter : null,
+      candidates
+    };
+  }
+
+  function clearAudioStallWatchdog() {
+    if (audioStallTimer) {
+      clearTimeout(audioStallTimer);
+      audioStallTimer = null;
+    }
+  }
+
+  function startAudioStallWatchdog(loadToken) {
+    clearAudioStallWatchdog();
+    const curSrc = audio.currentSrc || audio.src || '';
+    const isArchive = curSrc.includes('archive.org');
+    const timeoutMs = (audio.currentTime || 0) < 0.5 ? (isArchive ? 12000 : 6500) : 10000;
+    audioStallTimer = setTimeout(() => {
+      if (loadToken !== currentAudioLoadToken || !isPlaying || audio.paused) return;
+      if (audio.readyState < 3) {
+        tryNextAudioCandidate('timeout');
+      }
+    }, timeoutMs);
+  }
+
+  function tryNextAudioCandidate(reason = 'error') {
+    clearAudioStallWatchdog();
+    if (isRadioMode && activeRadioStation) {
+      const radioUrls = [
+        activeRadioStation.url,
+        activeRadioStation.fallbackUrl,
+        'https://backup.qurango.net/radio/tarateel'
+      ].filter((u, idx, arr) => u && arr.indexOf(u) === idx);
+
+      radioCandidateIndex++;
+      if (radioCandidateIndex < radioUrls.length) {
+        currentAudioLoadToken++;
+        audio.src = radioUrls[radioCandidateIndex];
+        audio.playbackRate = 1.0;
+        if (isPlaying) {
+          playAudio();
+        }
+        return true;
+      }
+      showToast('تعذر الاتصال بالبث المباشر حالياً، جاري العودة للمشغل.', 'error');
+      loadSurah(SURAHS[currentIndex], false);
+      return false;
+    }
+
+    currentSurahCandidateIndex++;
+    if (currentSurahCandidateIndex < currentSurahCandidates.length) {
+      const nextCand = currentSurahCandidates[currentSurahCandidateIndex];
+      currentAudioLoadToken++;
+      if (audio.currentTime > 2 && isFinite(audio.currentTime)) {
+        pendingResumeTime = audio.currentTime;
+      }
+      audio.src = nextCand.url;
+      audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
+
+      if (nextCand.isReciterFallback) {
+        const fbReciter = nextCand.reciter;
+        playerAudioSource.innerHTML = `<i class="fa-solid fa-microphone"></i> ${fbReciter.name} <span class="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">(بديل تلقائي)</span>`;
+        playerSourceBadge.innerText = fbReciter.shortName;
+        updateMiniPlayerInfo(SURAHS[currentIndex], fbReciter);
+        if (reason !== 'silent') {
+          showToast(`جاري تشغيل سورة ${SURAHS[currentIndex].name} بصوت ${fbReciter.shortName} لضمان استمرار الاستماع.`, 'info');
+        }
+      }
+
+      if (isPlaying) {
+        playAudio();
+      }
+      return true;
+    }
+
+    showToast('تعذر تحميل الملف الصوتي حالياً. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.', 'error');
+    pauseAudio();
+    return false;
   }
 
   // --- Load Surah into Player ---
   function loadSurah(surah, shouldPlay = true) {
     isRadioMode = false;
     activeRadioStation = null;
+    radioCandidateIndex = 0;
+    pendingResumeTime = 0;
+    clearAudioStallWatchdog();
     if (playerRadioLabel) playerRadioLabel.innerText = 'إذاعة مباشرة';
     resetAbLoop(false);
 
     const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
     const audioInfo = getSurahAudioUrl(reciter, surah.id);
-    
+    currentSurahCandidates = audioInfo.candidates;
+    currentSurahCandidateIndex = 0;
+    currentAudioLoadToken++;
+
     audio.src = audioInfo.url;
     audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
-    audio.load();
 
     // Reset seek sliders and timers
     seekSlider.value = 0;
@@ -921,16 +1076,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Audio Play / Pause Execution ---
+  function togglePlayPause() {
+    if (isPlaying) pauseAudio(); else playAudio();
+  }
+
   function playAudio() {
-    // Pause single ayah audio if playing
+    // Pause single ayah audio or Hadr audio if playing
     if (ayahSingleAudio && !ayahSingleAudio.paused) {
       ayahSingleAudio.pause();
     }
+    const hadrAudioEl = document.getElementById('hadr-audio');
+    if (hadrAudioEl && !hadrAudioEl.paused) {
+      hadrAudioEl.pause();
+    }
+    if (!audio.getAttribute('src')) {
+      loadSurah(SURAHS[currentIndex], true);
+      return;
+    }
+
     isPlaying = true;
+    const token = currentAudioLoadToken;
+    if (audio.readyState < 3) {
+      playIcon.className = 'fa-solid fa-spinner animate-spin text-lg sm:text-xl text-slate-900';
+      if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-spinner animate-spin text-sm text-slate-900';
+      startAudioStallWatchdog(token);
+    }
+
     const playPromise = audio.play();
     
     if (playPromise !== undefined) {
       playPromise.then(() => {
+        if (token !== currentAudioLoadToken || !isPlaying) return;
+        clearAudioStallWatchdog();
         // Main Button
         playIcon.className = 'fa-solid fa-pause text-lg sm:text-xl text-slate-900';
         btnPlayPause.className = 'w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 flex items-center justify-center transition-all duration-300 transform active:scale-95 shadow-xl border-2 sm:border-4 border-emerald-950/30 pulse-glow-active flex-shrink-0';
@@ -958,15 +1135,23 @@ document.addEventListener('DOMContentLoaded', () => {
           navigator.mediaSession.playbackState = 'playing';
         }
       }).catch(err => {
-        if (err.name === 'AbortError') return;
+        if (token !== currentAudioLoadToken) return;
+        if (err && err.name === 'AbortError') return;
         console.warn("Audio play prevented or blocked:", err);
-        isPlaying = false;
-        pauseAudio();
+        clearAudioStallWatchdog();
+        if (err && err.name === 'NotAllowedError') {
+          isPlaying = false;
+          pauseAudio();
+          showToast('انقر على زر التشغيل مرة أخرى لبدء الصوت', 'info');
+          return;
+        }
+        tryNextAudioCandidate('error');
       });
     }
   }
 
   function pauseAudio() {
+    clearAudioStallWatchdog();
     isPlaying = false;
     audio.pause();
     
@@ -1701,11 +1886,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     audio.addEventListener('waiting', () => {
+      if (!isPlaying) return;
       playIcon.className = 'fa-solid fa-spinner animate-spin text-lg sm:text-xl text-slate-900';
       if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-spinner animate-spin text-sm text-slate-900';
+      startAudioStallWatchdog(currentAudioLoadToken);
+    });
+
+    audio.addEventListener('canplay', () => {
+      clearAudioStallWatchdog();
+      if (pendingResumeTime > 2 && isFinite(audio.duration) && pendingResumeTime < audio.duration - 2) {
+        const resumeTo = pendingResumeTime;
+        pendingResumeTime = 0;
+        try { audio.currentTime = resumeTo; } catch (e) {}
+      }
     });
 
     audio.addEventListener('playing', () => {
+      clearAudioStallWatchdog();
       playIcon.className = 'fa-solid fa-pause text-lg sm:text-xl text-slate-900';
       if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-pause text-sm text-slate-900';
       if ('mediaSession' in navigator) {
@@ -1713,29 +1910,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 8. Resilient Fallback on Audio Error
+    // 8. Resilient Multi-CDN & Reciter Fallback on Audio Error
     audio.addEventListener('error', () => {
-      if (isRadioMode) {
-        showToast('تعذر الاتصال بالبث المباشر حالياً، جاري العودة للمشغل.', 'error');
-        loadSurah(SURAHS[currentIndex], false);
-        return;
-      }
-      const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
-      if (reciter.id !== 'hussary') {
-        const fallbackReciter = RECITERS.find(r => r.id === 'hussary');
-        const paddedId = SURAHS[currentIndex].id.toString().padStart(3, '0');
-        audio.src = `${fallbackReciter.serverUrl}${paddedId}.mp3`;
-        audio.load();
-        playerAudioSource.innerHTML = `<i class="fa-solid fa-microphone"></i> ${fallbackReciter.name} <span class="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">(بديل تلقائي)</span>`;
-        playerSourceBadge.innerText = fallbackReciter.shortName;
-        showToast(`جاري تشغيل سورة ${SURAHS[currentIndex].name} بصوت الشيخ الحصري لضمان استمرار الاستماع.`, 'info');
-        if (isPlaying) {
-          playAudio();
-        }
-      } else {
-        showToast('خطأ في تشغيل الملف الصوتي. يرجى التحقق من الاتصال بالإنترنت.', 'error');
-        pauseAudio();
-      }
+      if (!audio.getAttribute('src')) return;
+      tryNextAudioCandidate('error');
     });
 
     // 9. Seek Slider Interaction
@@ -2227,11 +2405,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctxSurah = currentStudioContext.surahId;
         const ctxAyah = currentStudioContext.ayahNum;
         closeAyahStudio();
-        if (typeof window.openVideoStudio === 'function') {
-          window.openVideoStudio(ctxSurah, ctxAyah);
-        } else {
-          switchView('video');
-        }
+        ensureVideoStudioLoaded(() => {
+          if (typeof window.openVideoStudio === 'function') {
+            window.openVideoStudio(ctxSurah, ctxAyah);
+          } else {
+            switchView('video');
+          }
+        });
       });
     }
 
@@ -3150,13 +3330,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  let singleAyahFallbackTried = false;
   function toggleSingleAyahAudio(globalAyah) {
     if (!ayahSingleAudio || !globalAyah) return;
     const icon = document.getElementById('studio-play-icon');
     const lbl = document.getElementById('studio-play-label');
-    const targetUrl = `https://cdn.islamic.network/quran/audio/128/ar.husary/${globalAyah}.mp3`;
+    const primaryUrl = `https://cdn.islamic.network/quran/audio/128/ar.husary/${globalAyah}.mp3`;
+    const fallbackUrl = `https://everyayah.com/data/Husary_128kbps/${String(currentStudioContext?.surahId || 1).padStart(3, '0')}${String(currentStudioContext?.ayahNum || 1).padStart(3, '0')}.mp3`;
 
-    if (!ayahSingleAudio.paused && ayahSingleAudio.src === targetUrl) {
+    if (!ayahSingleAudio.paused && (ayahSingleAudio.src === primaryUrl || ayahSingleAudio.src === fallbackUrl)) {
       ayahSingleAudio.pause();
       if (icon) icon.className = 'fa-solid fa-play';
       if (lbl) lbl.innerText = 'استماع للآية';
@@ -3164,12 +3346,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (isPlaying) pauseAudio();
-    ayahSingleAudio.src = targetUrl;
+    singleAyahFallbackTried = false;
+    ayahSingleAudio.onerror = () => {
+      if (!singleAyahFallbackTried && ayahSingleAudio.src !== fallbackUrl) {
+        singleAyahFallbackTried = true;
+        ayahSingleAudio.src = fallbackUrl;
+        ayahSingleAudio.play().then(() => {
+          if (icon) icon.className = 'fa-solid fa-pause';
+          if (lbl) lbl.innerText = 'إيقاف الآية';
+        }).catch(() => {
+          showToast('تعذر تشغيل صوت الآية المنفردة حالياً', 'error');
+        });
+      } else {
+        showToast('تعذر تشغيل صوت الآية المنفردة حالياً', 'error');
+      }
+    };
+    ayahSingleAudio.src = primaryUrl;
     ayahSingleAudio.play().then(() => {
       if (icon) icon.className = 'fa-solid fa-pause';
       if (lbl) lbl.innerText = 'إيقاف الآية';
     }).catch(() => {
-      showToast('تعذر تشغيل صوت الآية المنفردة حالياً', 'error');
+      if (!singleAyahFallbackTried) {
+        ayahSingleAudio.onerror();
+      }
     });
   }
 
@@ -3474,11 +3673,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function playRadioStation(station) {
     isRadioMode = true;
     activeRadioStation = station;
+    radioCandidateIndex = 0;
+    pendingResumeTime = 0;
+    clearAudioStallWatchdog();
     resetAbLoop(false);
 
+    currentAudioLoadToken++;
     audio.src = station.url;
     audio.playbackRate = 1.0;
-    audio.load();
 
     if (station.isAudioFile) {
       playerSurahNumber.innerText = 'تسجيل خاص 🌿';
@@ -3687,11 +3889,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Render fallback/cached timings immediately for 0ms latency
       currentPrayerTimings = { ...(cityObj.fallback || ISLAMIC_CITIES[0].fallback) };
       const cachedKey = `quran_prayer_timings_${cityObj.id}_${new Date().toISOString().slice(0, 10)}`;
+      let hasFreshCache = false;
       try {
         const cached = localStorage.getItem(cachedKey);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (parsed.timings) currentPrayerTimings = parsed.timings;
+          if (parsed.timings) {
+            currentPrayerTimings = parsed.timings;
+            hasFreshCache = true;
+          }
           if (parsed.hijriText) {
             const hijriEl = document.getElementById('prayer-hijri-date');
             if (hijriEl) hijriEl.innerText = parsed.hijriText;
@@ -3700,8 +3906,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) {}
 
       renderPrayerTimesGrid(currentPrayerTimings);
+      if (hasFreshCache) return;
 
-      // Fetch live astronomical timings from AlAdhan API
+      // Fetch live astronomical timings from AlAdhan API only if not cached today
       fetch(`https://api.aladhan.com/v1/timings?latitude=${cityObj.lat}&longitude=${cityObj.lng}&method=${cityObj.method || 5}`)
         .then(r => r.json())
         .then(json => {
@@ -3766,13 +3973,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const initialCity = ISLAMIC_CITIES.find(c => c.id === savedCityId) || ISLAMIC_CITIES[0];
-    loadCityPrayerData(initialCity);
-
-    if (prayerCountdownTimer) clearInterval(prayerCountdownTimer);
-    prayerCountdownTimer = setInterval(() => {
-      if (currentPrayerTimings) updateNextPrayerCountdown(currentPrayerTimings);
-    }, 1000);
+    let prayerHubLoaded = false;
+    window.ensurePrayerHubLoaded = () => {
+      if (prayerHubLoaded) return;
+      prayerHubLoaded = true;
+      const initialCity = ISLAMIC_CITIES.find(c => c.id === savedCityId) || ISLAMIC_CITIES[0];
+      loadCityPrayerData(initialCity);
+      if (prayerCountdownTimer) clearInterval(prayerCountdownTimer);
+      prayerCountdownTimer = setInterval(() => {
+        if (currentPrayerTimings) updateNextPrayerCountdown(currentPrayerTimings);
+      }, 1000);
+    };
   }
 
   function formatTime12Ar(hm) {
@@ -5050,23 +5261,66 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHadrNowPlayingUI();
   }
 
+  let hadrAudioCandidates = [];
+  let hadrAudioCandidateIdx = 0;
+  let hadrStallTimer = null;
+
+  function tryNextHadrCandidate(hadrAudio) {
+    if (hadrStallTimer) { clearTimeout(hadrStallTimer); hadrStallTimer = null; }
+    hadrAudioCandidateIdx++;
+    if (hadrAudioCandidateIdx < hadrAudioCandidates.length && hadrAudio) {
+      hadrAudio.src = hadrAudioCandidates[hadrAudioCandidateIdx];
+      hadrAudio.playbackRate = hadrPlaybackSpeed;
+      hadrAudio.play().catch(() => {});
+      return true;
+    }
+    showToast('تعذر تحميل تلاوة الحدر حالياً، يرجى التحقق من الإنترنت.', 'error');
+    const playIcon = document.getElementById('hadr-play-icon');
+    if (playIcon) playIcon.className = 'fa-solid fa-play';
+    return false;
+  }
+
   function playHadrSurah(surahId, autoPlay = true) {
     currentHadrSurahId = surahId;
     const hadrAudio = document.getElementById('hadr-audio');
     const reciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
     const reciter = reciters.find(r => r.id === currentHadrReciterId) || reciters[0];
     const padded = String(surahId).padStart(3, '0');
-    const audioUrl = `${reciter.serverUrl}${padded}.mp3`;
+    hadrAudioCandidates = [
+      reciter && reciter.serverUrl ? `${reciter.serverUrl}${padded}.mp3` : null,
+      reciter && reciter.fallbackServerUrl ? `${reciter.fallbackServerUrl}${padded}.mp3` : null,
+      reciter && reciter.cdnFallbackUrl ? `${reciter.cdnFallbackUrl}${padded}.mp3` : null,
+      `https://cdn.mp3quran.net/audio/mahmoud-husary/r1/${padded}.mp3`
+    ].filter((u, idx, arr) => u && arr.indexOf(u) === idx);
+    hadrAudioCandidateIdx = 0;
 
-    if (hadrAudio) {
-      hadrAudio.src = audioUrl;
+    if (hadrAudio && hadrAudioCandidates.length > 0) {
+      if (hadrStallTimer) clearTimeout(hadrStallTimer);
+      hadrAudio.onerror = () => {
+        if (!hadrAudio.getAttribute('src')) return;
+        tryNextHadrCandidate(hadrAudio);
+      };
+      hadrAudio.onplaying = () => {
+        if (hadrStallTimer) { clearTimeout(hadrStallTimer); hadrStallTimer = null; }
+      };
+      hadrAudio.src = hadrAudioCandidates[0];
       hadrAudio.playbackRate = hadrPlaybackSpeed;
       if (autoPlay) {
+        hadrStallTimer = setTimeout(() => {
+          if (!hadrAudio.paused && hadrAudio.readyState < 3) {
+            tryNextHadrCandidate(hadrAudio);
+          }
+        }, 10000);
         hadrAudio.play().then(() => {
+          if (hadrStallTimer) { clearTimeout(hadrStallTimer); hadrStallTimer = null; }
           const playIcon = document.getElementById('hadr-play-icon');
           if (playIcon) playIcon.className = 'fa-solid fa-pause';
         }).catch(err => {
+          if (err && err.name === 'AbortError') return;
           console.warn('Hadr autoplay prevented:', err);
+          if (err && err.name !== 'NotAllowedError') {
+            tryNextHadrCandidate(hadrAudio);
+          }
         });
       }
     }

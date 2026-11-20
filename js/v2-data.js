@@ -347,6 +347,7 @@ const RADIO_STATIONS = [
     name: "الرقية الشرعية - الشيخ مشاري راشد العفاسي",
     subtitle: "التسجيل الشامل المبارك للرقية الشرعية والتحصين من العين والسحر والحسد",
     url: "https://archive.org/download/20240228_20240228_1849/034%20%20%204%20%20%D8%A7%D9%84%D8%B1%D9%82%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B4%D8%B1%D8%B9%D9%8A%D8%A9%20%D9%83%D8%A7%D9%85%D9%84%D8%A9%20%D9%84%D8%B9%D9%84%D8%A7%D8%AC%20%D8%A7%D9%84%D8%B3%D8%AD%D8%B1%20%D9%88%D8%A7%D9%84%D9%85%D8%B3%20%D9%88%D8%A7%D9%84%D8%B9%D9%8A%D9%86%20%D9%88%D8%A7%D9%84%D8%AD%D8%B3%D8%AF%20%D8%A8%D8%B5%D9%88%D8%AA%20%D8%A7%D9%84%D8%B4%D9%8A%D8%AE%20%D9%85%D8%B4%D8%A7%D8%B1%D9%8A%20%D8%A7%D9%84%D8%B9%D9%81%D8%A7%D8%B3%D9%8A%20%D8%AC%D9%88%D8%AF%D8%A9%20%D8%B9%D8%A7%D9%84%D9%8A%D8%A9.mp3",
+    fallbackUrl: "https://backup.qurango.net/radio/roqiah",
     badge: "الرقية • العفاسي",
     reciter: "الشيخ مشاري راشد العفاسي",
     isAudioFile: true
@@ -356,6 +357,7 @@ const RADIO_STATIONS = [
     name: "إذاعة الرقية الشرعية والسكينة (مباشر)",
     subtitle: "آيات السكينة والشفاء والتحصين من القرآن الكريم على مدار الساعة",
     url: "https://backup.qurango.net/radio/roqiah",
+    fallbackUrl: "https://qurango.net/radio/roqiah",
     badge: "بث مباشر 24/7"
   },
   {
@@ -363,6 +365,7 @@ const RADIO_STATIONS = [
     name: "إذاعة التلاوات الخاشعة المختارة",
     subtitle: "تلاوات قصيرة خاشعة على مدار الساعة",
     url: "https://backup.qurango.net/radio/tarateel",
+    fallbackUrl: "https://qurango.net/radio/tarateel",
     badge: "تلاوات خاشعة"
   },
   {
@@ -370,6 +373,7 @@ const RADIO_STATIONS = [
     name: "إذاعة الشيخ مشاري راشد العفاسي",
     subtitle: "تلاوات ندية على مدار الساعة",
     url: "https://backup.qurango.net/radio/mishary_alafasi",
+    fallbackUrl: "https://qurango.net/radio/mishary_alafasi",
     badge: "العفاسي"
   },
   {
@@ -377,6 +381,7 @@ const RADIO_STATIONS = [
     name: "إذاعة الشيخ محمود خليل الحصري",
     subtitle: "المصحف المرتل برواية حفص عن عاصم",
     url: "https://backup.qurango.net/radio/mahmoud_khalil_alhussary",
+    fallbackUrl: "https://qurango.net/radio/mahmoud_khalil_alhussary",
     badge: "الحصري"
   },
   {
@@ -384,6 +389,7 @@ const RADIO_STATIONS = [
     name: "إذاعة الشيخ محمد صديق المنشاوي",
     subtitle: "تلاوات مرتلة ومجودة خاشعة",
     url: "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
+    fallbackUrl: "https://qurango.net/radio/mohammed_siddiq_alminshawi",
     badge: "المنشاوي"
   },
   {
@@ -391,6 +397,7 @@ const RADIO_STATIONS = [
     name: "إذاعة الشيخ عبد الباسط عبد الصمد",
     subtitle: "روائع المصحف المجود والمرتل",
     url: "https://backup.qurango.net/radio/abdulbasit_abdulsamad_mojawwad",
+    fallbackUrl: "https://qurango.net/radio/abdulbasit_abdulsamad_mojawwad",
     badge: "عبد الباسط"
   },
   {
@@ -398,6 +405,7 @@ const RADIO_STATIONS = [
     name: "إذاعة التفسير الميسر للقرآن الكريم",
     subtitle: "تلاوة الآيات مع بيان معانيها وتفسيرها",
     url: "https://backup.qurango.net/radio/tafseer",
+    fallbackUrl: "https://qurango.net/radio/tafseer",
     badge: "التفسير"
   }
 ];
@@ -543,7 +551,9 @@ const HADR_RECITERS = [
     id: "ahmed_deiban",
     name: "الشيخ د. أحمد ديبان",
     englishName: "Dr. Ahmed Deiban",
-    serverUrl: "https://archive.org/download/002_20250526/",
+    serverUrl: "https://ia600704.us.archive.org/26/items/002_20250526/",
+    fallbackServerUrl: "https://archive.org/download/002_20250526/",
+    cdnFallbackUrl: "https://cdn.mp3quran.net/audio/ahmad-deeban/r1/",
     badge: "مصحف الحدر المعتمد (114 سورة)",
     shortName: "د. أحمد ديبان",
     desc: "تلاوة حدر نموذجية واضحة ومتقنة برواية حفص عن عاصم، لكامل المصحف الشريف 114 سورة، مثالية لمراجعة وتثبيت الحفظ."
@@ -552,7 +562,9 @@ const HADR_RECITERS = [
     id: "yasser_salama_hadr",
     name: "الشيخ ياسر سلامة",
     englishName: "Yasser Salama",
-    serverUrl: "https://archive.org/download/nordarby_20150917_1806/",
+    serverUrl: "https://ia600709.us.archive.org/7/items/nordarby_20150917_1806/",
+    fallbackServerUrl: "https://archive.org/download/nordarby_20150917_1806/",
+    cdnFallbackUrl: "https://cdn.mp3quran.net/audio/yasser-salama/r1/",
     badge: "حدر سريع متصل",
     shortName: "ياسر سلامة",
     desc: "حدر سريع متقن بالأحكام لمراجعة وتسميع الأجزاء والأوراد اليومية بسرعة وسلاسة."

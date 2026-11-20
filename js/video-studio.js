@@ -436,9 +436,12 @@
   }
 
   // --- 6. Initialization & Population ---
+  let videoStudioInitialized = false;
   function initVideoStudio() {
+    if (videoStudioInitialized) return;
     cacheDOMElements();
     if (!els.view || !els.canvas) return;
+    videoStudioInitialized = true;
 
     // Populate Surahs Dropdown
     populateSurahsDropdown();
@@ -3014,11 +3017,11 @@
     initVideoStudio();
   };
 
-  // Auto-init on DOMContentLoaded
+  // Auto-init if loaded cleanly onto ready DOM (supports lazy-loading on demand)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initVideoStudio);
   } else {
-    setTimeout(initVideoStudio, 100);
+    initVideoStudio();
   }
 
 })();

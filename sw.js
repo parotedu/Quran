@@ -1,21 +1,31 @@
 // Service Worker for منصة القرآن الكريم
 // Enables instant offline loading, asset caching, and resilience on poor connections.
 
-const CACHE_NAME = 'quran-platform-v3.0';
+const CACHE_NAME = 'quran-platform-v3.1';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './favicon.ico',
+  './css/tailwind.min.css',
   './css/style.css',
   './js/surahs.js',
   './js/v2-data.js',
   './js/theme.js',
   './js/player.js',
-  './js/video-studio.js',
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png'
+];
+
+const MEDIA_HOST_MARKERS = [
+  'archive.org',
+  'mp3quran.net',
+  'quranicaudio.com',
+  'islamic.network',
+  'everyayah.com',
+  'qurango.net',
+  'way2quran.com'
 ];
 
 self.addEventListener('install', (event) => {
@@ -44,15 +54,20 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-  const url = new URL(request.url);
+  if (request.method !== 'GET') return;
 
-  // For audio files, use network first, cache only if streamed or needed
-  if (url.pathname.endsWith('.mp3')) {
-    event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match(request);
-      })
-    );
+  const url = new URL(request.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  // NEVER intercept audio/video/streaming or Range requests:
+  // Safari/WebKit/Android WebView break or stall Range streams and live Shoutcast radio when proxied through SW.
+  const isMediaExt = /\.(mp3|m4a|aac|ogg|wav|mp4|webm)(\?.*)?$/i.test(url.pathname);
+  const isMediaDest = request.destination === 'audio' || request.destination === 'video';
+  const isRangeReq = request.headers.has('range');
+  const isMediaHost = MEDIA_HOST_MARKERS.some((h) => url.hostname.includes(h));
+  const isRadioPath = url.pathname.includes('/radio/');
+
+  if (isMediaDest || isRangeReq || isMediaExt || isMediaHost || isRadioPath) {
     return;
   }
 
@@ -74,8 +89,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For API or CDN font assets: Stale-While-Revalidate
-  if (url.origin.includes('cdnjs') || url.origin.includes('fonts.googleapis') || url.origin.includes('fonts.gstatic') || url.origin.includes('cdn.tailwindcss')) {
+  // For external CDN font/icon assets: Stale-While-Revalidate
+  if (url.origin.includes('cdnjs') || url.origin.includes('fonts.googleapis') || url.origin.includes('fonts.gstatic')) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
         return cache.match(request).then((cachedResponse) => {
@@ -92,22 +107,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Core app shell: Cache-first with network fallback
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response && response.status === 200 && request.method === 'GET') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+  // Only cache same-origin app shell resources
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  // HTML navigations: Network-first with cache fallback so updates arrive immediately
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).then((response) => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
         return response;
-      }).catch(() => {
-        if (request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
+      }).catch(() => caches.match(request).then((c) => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Same-origin JS/CSS/images: Stale-While-Revalidate (instant paint + background update)
+  event.respondWith(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(request).then((cached) => {
+        const networkPromise = fetch(request).then((response) => {
+          if (response && response.status === 200) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || networkPromise;
       });
     })
   );
