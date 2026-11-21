@@ -131,13 +131,17 @@
 /* ==========================================================================
    GLOBAL RESET & TYPOGRAPHY
    ========================================================================== */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   transition: background 0.4s ease, color 0.3s ease;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -779,9 +783,11 @@ body {
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
   }
 
-  /* Player view bottom clearance so bottom buttons sit cleanly above mobile glass nav */
-  #player-view {
-    padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 72px) !important;
+  /* Player & Hadr views bottom clearance so bottom controls/dock sit cleanly above mobile glass nav */
+  #player-view,
+  #hadr-view,
+  #video-studio-view {
+    padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 74px) !important;
   }
 
   /* Ensure bottom elements in scroll containers never get covered by floating navigator or mini player */
@@ -1174,6 +1180,36 @@ button, select, input {
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(6, 78, 59, 0.55) 100%) !important;
   box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
   transform: translateY(-2px);
+}
+
+/* Searchable Reciter Picker Cards & Mobile Overflow Prevention */
+header, main, section {
+  max-width: 100%;
+  min-width: 0;
+}
+.reciter-modal-card {
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+.reciter-modal-card:hover {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(6, 78, 59, 0.35);
+}
+.reciter-modal-card.active {
+  border-color: rgba(251, 191, 36, 0.72) !important;
+  background: rgba(245, 158, 11, 0.16) !important;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.14);
+}
+[data-theme="light"] .reciter-modal-card:hover {
+  background: rgba(4, 120, 87, 0.08);
+}
+[data-theme="light"] .reciter-modal-card.active {
+  border-color: rgba(4, 120, 87, 0.65) !important;
+  background: rgba(4, 120, 87, 0.12) !important;
+}
+[data-theme="light"] #reciter-search-input {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(4, 120, 87, 0.28);
+  color: #0f172a;
 }
 
 

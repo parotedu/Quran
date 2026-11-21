@@ -1,24 +1,24 @@
 // Service Worker for منصة القرآن الكريم
 // Enables instant offline loading, asset caching, and resilience on poor connections.
 
-const CACHE_NAME = 'quran-platform-v3.3';
+const CACHE_NAME = 'quran-platform-v3.4';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './favicon.ico?v=3.3',
-  './assets/logo.svg?v=3.3',
-  './css/tailwind.min.css?v=3.3',
-  './css/style.css?v=3.3',
-  './js/surahs.js?v=3.3',
-  './js/v2-data.js?v=3.3',
-  './js/theme.js?v=3.3',
-  './js/player.js?v=3.3',
-  './assets/favicon-32.png?v=3.3',
-  './assets/favicon-16.png?v=3.3',
+  './favicon.ico?v=3.4',
+  './assets/logo.svg?v=3.4',
+  './css/tailwind.min.css?v=3.4',
+  './css/style.css?v=3.4',
+  './js/surahs.js?v=3.4',
+  './js/v2-data.js?v=3.4',
+  './js/theme.js?v=3.4',
+  './js/player.js?v=3.4',
+  './assets/favicon-32.png?v=3.4',
+  './assets/favicon-16.png?v=3.4',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/apple-touch-icon.png?v=3.3'
+  './assets/apple-touch-icon.png?v=3.4'
 ];
 
 const MEDIA_HOST_MARKERS = [
@@ -46,7 +46,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== 'quran-offline-audio') {
             return caches.delete(key);
           }
         })

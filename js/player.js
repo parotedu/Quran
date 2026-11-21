@@ -248,6 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let isRadioMode = false;
   let activeRadioStation = null;
   let radioCandidateIndex = 0;
+  let activeMiniEngine = 'main'; // 'main' | 'hadr'
+  const OFFLINE_AUDIO_CACHE = 'quran-offline-audio';
+  let activeOfflineObjectUrl = null;
+  const offlineAudioIndex = new Set();
+  let isDownloadingSurah = false;
   let currentSurahCandidates = [];
   let currentSurahCandidateIndex = 0;
   let currentAudioLoadToken = 0;
@@ -314,9 +319,11 @@ document.addEventListener('DOMContentLoaded', () => {
   init();
 
   function init() {
-    // 1. Populate Dropdowns (Reciters & Mushaf Surahs)
+    // 1. Populate Dropdowns (Reciters & Mushaf Surahs) & Offline Audio Index
     populateRecitersDropdown();
     populateMushafSurahSelect();
+    initReciterPickerModal();
+    refreshOfflineAudioIndex();
     
     // 2. Setup Statistics
     updateStatistics();
@@ -474,14 +481,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Mini Player is only shown on other tabs if audio has been started/played
-    const shouldShowMini = (isPlaying || (audio.currentTime > 0 && !audio.paused) || isRadioMode) && targetView !== 'player';
-    document.body.classList.toggle('mini-player-active', shouldShowMini);
+    // Mini Player stays hidden in full-screen 'player' or 'hadr' (which has its dedicated dock)
+    const canShowMini = syncMiniPlayerVisibility(targetView);
 
     if (targetView === 'mushaf') {
       if (navBtnMushaf) navBtnMushaf.className = tabActive;
       mushafView.classList.remove('hidden');
-      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
+      if (canShowMini) syncMiniPlayerVisibility(targetView);
       loadSurahMushaf(SURAHS[currentIndex].id);
       if (isMemorizationMode) {
         loadSurahTimestamps(SURAHS[currentIndex].id);
@@ -490,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (targetView === 'spiritual') {
       if (navBtnSpiritual) navBtnSpiritual.className = tabActive;
       if (spiritualView) spiritualView.classList.remove('hidden');
-      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       if (window.ensurePrayerHubLoaded) window.ensurePrayerHubLoaded();
       updateKhatmaDashboard();
       // Auto-collapse khatma card on mobile when in Sebha panel to focus 100% on Sebha
@@ -501,25 +506,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else if (targetView === 'memorial') {
       if (memorialView) memorialView.classList.remove('hidden');
-      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       updateMemorialViewUI();
     } else if (targetView === 'video') {
       if (videoStudioView) videoStudioView.classList.remove('hidden');
-      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       ensureVideoStudioLoaded(() => {
         if (window.initVideoStudioView) window.initVideoStudioView();
       });
     } else if (targetView === 'hadr') {
       if (hadrView) hadrView.classList.remove('hidden');
-      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
       initHadrView();
     } else if (targetView === 'playlist' && !isDesktop) {
       if (navBtnPlaylist) navBtnPlaylist.className = tabActive + ' lg:hidden';
-      if (shouldShowMini) miniPlayer.classList.remove('hidden'); else miniPlayer.classList.add('hidden');
     } else {
       if (navBtnPlayer) navBtnPlayer.className = tabActive;
       playerView.classList.remove('hidden');
-      miniPlayer.classList.add('hidden');
     }
 
     // Update Mobile Glass Navigator Tabs
@@ -582,9 +582,450 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateHeaderSubtitle() {
-    if (!appSubtitle) return;
     const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
-    appSubtitle.innerText = `المصحف المرتل - ${reciter.name}`;
+    if (appSubtitle) {
+      appSubtitle.innerText = `المصحف المرتل - ${reciter.name}`;
+    }
+    const headerReciterName = document.getElementById('header-reciter-name');
+    if (headerReciterName && reciter) {
+      headerReciterName.innerText = reciter.name;
+    }
+  }
+
+  // --- Shared Mini-Player Unification (Main + Hadr) ---
+  function getActiveHadrAudio() {
+    return document.getElementById('hadr-audio');
+  }
+
+  function syncHadrToMiniPlayer() {
+    if (!miniPlayer) return;
+    const hadrAudioEl = getActiveHadrAudio();
+    const surah = (typeof SURAHS !== 'undefined' && SURAHS.find(s => s.id === currentHadrSurahId)) || SURAHS[0];
+    const hReciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
+    const hReciter = hReciters.find(r => r.id === currentHadrReciterId) || hReciters[0];
+
+    if (miniSurahName && surah) miniSurahName.innerText = `حدر • سورة ${surah.name}`;
+    if (miniReciterName && hReciter) miniReciterName.innerText = hReciter.name;
+
+    const hadrIsPlaying = hadrAudioEl && !hadrAudioEl.paused;
+    if (miniPlayIcon) {
+      miniPlayIcon.className = hadrIsPlaying
+        ? 'fa-solid fa-pause text-sm sm:text-base text-slate-900'
+        : 'fa-solid fa-play text-sm sm:text-base mr-0.5 text-slate-900';
+    }
+    if (miniIcon) {
+      miniIcon.className = hadrIsPlaying
+        ? 'fa-solid fa-bolt text-xs text-amber-400 animate-pulse'
+        : 'fa-solid fa-bolt text-xs text-amber-400';
+    }
+
+    if (hadrAudioEl && isFinite(hadrAudioEl.duration) && hadrAudioEl.duration > 0) {
+      const dur = Math.floor(hadrAudioEl.duration);
+      const cur = Math.floor(hadrAudioEl.currentTime || 0);
+      const pct = Math.min(100, Math.max(0, (hadrAudioEl.currentTime / hadrAudioEl.duration) * 100));
+      if (miniSeekSlider && !miniSeekSlider.classList.contains('user-dragging')) {
+        miniSeekSlider.max = dur;
+        miniSeekSlider.disabled = false;
+        miniSeekSlider.value = cur;
+      }
+      if (miniCurrentTime) miniCurrentTime.innerText = formatTime(cur);
+      if (miniTotalDuration) miniTotalDuration.innerText = formatTime(dur);
+      if (miniTimeDisplay) miniTimeDisplay.innerText = `${formatTime(cur)} / ${formatTime(dur)}`;
+      if (miniProgressFill) miniProgressFill.style.width = `${pct}%`;
+    }
+  }
+
+  function syncMiniPlayerVisibility(targetView = currentView) {
+    if (!miniPlayer) return false;
+    const hadrAudioEl = getActiveHadrAudio();
+    const hadrHasActivity = activeMiniEngine === 'hadr' && hadrAudioEl && (
+      !hadrAudioEl.paused || (hadrAudioEl.currentTime > 0 && !!hadrAudioEl.getAttribute('src'))
+    );
+    const mainHasActivity = activeMiniEngine === 'main' && (
+      isPlaying || (audio.currentTime > 0 && !audio.paused) || isRadioMode
+    );
+    // Never cover full-screen player or Hadr's own bottom player dock
+    const shouldShow = (mainHasActivity || hadrHasActivity) && targetView !== 'player' && targetView !== 'hadr';
+
+    document.body.classList.toggle('mini-player-active', shouldShow);
+    miniPlayer.classList.toggle('hidden', !shouldShow);
+    if (shouldShow && activeMiniEngine === 'hadr') {
+      syncHadrToMiniPlayer();
+    }
+    return shouldShow;
+  }
+
+  // --- Searchable Reciter Picker Modal ---
+  let reciterModalFilter = 'all';
+  function getReciterMeta(reciter) {
+    const hasPartial = Array.isArray(reciter.availableSurahs) && reciter.availableSurahs.length < 114;
+    const isRiwaya = /ورش|قالون|شعبة|مجود|الدوري|البزي/.test(reciter.name || '');
+    return { hasPartial, isRiwaya };
+  }
+
+  function renderReciterModalGrid(queryText = '') {
+    const grid = document.getElementById('reciter-modal-grid');
+    const countEl = document.getElementById('reciter-modal-count');
+    if (!grid) return;
+
+    const normQ = normalizeArabic(queryText);
+    const qLower = (queryText || '').trim().toLowerCase();
+
+    const filtered = RECITERS.filter(r => {
+      const meta = getReciterMeta(r);
+      if (reciterModalFilter === 'full' && meta.hasPartial) return false;
+      if (reciterModalFilter === 'selection' && !meta.hasPartial) return false;
+      if (reciterModalFilter === 'riwayat' && !meta.isRiwaya) return false;
+      if (!normQ && !qLower) return true;
+      const hayAr = normalizeArabic(`${r.name} ${r.shortName}`);
+      const hayEn = `${r.slug || ''} ${r.id || ''}`.toLowerCase();
+      return hayAr.includes(normQ) || hayEn.includes(qLower);
+    });
+
+    if (countEl) {
+      countEl.innerText = `${filtered.length} من ${RECITERS.length}`;
+    }
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="col-span-full py-8 text-center text-xs sm:text-sm text-[var(--text-secondary)]">لم يتم العثور على قارئ مطابق للبحث. جرّب كتابة اسم آخر أو اختر "الكل".</div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(r => {
+      const meta = getReciterMeta(r);
+      const isActive = r.id === currentReciterId;
+      const countBadge = meta.hasPartial ? `${r.availableSurahs.length} سورة` : 'المصحف الكامل 114';
+      const riwayaBadge = meta.isRiwaya ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 font-bold">رواية / مجود</span>` : '';
+      return `
+        <button type="button" data-reciter-id="${r.id}"
+          class="reciter-modal-card ${isActive ? 'active' : ''} w-full p-2.5 sm:p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 text-right flex items-center justify-between gap-2.5 cursor-pointer">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-amber-500 text-slate-950' : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'} flex items-center justify-center flex-shrink-0 text-sm">
+              <i class="fa-solid ${isActive ? 'fa-volume-high' : 'fa-microphone-lines'}"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="font-bold text-xs sm:text-sm ${isActive ? 'text-amber-300' : 'text-[var(--text-primary)]'} truncate">${r.name}</div>
+              <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">${countBadge}</span>
+                ${riwayaBadge}
+              </div>
+            </div>
+          </div>
+          ${isActive ? '<i class="fa-solid fa-circle-check text-amber-400 text-base flex-shrink-0"></i>' : '<i class="fa-solid fa-chevron-left text-[10px] text-[var(--text-secondary)] flex-shrink-0"></i>'}
+        </button>
+      `;
+    }).join('');
+  }
+
+  function initReciterPickerModal() {
+    const modal = document.getElementById('reciter-modal');
+    const openBtn = document.getElementById('btn-open-reciter-modal');
+    const closeBtn = document.getElementById('btn-close-reciter-modal');
+    const searchInput = document.getElementById('reciter-search-input');
+    const clearBtn = document.getElementById('btn-clear-reciter-search');
+    const grid = document.getElementById('reciter-modal-grid');
+    if (!modal || !openBtn) return;
+
+    const filterPills = modal.querySelectorAll('.reciter-filter-pill');
+    const closeModal = () => modal.classList.add('hidden');
+    const openModal = () => {
+      renderReciterModalGrid(searchInput ? searchInput.value : '');
+      modal.classList.remove('hidden');
+      if (searchInput) setTimeout(() => searchInput.focus(), 50);
+    };
+
+    openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        if (clearBtn) clearBtn.classList.toggle('hidden', !searchInput.value.trim());
+        renderReciterModalGrid(searchInput.value);
+      });
+    }
+    if (clearBtn && searchInput) {
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.classList.add('hidden');
+        renderReciterModalGrid('');
+        searchInput.focus();
+      });
+    }
+
+    filterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        reciterModalFilter = pill.getAttribute('data-reciter-filter') || 'all';
+        filterPills.forEach(p => {
+          const isMatch = p === pill;
+          p.classList.toggle('active', isMatch);
+          p.className = isMatch
+            ? 'reciter-filter-pill active px-3 py-1 rounded-xl text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 whitespace-nowrap transition-all'
+            : 'reciter-filter-pill px-3 py-1 rounded-xl text-[11px] font-semibold bg-emerald-950/60 text-[var(--text-secondary)] border border-emerald-500/20 hover:text-amber-300 whitespace-nowrap transition-all';
+        });
+        renderReciterModalGrid(searchInput ? searchInput.value : '');
+      });
+    });
+
+    if (grid) {
+      grid.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-reciter-id]');
+        if (!card) return;
+        const chosenId = card.getAttribute('data-reciter-id');
+        if (chosenId && reciterSelect) {
+          reciterSelect.value = chosenId;
+          reciterSelect.dispatchEvent(new Event('change'));
+        }
+        closeModal();
+      });
+    }
+  }
+
+  // --- Offline Audio Cache & Fastest Lowest-Data Downloader ---
+  function revokeActiveOfflineObjectUrl() {
+    if (activeOfflineObjectUrl) {
+      try { URL.revokeObjectURL(activeOfflineObjectUrl); } catch (e) {}
+      activeOfflineObjectUrl = null;
+    }
+  }
+
+  function getOfflineCacheKey(reciterId, surahId) {
+    return new URL(`./offline-audio/${encodeURIComponent(reciterId)}/${String(surahId).padStart(3, '0')}.mp3`, window.location.href).href;
+  }
+
+  async function refreshOfflineAudioIndex() {
+    if (!('caches' in window)) return;
+    try {
+      const cache = await caches.open(OFFLINE_AUDIO_CACHE);
+      const reqs = await cache.keys();
+      offlineAudioIndex.clear();
+      reqs.forEach(req => offlineAudioIndex.add(req.url));
+      const activeReciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
+      if (SURAHS[currentIndex] && activeReciter) {
+        updateDownloadButtonBadge(activeReciter.id, SURAHS[currentIndex].id);
+      }
+    } catch (e) {}
+  }
+
+  async function getCachedOfflineAudioBlob(reciterId, surahId) {
+    if (!('caches' in window)) return null;
+    try {
+      const key = getOfflineCacheKey(reciterId, surahId);
+      const cache = await caches.open(OFFLINE_AUDIO_CACHE);
+      const resp = await cache.match(key);
+      if (!resp) return null;
+      const blob = await resp.blob();
+      return blob && blob.size > 10240 ? blob : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function putOfflineAudioBlob(reciterId, surahId, blob) {
+    if (!('caches' in window) || !blob || blob.size < 10240) return false;
+    try {
+      const key = getOfflineCacheKey(reciterId, surahId);
+      const cache = await caches.open(OFFLINE_AUDIO_CACHE);
+      await cache.put(key, new Response(blob, {
+        status: 200,
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Content-Length': String(blob.size)
+        }
+      }));
+      offlineAudioIndex.add(key);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updateDownloadButtonBadge(reciterId, surahId) {
+    if (!btnDownload || isDownloadingSurah) return;
+    const isCached = offlineAudioIndex.has(getOfflineCacheKey(reciterId, surahId));
+    btnDownload.innerHTML = isCached
+      ? '<i class="fa-solid fa-check-double text-emerald-400"></i> <span>محمّلة</span>'
+      : '<i class="fa-solid fa-circle-down"></i> <span>تحميل</span>';
+    btnDownload.title = isCached
+      ? 'متوفرة محلياً بدون إنترنت (انقر لحفظ نسخة MP3 على جهازك)'
+      : 'تحميل سريع بأقل استهلاك للإنترنت + حفظ للاستماع بدون إنترنت';
+  }
+
+  function triggerBlobDownload(blob, filename) {
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => { try { URL.revokeObjectURL(objUrl); } catch (e) {} }, 15000);
+  }
+
+  async function probeBestAudioMirror(urls) {
+    const probes = urls.map(async (url, idx) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      try {
+        const res = await fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal });
+        clearTimeout(timer);
+        if (!res.ok) return null;
+        const cl = parseInt(res.headers.get('content-length') || '0', 10);
+        const acceptRanges = (res.headers.get('accept-ranges') || '').toLowerCase().includes('bytes');
+        return { url, size: isFinite(cl) && cl > 10240 ? cl : 0, acceptRanges, idx };
+      } catch (e) {
+        clearTimeout(timer);
+        return null;
+      }
+    });
+    const results = (await Promise.all(probes)).filter(Boolean);
+    if (results.length === 0) return { url: urls[0], size: 0, acceptRanges: false };
+    const sized = results.filter(r => r.size > 0).sort((a, b) => a.size - b.size);
+    return sized.length > 0 ? sized[0] : results[0];
+  }
+
+  async function fetchParallelRangesBlob(url, totalBytes, onProgress) {
+    const chunkCount = totalBytes >= 1048576 ? 4 : 2;
+    const chunkSize = Math.ceil(totalBytes / chunkCount);
+    const loadedPerChunk = new Array(chunkCount).fill(0);
+    const report = () => {
+      const loaded = loadedPerChunk.reduce((a, b) => a + b, 0);
+      onProgress(loaded, totalBytes);
+    };
+
+    const parts = await Promise.all(Array.from({ length: chunkCount }, async (_, i) => {
+      const start = i * chunkSize;
+      const end = Math.min(totalBytes - 1, (i + 1) * chunkSize - 1);
+      const res = await fetch(url, { headers: { Range: `bytes=${start}-${end}` }, mode: 'cors' });
+      if (res.status !== 206 && !(i === 0 && res.status === 200)) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      if (res.body && res.body.getReader) {
+        const reader = res.body.getReader();
+        const subChunks = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            subChunks.push(value);
+            loadedPerChunk[i] += value.byteLength;
+            report();
+          }
+        }
+        return new Blob(subChunks);
+      }
+      const buf = await res.arrayBuffer();
+      loadedPerChunk[i] = buf.byteLength;
+      report();
+      return buf;
+    }));
+    return new Blob(parts, { type: 'audio/mpeg' });
+  }
+
+  async function downloadCurrentSurah() {
+    if (isDownloadingSurah) {
+      showToast('يوجد تحميل قيد التقدم حالياً، يرجى الانتظار قليلاً...', 'info');
+      return;
+    }
+    const surah = SURAHS[currentIndex];
+    const selectedReciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
+    const audioInfo = getSurahAudioUrl(selectedReciter, surah.id);
+    const effReciter = audioInfo.isFallback ? audioInfo.fallbackReciter : selectedReciter;
+    const padded = String(surah.id).padStart(3, '0');
+    const filename = `${padded}_${surah.name}_${effReciter.shortName}.mp3`.replace(/\s+/g, '_');
+
+    const cachedBlob = await getCachedOfflineAudioBlob(effReciter.id, surah.id);
+    if (cachedBlob) {
+      triggerBlobDownload(cachedBlob, filename);
+      updateDownloadButtonBadge(effReciter.id, surah.id);
+      showToast(`تم حفظ سورة ${surah.name} من الذاكرة المحلية بدون استهلاك إنترنت!`);
+      return;
+    }
+
+    const mirrorUrls = audioInfo.candidates
+      .filter(c => c.reciter && c.reciter.id === effReciter.id)
+      .map(c => c.url);
+    const urls = mirrorUrls.length > 0 ? mirrorUrls : [audioInfo.url];
+
+    isDownloadingSurah = true;
+    const setBtnProgress = (pctText) => {
+      if (btnDownload) {
+        btnDownload.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-400"></i> <span>${pctText}</span>`;
+      }
+    };
+    setBtnProgress('تجهيز...');
+    showToast(`جاري اختيار أصغر وأسرع مصدر لسورة ${surah.name}...`);
+
+    try {
+      const best = await probeBestAudioMirror(urls);
+      const sizeMb = best.size > 0 ? ` (${(best.size / (1024 * 1024)).toFixed(1)} MB)` : '';
+      let lastPct = -1;
+      const onProgress = (loaded, total) => {
+        if (total > 0) {
+          const pct = Math.min(99, Math.round((loaded / total) * 100));
+          if (pct !== lastPct) {
+            lastPct = pct;
+            setBtnProgress(`${pct}%`);
+          }
+        } else {
+          setBtnProgress(`${(loaded / (1024 * 1024)).toFixed(1)}MB`);
+        }
+      };
+
+      let blob = null;
+      if (best.acceptRanges && best.size > 262144 && best.size <= 125829120) {
+        try {
+          blob = await fetchParallelRangesBlob(best.url, best.size, onProgress);
+        } catch (rangeErr) {
+          blob = null;
+        }
+      }
+
+      if (!blob) {
+        const res = await fetch(best.url, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const total = parseInt(res.headers.get('content-length') || String(best.size || 0), 10);
+        if (res.body && res.body.getReader) {
+          const reader = res.body.getReader();
+          const chunks = [];
+          let received = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (value) {
+              chunks.push(value);
+              received += value.byteLength;
+              onProgress(received, total);
+            }
+          }
+          blob = new Blob(chunks, { type: 'audio/mpeg' });
+        } else {
+          blob = await res.blob();
+        }
+      }
+
+      await putOfflineAudioBlob(effReciter.id, surah.id, blob);
+      triggerBlobDownload(blob, filename);
+      showToast(`اكتمل تحميل سورة ${surah.name}${sizeMb} وحُفظت للاستماع بدون إنترنت`);
+    } catch (err) {
+      const a = document.createElement('a');
+      a.href = audioInfo.url;
+      a.download = filename;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast(`جاري تحميل سورة ${surah.name} عبر المتصفح...`);
+    } finally {
+      isDownloadingSurah = false;
+      updateDownloadButtonBadge(effReciter.id, surah.id);
+    }
   }
 
   // --- Statistics ---
@@ -757,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videoStudioLoadPromise) {
       videoStudioLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/video-studio.js?v=3.3';
+        script.src = 'js/video-studio.js?v=3.4';
         script.onload = resolve;
         script.onerror = reject;
         document.body.appendChild(script);
@@ -912,22 +1353,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Load Surah into Player ---
   function loadSurah(surah, shouldPlay = true) {
+    activeMiniEngine = 'main';
     isRadioMode = false;
     activeRadioStation = null;
     radioCandidateIndex = 0;
     pendingResumeTime = 0;
     clearAudioStallWatchdog();
+    revokeActiveOfflineObjectUrl();
     if (playerRadioLabel) playerRadioLabel.innerText = 'إذاعة مباشرة';
     resetAbLoop(false);
 
     const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
     const audioInfo = getSurahAudioUrl(reciter, surah.id);
+    const effReciter = audioInfo.isFallback ? audioInfo.fallbackReciter : reciter;
     currentSurahCandidates = audioInfo.candidates;
     currentSurahCandidateIndex = 0;
     currentAudioLoadToken++;
+    const loadToken = currentAudioLoadToken;
 
-    audio.src = audioInfo.url;
-    audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
+    const isCachedLocally = offlineAudioIndex.has(getOfflineCacheKey(effReciter.id, surah.id));
+    updateDownloadButtonBadge(effReciter.id, surah.id);
+
+    if (isCachedLocally) {
+      audio.removeAttribute('src');
+      getCachedOfflineAudioBlob(effReciter.id, surah.id).then(offlineBlob => {
+        if (loadToken !== currentAudioLoadToken || isRadioMode) return;
+        if (offlineBlob) {
+          const objUrl = URL.createObjectURL(offlineBlob);
+          activeOfflineObjectUrl = objUrl;
+          audio.src = objUrl;
+          audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
+          if (shouldPlay) playAudio();
+        } else {
+          offlineAudioIndex.delete(getOfflineCacheKey(effReciter.id, surah.id));
+          audio.src = audioInfo.url;
+          audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
+          if (shouldPlay) playAudio(); else pauseAudio();
+        }
+      });
+    } else {
+      audio.src = audioInfo.url;
+      audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
+    }
 
     // Reset seek sliders and timers
     seekSlider.value = 0;
@@ -996,10 +1463,14 @@ document.addEventListener('DOMContentLoaded', () => {
       loadSurahMushaf(surah.id);
     }
 
-    // Start Audio
-    if (shouldPlay) {
-      playAudio();
-    } else {
+    // Start Audio (skip synchronous play when awaiting local offline Blob resolution)
+    if (!isCachedLocally) {
+      if (shouldPlay) {
+        playAudio();
+      } else {
+        pauseAudio();
+      }
+    } else if (!shouldPlay) {
       pauseAudio();
     }
   }
@@ -1075,6 +1546,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playAudio() {
+    activeMiniEngine = 'main';
     // Pause single ayah audio or Hadr audio if playing
     if (ayahSingleAudio && !ayahSingleAudio.paused) {
       ayahSingleAudio.pause();
@@ -1111,9 +1583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (miniIcon) miniIcon.className = 'fa-solid fa-volume-high text-xs text-amber-400 animate-pulse';
         if (mushafPlayIcon) mushafPlayIcon.className = 'fa-solid fa-pause';
         if (mMushafPlayIcon) mMushafPlayIcon.className = 'fa-solid fa-pause text-xs';
-        if (currentView !== 'player' && miniPlayer) {
-          miniPlayer.classList.remove('hidden');
-        }
+        syncMiniPlayerVisibility(currentView);
 
         // Animations
         artworkMandala.classList.remove('spin-paused');
@@ -1153,9 +1623,11 @@ document.addEventListener('DOMContentLoaded', () => {
     playIcon.className = 'fa-solid fa-play text-lg sm:text-xl mr-0.5 text-slate-900';
     btnPlayPause.className = 'w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 flex items-center justify-center transition-all duration-300 transform active:scale-95 shadow-xl border-2 sm:border-4 border-emerald-950/30 flex-shrink-0';
     
-    // Mini Player Button
-    if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-play text-sm sm:text-base mr-0.5 text-slate-900';
-    if (miniIcon) miniIcon.className = 'fa-solid fa-music text-sm text-amber-400';
+    // Mini Player Button (preserve Hadr mini-player state when activeMiniEngine === 'hadr')
+    if (activeMiniEngine === 'main') {
+      if (miniPlayIcon) miniPlayIcon.className = 'fa-solid fa-play text-sm sm:text-base mr-0.5 text-slate-900';
+      if (miniIcon) miniIcon.className = 'fa-solid fa-music text-sm text-amber-400';
+    }
     if (mushafPlayIcon) mushafPlayIcon.className = 'fa-solid fa-play';
     if (mMushafPlayIcon) mMushafPlayIcon.className = 'fa-solid fa-play text-xs';
 
@@ -1774,6 +2246,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     miniBtnPlayPause.addEventListener('click', () => {
+      if (activeMiniEngine === 'hadr') {
+        const hadrAudioEl = getActiveHadrAudio();
+        if (!hadrAudioEl || !hadrAudioEl.getAttribute('src')) {
+          playHadrSurah(currentHadrSurahId, true);
+        } else if (hadrAudioEl.paused) {
+          hadrAudioEl.play().catch(() => {});
+        } else {
+          hadrAudioEl.pause();
+        }
+        return;
+      }
       if (isPlaying) pauseAudio(); else playAudio();
     });
 
@@ -1784,8 +2267,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Next / Prev
     btnNext.addEventListener('click', nextSurah);
     btnPrev.addEventListener('click', prevSurah);
-    miniBtnNext.addEventListener('click', nextSurah);
-    miniBtnPrev.addEventListener('click', prevSurah);
+    miniBtnNext.addEventListener('click', () => {
+      if (activeMiniEngine === 'hadr') {
+        if (currentHadrSurahId < 114) playHadrSurah(currentHadrSurahId + 1, true);
+        return;
+      }
+      nextSurah();
+    });
+    miniBtnPrev.addEventListener('click', () => {
+      if (activeMiniEngine === 'hadr') {
+        if (currentHadrSurahId > 1) playHadrSurah(currentHadrSurahId - 1, true);
+        return;
+      }
+      prevSurah();
+    });
 
     // 4. Skip 15 Seconds Forward & Backward
     if (btnSkipBack15) {
@@ -1802,9 +2297,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 5. Mini Player Expand
-    miniBtnExpand.addEventListener('click', () => switchView('player'));
-    miniPlayerInfo.addEventListener('click', () => switchView('player'));
+    // 5. Mini Player Expand (returns to Main Player OR Hadr Hub matching active audio engine)
+    miniBtnExpand.addEventListener('click', () => switchView(activeMiniEngine === 'hadr' ? 'hadr' : 'player'));
+    miniPlayerInfo.addEventListener('click', () => switchView(activeMiniEngine === 'hadr' ? 'hadr' : 'player'));
 
     // 6. Shuffle & Repeat
     btnShuffle.addEventListener('click', () => {
@@ -1892,14 +2387,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTimeLabel.innerText = formatted;
       }
 
-      if (miniSeekSlider && !miniSeekSlider.classList.contains('user-dragging')) {
-        miniSeekSlider.value = cur;
-        miniCurrentTime.innerText = formatted;
-        miniTimeDisplay.innerText = `${formatted} / ${formatTime(audio.duration)}`;
-      }
-
-      if (miniProgressFill) {
-        miniProgressFill.style.width = `${progressPercent}%`;
+      if (activeMiniEngine === 'main') {
+        if (miniSeekSlider && !miniSeekSlider.classList.contains('user-dragging')) {
+          miniSeekSlider.value = cur;
+          miniCurrentTime.innerText = formatted;
+          miniTimeDisplay.innerText = `${formatted} / ${formatTime(audio.duration)}`;
+        }
+        if (miniProgressFill) {
+          miniProgressFill.style.width = `${progressPercent}%`;
+        }
       }
 
       // V2+: Live Reciter Ayah Hover in Mushaf when Memorization Mode is active
@@ -2000,12 +2496,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (miniSeekSlider) {
       miniSeekSlider.addEventListener('input', () => {
         miniSeekSlider.classList.add('user-dragging');
-        handleSeekInput(miniSeekSlider.value);
+        const targetAudio = (activeMiniEngine === 'hadr' && getActiveHadrAudio()) ? getActiveHadrAudio() : audio;
+        const val = miniSeekSlider.value;
+        if (miniCurrentTime) miniCurrentTime.innerText = formatTime(val);
+        if (miniTimeDisplay) miniTimeDisplay.innerText = `${formatTime(val)} / ${formatTime(targetAudio.duration)}`;
       });
 
       miniSeekSlider.addEventListener('change', () => {
         miniSeekSlider.classList.remove('user-dragging');
-        handleSeekChange(miniSeekSlider.value);
+        const targetAudio = (activeMiniEngine === 'hadr' && getActiveHadrAudio()) ? getActiveHadrAudio() : audio;
+        targetAudio.currentTime = miniSeekSlider.value;
+        if (activeMiniEngine === 'main' && isPlaying) {
+          audio.play().catch(() => {});
+        }
       });
     }
 
@@ -2245,15 +2748,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 20. Download Mp3 Button
-    btnDownload.addEventListener('click', () => {
-      const surah = SURAHS[currentIndex];
-      const reciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
-      const audioInfo = getSurahAudioUrl(reciter, surah.id);
-      
-      window.open(audioInfo.url, '_blank');
-      showToast(`جاري تحويلك لتحميل سورة ${surah.name}...`);
-    });
+    // 20. Download Mp3 Button (Lowest-data mirror selection + Parallel Range + Offline Cache)
+    btnDownload.addEventListener('click', downloadCurrentSurah);
 
     // 21. Keyboard & TV Remote Shortcuts
     window.addEventListener('keydown', (e) => {
@@ -3726,6 +4222,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playRadioStation(station) {
+    activeMiniEngine = 'main';
     isRadioMode = true;
     activeRadioStation = station;
     radioCandidateIndex = 0;
@@ -3920,10 +4417,100 @@ document.addEventListener('DOMContentLoaded', () => {
     return Math.round((brng + 360) % 360);
   }
 
+  function calculateDistanceToMakkahKm(lat, lng) {
+    const mLat = 21.4225 * Math.PI / 180;
+    const mLng = 39.8262 * Math.PI / 180;
+    const pLat = lat * Math.PI / 180;
+    const pLng = lng * Math.PI / 180;
+    const dLat = mLat - pLat;
+    const dLng = mLng - pLng;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(pLat) * Math.cos(mLat) * (Math.sin(dLng / 2) ** 2);
+    return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  }
+
   function initPrayerAndQiblaHub() {
     const citySelect = document.getElementById('prayer-city-select');
     const btnGps = document.getElementById('btn-prayer-gps');
+    const btnLiveQibla = document.getElementById('btn-live-qibla');
+    const liveStatusEl = document.getElementById('qibla-live-status');
     if (!citySelect || typeof ISLAMIC_CITIES === 'undefined') return;
+
+    let currentQiblaDeg = 136;
+    let isLiveCompassActive = false;
+    let liveCompassHandler = null;
+
+    const updateQiblaVisual = (deviceHeadingDeg = null) => {
+      const needle = document.getElementById('qibla-compass-needle');
+      const dial = document.getElementById('qibla-compass-dial');
+      if (deviceHeadingDeg !== null && isFinite(deviceHeadingDeg)) {
+        if (dial) dial.style.transform = `rotate(${-deviceHeadingDeg}deg)`;
+        if (needle) needle.style.transform = `rotate(${currentQiblaDeg - deviceHeadingDeg}deg)`;
+      } else {
+        if (dial) dial.style.transform = 'rotate(0deg)';
+        if (needle) needle.style.transform = `rotate(${currentQiblaDeg}deg)`;
+      }
+    };
+
+    const stopLiveCompass = () => {
+      isLiveCompassActive = false;
+      if (liveCompassHandler) {
+        window.removeEventListener('deviceorientationabsolute', liveCompassHandler);
+        window.removeEventListener('deviceorientation', liveCompassHandler);
+        liveCompassHandler = null;
+      }
+      if (btnLiveQibla) {
+        btnLiveQibla.innerHTML = '<i class="fa-solid fa-compass"></i> <span>البوصلة الحية</span>';
+      }
+      if (liveStatusEl) liveStatusEl.classList.add('hidden');
+      updateQiblaVisual(null);
+    };
+
+    if (btnLiveQibla) {
+      btnLiveQibla.addEventListener('click', async () => {
+        if (isLiveCompassActive) {
+          stopLiveCompass();
+          return;
+        }
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          try {
+            const perm = await DeviceOrientationEvent.requestPermission();
+            if (perm !== 'granted') {
+              showToast('يرجى السماح بصلاحية مستشعر الحركة لتشغيل البوصلة الحية', 'info');
+              return;
+            }
+          } catch (err) {
+            showToast('تعذر تفعيل مستشعر البوصلة على هذا المتصفح', 'info');
+            return;
+          }
+        }
+        isLiveCompassActive = true;
+        let receivedReading = false;
+        btnLiveQibla.innerHTML = '<i class="fa-solid fa-compass fa-spin text-emerald-300"></i> <span>إيقاف البوصلة</span>';
+        if (liveStatusEl) {
+          liveStatusEl.innerText = 'حرّك الهاتف أفقياً';
+          liveStatusEl.classList.remove('hidden');
+        }
+        liveCompassHandler = (ev) => {
+          let heading = null;
+          if (typeof ev.webkitCompassHeading === 'number' && !isNaN(ev.webkitCompassHeading)) {
+            heading = ev.webkitCompassHeading;
+          } else if (ev.alpha !== null && ev.alpha !== undefined) {
+            heading = (360 - ev.alpha) % 360;
+          }
+          if (heading === null) return;
+          receivedReading = true;
+          if (liveStatusEl) liveStatusEl.innerText = `شمال: ${Math.round(heading)}°`;
+          updateQiblaVisual(heading);
+        };
+        window.addEventListener('deviceorientationabsolute', liveCompassHandler);
+        window.addEventListener('deviceorientation', liveCompassHandler);
+        setTimeout(() => {
+          if (isLiveCompassActive && !receivedReading) {
+            showToast('جهازك لا يرسل قراءة البوصلة المغناطيسية — يتم عرض الزاوية من الشمال الحقيقي', 'info');
+          }
+        }, 1800);
+      });
+    }
 
     const savedCityId = localStorage.getItem('quran_prayer_city') || 'cairo';
     citySelect.innerHTML = ISLAMIC_CITIES.map(c => `<option value="${c.id}" class="bg-emerald-950 text-white">${c.name}</option>`).join('');
@@ -3936,12 +4523,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const titleEl = document.getElementById('prayer-city-title');
       if (titleEl) titleEl.innerText = `مواقيت الصلاة • ${cityObj.name}`;
 
-      // Update Qibla Compass immediately
-      const qiblaDeg = cityObj.qibla !== undefined ? cityObj.qibla : calculateQiblaAngle(cityObj.lat, cityObj.lng);
+      // Update Qibla Compass & Distance immediately
+      currentQiblaDeg = cityObj.qibla !== undefined ? cityObj.qibla : calculateQiblaAngle(cityObj.lat, cityObj.lng);
       const degLabel = document.getElementById('qibla-degree-label');
-      const needle = document.getElementById('qibla-compass-needle');
-      if (degLabel) degLabel.innerText = `${qiblaDeg}°`;
-      if (needle) needle.style.transform = `rotate(${qiblaDeg}deg)`;
+      const distLabel = document.getElementById('qibla-distance-label');
+      if (degLabel) degLabel.innerText = `${currentQiblaDeg}°`;
+      if (distLabel && typeof cityObj.lat === 'number' && typeof cityObj.lng === 'number') {
+        const km = calculateDistanceToMakkahKm(cityObj.lat, cityObj.lng);
+        distLabel.innerText = km < 15 ? 'أنت في رحاب مكة المكرمة' : `نحو ${km.toLocaleString('en-US')} كم لمكة`;
+      }
+      if (!isLiveCompassActive) {
+        updateQiblaVisual(null);
+      }
 
       // Render fallback/cached timings immediately for 0ms latency
       currentPrayerTimings = { ...(cityObj.fallback || ISLAMIC_CITIES[0].fallback) };
@@ -4088,15 +4681,18 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     let nextPrayer = null;
+    let nextIdx = -1;
     let diffSec = 0;
 
-    for (const p of order) {
+    for (let i = 0; i < order.length; i++) {
+      const p = order[i];
       const hm = timings[p.key];
       if (!hm) continue;
       const [h, m] = hm.split(':').map(Number);
       const targetSec = h * 3600 + m * 60;
       if (targetSec > nowSec) {
         nextPrayer = p;
+        nextIdx = i;
         diffSec = targetSec - nowSec;
         break;
       }
@@ -4104,9 +4700,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!nextPrayer) {
       nextPrayer = order[0];
+      nextIdx = 0;
       const [h, m] = (timings.Fajr || '04:58').split(':').map(Number);
       diffSec = (24 * 3600 - nowSec) + (h * 3600 + m * 60);
     }
+
+    // Window elapsed progress between previous prayer & upcoming prayer
+    const prevObj = order[(nextIdx - 1 + order.length) % order.length];
+    const [pH, pM] = (timings[prevObj.key] || '04:58').split(':').map(Number);
+    const prevSec = pH * 3600 + pM * 60;
+    const [nH, nM] = (timings[nextPrayer.key] || '04:58').split(':').map(Number);
+    const nextSec = nH * 3600 + nM * 60;
+    const totalWindowSec = nextSec > prevSec ? (nextSec - prevSec) : (24 * 3600 - prevSec + nextSec);
+    const progressPct = totalWindowSec > 0
+      ? Math.max(0, Math.min(100, Math.round(((totalWindowSec - diffSec) / totalWindowSec) * 100)))
+      : 0;
+
+    const progressEl = document.getElementById('next-prayer-progress');
+    const progressLabelEl = document.getElementById('next-prayer-progress-label');
+    if (progressEl) progressEl.style.width = `${progressPct}%`;
+    if (progressLabelEl) progressLabelEl.innerText = `${progressPct}%`;
 
     const hrs = String(Math.floor(diffSec / 3600)).padStart(2, '0');
     const mins = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
@@ -5268,17 +5881,38 @@ document.addEventListener('DOMContentLoaded', () => {
           if (seekBar) seekBar.value = pct;
           if (currentTimeEl) currentTimeEl.innerText = formatTime(hadrAudio.currentTime);
           if (totalTimeEl) totalTimeEl.innerText = formatTime(hadrAudio.duration);
+
+          if (activeMiniEngine === 'hadr') {
+            const cur = Math.floor(hadrAudio.currentTime);
+            const dur = Math.floor(hadrAudio.duration);
+            if (miniSeekSlider && !miniSeekSlider.classList.contains('user-dragging')) {
+              miniSeekSlider.max = dur;
+              miniSeekSlider.disabled = false;
+              miniSeekSlider.value = cur;
+            }
+            if (miniCurrentTime) miniCurrentTime.innerText = formatTime(cur);
+            if (miniTotalDuration) miniTotalDuration.innerText = formatTime(dur);
+            if (miniTimeDisplay) miniTimeDisplay.innerText = `${formatTime(cur)} / ${formatTime(dur)}`;
+            if (miniProgressFill) miniProgressFill.style.width = `${pct}%`;
+          }
         });
 
         hadrAudio.addEventListener('play', () => {
+          activeMiniEngine = 'hadr';
           if (playIcon) playIcon.className = 'fa-solid fa-pause';
-          // Pause main player audio
-          const mainAudio = document.getElementById('main-audio');
-          if (mainAudio && !mainAudio.paused) mainAudio.pause();
+          // Sync-pause main player cleanly so isPlaying stays false and main mini-player never hijacks Hadr
+          if (isPlaying || (audio && !audio.paused)) {
+            pauseAudio();
+          }
+          syncHadrToMiniPlayer();
+          syncMiniPlayerVisibility(currentView);
         });
 
         hadrAudio.addEventListener('pause', () => {
           if (playIcon) playIcon.className = 'fa-solid fa-play';
+          if (activeMiniEngine === 'hadr') {
+            syncHadrToMiniPlayer();
+          }
         });
 
         hadrAudio.addEventListener('ended', () => {
@@ -5339,6 +5973,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function playHadrSurah(surahId, autoPlay = true) {
     currentHadrSurahId = surahId;
+    if (autoPlay) {
+      if (isPlaying || (audio && !audio.paused)) {
+        pauseAudio();
+      }
+      activeMiniEngine = 'hadr';
+    }
     const hadrAudio = document.getElementById('hadr-audio');
     const reciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
     const reciter = reciters.find(r => r.id === currentHadrReciterId) || reciters[0];
@@ -5400,6 +6040,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nowSurahName) nowSurahName.innerText = `سُورَةُ ${surah.name}`;
     if (nowReciterName) nowReciterName.innerText = `• ${reciter.name}`;
     if (nowMeta) nowMeta.innerText = `${surah.versesCount} آية • ${surah.revelationPlace === 'makkah' ? 'مكية' : 'مدنية'} • ${reciter.badge}`;
+    if (activeMiniEngine === 'hadr') syncHadrToMiniPlayer();
   }
 
   function highlightHadrCard(surahId) {

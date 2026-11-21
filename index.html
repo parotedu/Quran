@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="h-full">
+<html lang="ar" dir="rtl" class="h-full overflow-x-hidden">
 
 <head>
   <meta charset="UTF-8">
@@ -29,11 +29,11 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap"></noscript>
 
   <!-- Favicon & App Icons (Unified Sacred Mushaf Emblem) -->
-  <link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=3.3">
-  <link rel="icon" type="image/x-icon" href="favicon.ico?v=3.3">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=3.3">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=3.3">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=3.3">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=3.4">
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=3.4">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=3.4">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=3.4">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=3.4">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
   <link rel="manifest" href="manifest.json">
@@ -103,7 +103,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=3.3').then(reg => {
+        navigator.serviceWorker.register('./sw.js?v=3.4').then(reg => {
           if (reg && reg.update) reg.update();
         }).catch(err => {
           console.warn('Service Worker registration skipped:', err);
@@ -116,29 +116,29 @@
   <script>try{var t=localStorage.getItem('quran_theme');if(t&&t!=='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 
   <!-- Precompiled Purged Tailwind CSS & Custom Styles (Versioned to Bypass Stale Caches) -->
-  <link rel="stylesheet" href="css/tailwind.min.css?v=3.3">
-  <link rel="stylesheet" href="css/style.css?v=3.3">
+  <link rel="stylesheet" href="css/tailwind.min.css?v=3.4">
+  <link rel="stylesheet" href="css/style.css?v=3.4">
   <!-- Non-blocking FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
   <!-- Core JavaScript Database & Controls (Non-Blocking Deferred Load; video-studio.js lazy-loaded on demand) -->
-  <script src="js/surahs.js?v=3.3" defer></script>
-  <script src="js/v2-data.js?v=3.3" defer></script>
-  <script src="js/theme.js?v=3.3" defer></script>
-  <script src="js/player.js?v=3.3" defer></script>
+  <script src="js/surahs.js?v=3.4" defer></script>
+  <script src="js/v2-data.js?v=3.4" defer></script>
+  <script src="js/theme.js?v=3.4" defer></script>
+  <script src="js/player.js?v=3.4" defer></script>
 </head>
 
-<body class="h-full min-h-screen flex flex-col antialiased selection:bg-amber-500/30 selection:text-amber-300 overflow-hidden">
+<body class="h-full min-h-screen flex flex-col antialiased selection:bg-amber-500/30 selection:text-amber-300 overflow-hidden overflow-x-hidden max-w-full">
 
   <!-- ======================================================================
        HEADER SECTION
        ====================================================================== -->
-  <header class="glass-panel mx-1.5 xs:mx-3 sm:mx-6 mt-1 sm:mt-3 mb-1 sm:mb-2 rounded-2xl py-1 sm:py-2 px-2 xs:px-3 sm:px-5 flex items-center justify-between gap-1.5 sm:gap-3 z-20 flex-shrink-0">
+  <header class="glass-panel mx-1.5 xs:mx-3 sm:mx-6 mt-1 sm:mt-3 mb-1 sm:mb-2 rounded-2xl py-1 sm:py-2 px-2 xs:px-3 sm:px-5 flex items-center justify-between gap-1 sm:gap-3 z-20 flex-shrink-0 max-w-full min-w-0">
     <!-- Brand Logo / Title -->
-    <div class="flex items-center gap-1.5 sm:gap-3 cursor-pointer select-none flex-shrink-0" id="brand-logo" title="منصة القرآن الكريم">
+    <div class="flex items-center gap-1.5 sm:gap-3 cursor-pointer select-none flex-shrink-0 min-w-0" id="brand-logo" title="منصة القرآن الكريم">
       <div class="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-center shadow-md flex-shrink-0 p-1">
-        <svg viewBox="5 6 54 52" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" aria-label="شعار منصة القرآن الكريم">
+        <svg viewBox="7 12 50 42" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" aria-label="شعار منصة القرآن الكريم">
           <defs>
             <linearGradient id="brandGold" x1="15%" y1="10%" x2="85%" y2="90%">
               <stop offset="0%" stop-color="#fef08a"/>
@@ -146,14 +146,13 @@
               <stop offset="100%" stop-color="#d97706"/>
             </linearGradient>
           </defs>
-          <path d="M35.5 10.8a5.8 5.8 0 1 0 0 9 4.5 4.5 0 1 1 0-9z" fill="url(#brandGold)"/>
-          <path d="M32 35.5 C27.5 23.5 18.5 19.5 10.5 21.5 L15 39 C22 38 27.5 40 32 43.5 C36.5 40 42 38 49 39 L53.5 21.5 C45.5 19.5 36.5 23.5 32 35.5 Z M32 35.5 V43.5 M19.5 53 L32 43.5 L44.5 53"
-            fill="none" stroke="url(#brandGold)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M32 30 C27 17.5 18 13.5 9.5 16 L14.5 35.5 C21.5 34 27 36.5 32 40.5 C37 36.5 42.5 34 49.5 35.5 L54.5 16 C46 13.5 37 17.5 32 30 Z M32 30 V40.5 M18.5 51 L32 40.5 L45.5 51"
+            fill="none" stroke="url(#brandGold)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <div class="min-w-0">
         <div class="flex items-center gap-1">
-          <h1 class="text-xs xs:text-sm sm:text-base lg:text-lg font-bold text-[var(--text-accent)] font-quran leading-tight whitespace-nowrap">
+          <h1 class="text-[11px] xs:text-[13px] sm:text-base lg:text-lg font-bold text-[var(--text-accent)] font-quran leading-tight whitespace-nowrap">
             مَنْصَةُ القُرآنِ الكَرِيمِ
           </h1>
         </div>
@@ -187,19 +186,19 @@
     </div>
 
     <!-- Controls & Separate Services Launcher (Spacious, balanced, calming) -->
-    <div class="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+    <div class="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 justify-end">
       <!-- Separate Services Launcher Dropdown -->
-      <div class="relative" id="services-menu-container">
+      <div class="relative flex-shrink-0" id="services-menu-container">
         <button id="btn-services-menu" type="button"
-          class="h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
+          class="h-7 xs:h-8 sm:h-9 px-1.5 xs:px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1 sm:gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
           title="خدمات المنصة (الأذكار، السبحة، صانع الفيديوهات، الحدر، صدقة جارية)">
-          <i class="fa-solid fa-shapes text-amber-400 text-xs"></i>
-          <span class="text-[11px] sm:text-xs font-semibold">خدمات المنصة</span>
+          <i class="fa-solid fa-shapes text-amber-400 text-[11px] sm:text-xs"></i>
+          <span class="text-[10px] xs:text-[11px] sm:text-xs font-semibold whitespace-nowrap">خدمات<span class="hidden sm:inline"> المنصة</span></span>
           <i class="fa-solid fa-chevron-down text-[8px] text-amber-400/80 transition-transform duration-200" id="services-menu-arrow"></i>
         </button>
 
         <!-- Floating Solid Services Dropdown Card -->
-        <div id="services-dropdown" style="background-color: var(--dropdown-bg, #03221a);" class="hidden absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-24px)] rounded-2xl solid-dropdown-panel bg-[#03221a] p-2 z-50 animate-fadeIn space-y-1">
+        <div id="services-dropdown" style="background-color: var(--dropdown-bg, #03221a);" class="hidden fixed inset-x-3 top-14 sm:inset-x-auto sm:top-auto sm:absolute sm:right-0 sm:mt-2 sm:w-80 rounded-2xl solid-dropdown-panel bg-[#03221a] p-2 z-50 animate-fadeIn space-y-1">
           <div class="px-2.5 py-1 text-[11px] text-[var(--text-secondary)] font-semibold border-b border-emerald-500/15 flex items-center justify-between">
             <span>خدمات وأدوات المنصة</span>
             <span class="text-amber-400 text-[10px] bg-amber-500/10 px-2 py-0.5 rounded font-bold">مختارات</span>
@@ -291,20 +290,19 @@
         </div>
       </div>
 
-      <!-- Reciter Selector Chip -->
-      <div class="flex items-center gap-1 bg-emerald-950/50 rounded-xl px-2 sm:px-2.5 py-0.5 sm:py-1 border border-emerald-500/20 text-[10px] sm:text-xs shadow-inner flex-shrink-0 max-w-[120px] xs:max-w-[150px] sm:max-w-[190px] lg:max-w-[215px] xl:max-w-[260px] 2xl:max-w-[310px]">
-        <i class="fa-solid fa-microphone-lines text-amber-400 text-[10px] sm:text-xs flex-shrink-0"></i>
-        <label for="reciter-select" class="text-[var(--text-secondary)] font-medium select-none hidden 2xl:inline mr-1">القارئ:</label>
-        <div class="relative min-w-0 flex-1">
-          <select id="reciter-select"
-            class="w-full bg-transparent text-amber-400 font-bold py-0.5 sm:py-1 pr-0.5 pl-3 sm:pl-4 rounded-lg transition-all duration-200 outline-none appearance-none cursor-pointer text-[10px] sm:text-xs truncate block"
-            title="اختر القارئ">
-            <!-- Populated dynamically via JS -->
-          </select>
-          <span class="absolute left-0 top-1/2 transform -translate-y-1/2 text-amber-400 text-[8px] sm:text-[10px] pointer-events-none">
-            <i class="fa-solid fa-chevron-down"></i>
-          </span>
-        </div>
+      <!-- Reciter Picker Chip (Opens Searchable Reciter Modal + Synced Select Compatibility) -->
+      <div class="relative flex-1 min-w-0 max-w-[100px] xs:max-w-[135px] sm:max-w-[195px] lg:max-w-[215px] xl:max-w-[260px] 2xl:max-w-[300px]">
+        <button id="btn-open-reciter-modal" type="button"
+          class="w-full h-7 xs:h-8 sm:h-9 flex items-center gap-1 sm:gap-1.5 bg-emerald-950/55 hover:bg-emerald-900/60 rounded-xl px-1.5 xs:px-2 sm:px-2.5 border border-emerald-500/25 hover:border-amber-500/45 text-[10px] sm:text-xs shadow-inner transition-all cursor-pointer"
+          title="البحث والاختيار بين جميع القراء">
+          <i class="fa-solid fa-microphone-lines text-amber-400 text-[10px] sm:text-xs flex-shrink-0"></i>
+          <span class="text-[var(--text-secondary)] font-medium select-none hidden 2xl:inline flex-shrink-0">القارئ:</span>
+          <span id="header-reciter-name" class="text-amber-400 font-bold truncate flex-1 text-right">الشيخ محمود خليل الحصري</span>
+          <i class="fa-solid fa-magnifying-glass text-amber-400/75 text-[9px] sm:text-[10px] flex-shrink-0"></i>
+        </button>
+        <select id="reciter-select" aria-label="اختر القارئ" class="sr-only" tabindex="-1">
+          <!-- Populated dynamically via JS -->
+        </select>
       </div>
 
       <!-- Daily Quran Streak Badge (V3.0) -->
@@ -978,17 +976,17 @@
             </div>
           </div>
 
-          <!-- SUB-PANEL 4: PRAYER TIMES, NEXT PRAYER COUNTDOWN & QIBLA COMPASS (V3.0) -->
+          <!-- SUB-PANEL 4: PRAYER TIMES, NEXT PRAYER COUNTDOWN & QIBLA COMPASS (V3.4 Upgraded) -->
           <div id="sp-panel-prayer" class="hidden space-y-3">
             <!-- Top Row: City Selector & GPS Button & Hijri Date -->
             <div class="surah-frame rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
-              <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/35 flex items-center justify-center text-amber-400 text-lg shadow-inner">
-                  <i class="fa-solid fa-location-dot"></i>
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/35 flex items-center justify-center text-amber-400 text-lg shadow-inner flex-shrink-0">
+                  <i class="fa-solid fa-mosque"></i>
                 </div>
-                <div>
-                  <h4 class="font-bold text-xs sm:text-sm text-amber-300" id="prayer-city-title">مواقيت الصلاة • القاهرة</h4>
-                  <p class="text-[10px] sm:text-[11px] text-[var(--text-secondary)]" id="prayer-hijri-date">التقويم الهجري والميلادي • تحديث تلقائي</p>
+                <div class="min-w-0">
+                  <h4 class="font-bold text-xs sm:text-sm text-amber-300 truncate" id="prayer-city-title">مواقيت الصلاة • القاهرة</h4>
+                  <p class="text-[10px] sm:text-[11px] text-[var(--text-secondary)] truncate" id="prayer-hijri-date">التقويم الهجري والميلادي • تحديث تلقائي</p>
                 </div>
               </div>
 
@@ -1009,36 +1007,94 @@
               </div>
             </div>
 
-            <!-- Next Prayer Live Countdown Banner + Qibla Direction Card -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-              <!-- Next Prayer Countdown (2 Cols) -->
-              <div class="md:col-span-2 p-4 rounded-2xl bg-gradient-to-l from-amber-500/20 via-emerald-950/80 to-emerald-950/90 border border-amber-500/40 flex items-center justify-between gap-3 shadow-lg">
-                <div>
-                  <span class="text-[10px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full">الصلاة القادمة</span>
-                  <h3 class="text-lg sm:text-2xl font-bold font-quran text-amber-300 mt-1" id="next-prayer-name">صلاة الفجر</h3>
-                  <p class="text-[11px] text-slate-300 mt-0.5" id="next-prayer-time-label">موعد الأذان: 04:58 ص</p>
+            <!-- Next Prayer Live Countdown Banner + Upgraded Qibla Compass Card -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+              <!-- Next Prayer Countdown (7 Cols) -->
+              <div class="md:col-span-7 p-4 rounded-2xl bg-gradient-to-l from-amber-500/20 via-emerald-950/85 to-emerald-950/95 border border-amber-500/40 flex flex-col justify-between gap-3 shadow-lg">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <span class="inline-flex items-center gap-1 text-[10px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full">
+                      <i class="fa-solid fa-clock"></i>
+                      <span>الصلاة القادمة</span>
+                    </span>
+                    <h3 class="text-lg sm:text-2xl font-bold font-quran text-amber-300 mt-1.5" id="next-prayer-name">صلاة الفجر</h3>
+                    <p class="text-[11px] text-slate-300 mt-0.5" id="next-prayer-time-label">موعد الأذان: 04:58 ص</p>
+                  </div>
+                  <div class="text-left">
+                    <span class="text-[10px] text-[var(--text-secondary)] block mb-0.5">الوقت المتبقي للأذان</span>
+                    <div class="text-xl sm:text-3xl font-mono font-black text-amber-400 tracking-wider tabular-nums" id="next-prayer-countdown">00:00:00</div>
+                  </div>
                 </div>
-                <div class="text-left">
-                  <span class="text-[10px] text-[var(--text-secondary)] block mb-0.5">الوقت المتبقي للأذان:</span>
-                  <div class="text-xl sm:text-3xl font-mono font-black text-amber-400 tracking-wider" id="next-prayer-countdown">00:00:00</div>
+
+                <!-- Elapsed Window Progress -->
+                <div class="space-y-1 pt-2 border-t border-amber-500/15">
+                  <div class="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+                    <span>تقدم الفترة بين الصلاتين</span>
+                    <span id="next-prayer-progress-label" class="font-bold text-amber-300 font-mono">0%</span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-emerald-950/90 border border-emerald-500/20 overflow-hidden">
+                    <div id="next-prayer-progress" class="h-full rounded-full bg-gradient-to-l from-amber-300 to-amber-500 transition-all duration-700" style="width: 0%;"></div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Qibla Direction Compass Card (1 Col) -->
-              <div class="p-3.5 rounded-2xl bg-emerald-950/65 border border-emerald-500/25 flex items-center justify-between gap-3">
-                <div>
+              <!-- Upgraded Qibla Direction & Live Compass Card (5 Cols) -->
+              <div class="md:col-span-5 p-3.5 rounded-2xl bg-gradient-to-br from-emerald-950/90 to-emerald-900/50 border border-amber-500/25 flex items-center justify-between gap-3 shadow-lg">
+                <div class="min-w-0 flex-1 space-y-1.5">
                   <div class="flex items-center gap-1.5 text-amber-300 font-bold text-xs">
                     <i class="fa-solid fa-kaaba text-amber-400"></i>
                     <span>اتجاه القبلة المشرفة</span>
                   </div>
-                  <div class="text-lg sm:text-xl font-black text-emerald-300 mt-1" id="qibla-degree-label">136°</div>
-                  <p class="text-[10px] text-[var(--text-secondary)]" id="qibla-direction-desc">من الشمال الحقيقي باتجاه عقارب الساعة</p>
+                  <div class="flex items-baseline gap-2 flex-wrap">
+                    <span class="text-xl sm:text-2xl font-black text-emerald-300 tabular-nums" id="qibla-degree-label">136°</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-semibold" id="qibla-distance-label">نحو 1,286 كم لمكة</span>
+                  </div>
+                  <p class="text-[10px] text-[var(--text-secondary)] leading-relaxed" id="qibla-direction-desc">من الشمال الحقيقي باتجاه عقارب الساعة</p>
+                  <div class="flex items-center gap-2 pt-0.5 flex-wrap">
+                    <button id="btn-live-qibla" type="button" class="py-1 px-2.5 rounded-lg bg-emerald-900/80 hover:bg-amber-500/20 border border-amber-500/35 text-amber-300 text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95">
+                      <i class="fa-solid fa-compass"></i>
+                      <span>البوصلة الحية</span>
+                    </button>
+                    <span id="qibla-live-status" class="text-[9px] text-emerald-300/80 hidden">مفعلة</span>
+                  </div>
                 </div>
-                <!-- Visual Compass Dial -->
-                <div class="w-14 h-14 rounded-full bg-emerald-950 border-2 border-amber-500/40 flex items-center justify-center relative shadow-inner flex-shrink-0">
-                  <span class="absolute top-0.5 text-[7px] font-bold text-amber-400">N</span>
-                  <div id="qibla-compass-needle" class="w-full h-full flex items-center justify-center transition-transform duration-700" style="transform: rotate(136deg);">
-                    <i class="fa-solid fa-location-arrow text-amber-400 text-lg -rotate-45"></i>
+
+                <!-- Precision Multi-Ring SVG Compass Dial -->
+                <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 flex items-center justify-center select-none">
+                  <!-- Outer Cardinal Dial (rotates inversely during live compass mode) -->
+                  <svg id="qibla-compass-dial" viewBox="0 0 120 120" class="w-full h-full transition-transform duration-300" aria-hidden="true">
+                    <defs>
+                      <radialGradient id="dialBg" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#064e3b" stop-opacity="0.85"/>
+                        <stop offset="100%" stop-color="#021c16" stop-opacity="0.98"/>
+                      </radialGradient>
+                    </defs>
+                    <circle cx="60" cy="60" r="56" fill="url(#dialBg)" stroke="#f59e0b" stroke-opacity="0.45" stroke-width="1.5"/>
+                    <circle cx="60" cy="60" r="45" fill="none" stroke="#10b981" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="3 3"/>
+                    <circle cx="60" cy="60" r="32" fill="none" stroke="#f59e0b" stroke-opacity="0.18" stroke-width="1"/>
+                    <!-- Cardinal Ticks -->
+                    <line x1="60" y1="4" x2="60" y2="11" stroke="#fbbf24" stroke-width="2"/>
+                    <line x1="60" y1="109" x2="60" y2="116" stroke="#94a3b8" stroke-width="1.4"/>
+                    <line x1="4" y1="60" x2="11" y2="60" stroke="#94a3b8" stroke-width="1.4"/>
+                    <line x1="109" y1="60" x2="116" y2="60" stroke="#94a3b8" stroke-width="1.4"/>
+                    <!-- Cardinal Labels -->
+                    <text x="60" y="21" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="800" font-family="sans-serif">N</text>
+                    <text x="103" y="63" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="700" font-family="sans-serif">E</text>
+                    <text x="60" y="105" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="700" font-family="sans-serif">S</text>
+                    <text x="17" y="63" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="700" font-family="sans-serif">W</text>
+                  </svg>
+
+                  <!-- Qibla Needle (Points True Bearing to Kaaba) -->
+                  <div id="qibla-compass-needle" class="absolute inset-0 flex items-center justify-center transition-transform duration-700 pointer-events-none" style="transform: rotate(136deg);">
+                    <svg viewBox="0 0 120 120" class="w-full h-full">
+                      <!-- Gold Arrow Tip pointing UP = 0deg -->
+                      <polygon points="60,18 66,58 60,52 54,58" fill="#fbbf24" stroke="#fef08a" stroke-width="0.8"/>
+                      <!-- Emerald Tail -->
+                      <polygon points="60,96 64,62 60,67 56,62" fill="#10b981" fill-opacity="0.65"/>
+                      <!-- Center Pivot + Tiny Kaaba Square at tip -->
+                      <rect x="57" y="11" width="6" height="6" rx="1" fill="#0f172a" stroke="#fbbf24" stroke-width="1.2"/>
+                      <circle cx="60" cy="60" r="4.5" fill="#fef08a" stroke="#b45309" stroke-width="1.5"/>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -2532,6 +2588,57 @@
             <span>تصفير الدورة</span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       SEARCHABLE RECITER PICKER MODAL (V3.4)
+       ====================================================================== -->
+  <div id="reciter-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div style="background-color: var(--dropdown-bg, #03221a);" class="solid-dropdown-panel max-w-2xl w-full rounded-3xl border border-amber-500/35 shadow-2xl flex flex-col max-h-[86vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-3.5 sm:p-4 border-b border-emerald-500/20 flex items-center justify-between gap-2 flex-shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/35 flex items-center justify-center text-amber-400 flex-shrink-0">
+            <i class="fa-solid fa-microphone-lines"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm sm:text-base text-amber-300 truncate">اختر القارئ والرواية</h3>
+              <span id="reciter-modal-count" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 flex-shrink-0">50 قارئاً</span>
+            </div>
+            <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate">ابحث بالاسم أو الرواية أو صفّي حسب نوع المصحف</p>
+          </div>
+        </div>
+        <button id="btn-close-reciter-modal" type="button" class="w-8 h-8 rounded-xl bg-emerald-950/70 hover:bg-red-500/20 text-[var(--text-secondary)] hover:text-red-300 border border-emerald-500/20 flex items-center justify-center transition-colors flex-shrink-0" title="إغلاق">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Search & Filter Toolbar -->
+      <div class="p-3 sm:px-4 border-b border-emerald-500/15 space-y-2.5 flex-shrink-0">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 text-amber-400/80 text-xs pointer-events-none"></i>
+          <input id="reciter-search-input" type="text" inputmode="search" autocomplete="off"
+            placeholder="ابحث باسم الشيخ أو الرواية (مثال: الحصري، العفاسي، المنشاوي، ورش، مجود)..."
+            class="w-full pr-9 pl-9 py-2 rounded-xl bg-emerald-950/80 border border-emerald-500/25 focus:border-amber-400 text-xs sm:text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none transition-colors">
+          <button id="btn-clear-reciter-search" type="button" class="hidden absolute left-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg text-[var(--text-secondary)] hover:text-amber-300 flex items-center justify-center text-xs" title="مسح البحث">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button type="button" data-reciter-filter="all" class="reciter-filter-pill active px-3 py-1 rounded-xl text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 whitespace-nowrap transition-all">الكل</button>
+          <button type="button" data-reciter-filter="full" class="reciter-filter-pill px-3 py-1 rounded-xl text-[11px] font-semibold bg-emerald-950/60 text-[var(--text-secondary)] border border-emerald-500/20 hover:text-amber-300 whitespace-nowrap transition-all">المصحف الكامل (114)</button>
+          <button type="button" data-reciter-filter="selection" class="reciter-filter-pill px-3 py-1 rounded-xl text-[11px] font-semibold bg-emerald-950/60 text-[var(--text-secondary)] border border-emerald-500/20 hover:text-amber-300 whitespace-nowrap transition-all">تلاوات مختارة</button>
+          <button type="button" data-reciter-filter="riwayat" class="reciter-filter-pill px-3 py-1 rounded-xl text-[11px] font-semibold bg-emerald-950/60 text-[var(--text-secondary)] border border-emerald-500/20 hover:text-amber-300 whitespace-nowrap transition-all">مجود وروايات</button>
+        </div>
+      </div>
+
+      <!-- Reciter Cards Grid -->
+      <div id="reciter-modal-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto custom-scrollbar p-3 sm:p-4">
+        <!-- Populated dynamically via JS -->
       </div>
     </div>
   </div>
