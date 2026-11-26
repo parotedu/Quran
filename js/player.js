@@ -31,38 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const mNavPlaylist = document.getElementById('m-nav-playlist');
   const spiritualView = document.getElementById('spiritual-view');
 
-  // Memorial Elements (صدقة جارية ودعاء للمتوفي V2.5)
+  // Memorial Elements (hydrated lazily with secondary DOM)
   const navBtnMemorial = document.getElementById('nav-btn-memorial');
   const btnHeaderMemorial = document.getElementById('btn-header-memorial');
-  const spTabMemorial = document.getElementById('sp-tab-memorial');
   const memorialView = document.getElementById('memorial-view');
-  const memorialGenderBadge = document.getElementById('memorial-gender-badge');
-  const memorialDeceasedName = document.getElementById('memorial-deceased-name');
-  const memorialDedicatedNote = document.getElementById('memorial-dedicated-note');
-  const btnOpenMemorialCreator = document.getElementById('btn-open-memorial-creator');
-  const btnCopyMemorialLink = document.getElementById('btn-copy-memorial-link');
-  const btnWhatsappMemorial = document.getElementById('btn-whatsapp-memorial');
-  const btnDownloadMemorialCard = document.getElementById('btn-download-memorial-card');
-  const memorialDhikrChips = document.getElementById('memorial-dhikr-chips');
-  const memorialActiveDhikrText = document.getElementById('memorial-active-dhikr-text');
-  const memorialTapBtn = document.getElementById('memorial-tap-btn');
-  const memorialRoundCount = document.getElementById('memorial-round-count');
-  const memorialSoundBtn = document.getElementById('memorial-sound-btn');
-  const memorialSoundIcon = document.getElementById('memorial-sound-icon');
-  const memorialResetRoundBtn = document.getElementById('memorial-reset-round-btn');
-  const memorialDuasGrid = document.getElementById('memorial-duas-grid');
-  const memorialSurahsGrid = document.getElementById('memorial-surahs-grid');
-  const memorialCreatorModal = document.getElementById('memorial-creator-modal');
-  const btnCloseMemorialModal = document.getElementById('btn-close-memorial-modal');
-  const memorialInputName = document.getElementById('memorial-input-name');
-  const memorialGenderBtnM = document.getElementById('memorial-gender-btn-m');
-  const memorialGenderBtnF = document.getElementById('memorial-gender-btn-f');
-  const memorialInputNote = document.getElementById('memorial-input-note');
-  const memorialPreviewText = document.getElementById('memorial-preview-text');
-  const btnSubmitCreateMemorial = document.getElementById('btn-submit-create-memorial');
-  const memorialSavedList = document.getElementById('memorial-saved-list');
+  let spTabMemorial, memorialGenderBadge, memorialDeceasedName, memorialDedicatedNote,
+    btnOpenMemorialCreator, btnCopyMemorialLink, btnWhatsappMemorial, btnDownloadMemorialCard,
+    memorialDhikrChips, memorialActiveDhikrText, memorialTapBtn, memorialRoundCount,
+    memorialSoundBtn, memorialSoundIcon, memorialResetRoundBtn, memorialDuasGrid,
+    memorialSurahsGrid, memorialCreatorModal, btnCloseMemorialModal, memorialInputName,
+    memorialGenderBtnM, memorialGenderBtnF, memorialInputNote, memorialPreviewText,
+    btnSubmitCreateMemorial, memorialSavedList;
 
-  // V2 Elements (Segmented Search Mode, Player Corner Pills, Modals, Single Ayah Audio)
+  // V2 Elements (Segmented Search Mode, Player Corner Pills Stay Static; Modals Hydrate Lazily)
   const ayahSingleAudio = document.getElementById('ayah-single-audio');
   const searchTabSurahs = document.getElementById('search-tab-surahs');
   const searchTabAyahs = document.getElementById('search-tab-ayahs');
@@ -73,19 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const sleepTimerBadge = document.getElementById('sleep-timer-badge');
   const btnAbLoop = document.getElementById('btn-ab-loop');
   const abLoopLabel = document.getElementById('ab-loop-label');
-  const mushafBtnGotoBookmark = document.getElementById('mushaf-btn-goto-bookmark');
-
-  // Smart Memorization & Live Reciter Ayah Hover Elements
   const btnPlayerMemorize = document.getElementById('btn-player-memorize');
-  const btnDockMemorize = document.getElementById('btn-dock-memorize');
-  const btnToggleMemorizeMode = document.getElementById('btn-toggle-memorize-mode');
-  const memorizeStatusDot = document.getElementById('memorize-status-dot');
-  const memorizeModeLabel = document.getElementById('memorize-mode-label');
-  const memorizeLiveAyahBadge = document.getElementById('memorize-live-ayah-badge');
-  const memorizeLiveAyahText = document.getElementById('memorize-live-ayah-text');
-  const memorizeRepeatSelect = document.getElementById('memorize-repeat-select');
-  const btnMemorizeBlur = document.getElementById('btn-memorize-blur');
-  const btnMemorizeOpenStudio = document.getElementById('btn-memorize-open-studio');
+  let mushafBtnGotoBookmark, btnDockMemorize, btnToggleMemorizeMode, memorizeStatusDot,
+    memorizeModeLabel, memorizeLiveAyahBadge, memorizeLiveAyahText, memorizeRepeatSelect,
+    btnMemorizeBlur, btnMemorizeOpenStudio;
 
   // Player Panel Elements
   const playerView = document.getElementById('player-view');
@@ -126,22 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnShare = document.getElementById('btn-share');
   const btnDownload = document.getElementById('btn-download');
 
-  // Mushaf Reader Panel Elements
+  // Mushaf Reader Panel Elements (container in DOM; inner controls hydrated lazily)
   const mushafView = document.getElementById('mushaf-view');
-  const mushafSurahBadge = document.getElementById('mushaf-surah-badge');
-  const mushafSurahTitle = document.getElementById('mushaf-surah-title');
-  const mushafRevelationBadge = document.getElementById('mushaf-revelation-badge');
-  const mushafSurahMeta = document.getElementById('mushaf-surah-meta');
-  const mushafSurahSelect = document.getElementById('mushaf-surah-select');
-  const mushafZoomIn = document.getElementById('mushaf-zoom-in');
-  const mushafZoomOut = document.getElementById('mushaf-zoom-out');
-  const mushafZoomReset = document.getElementById('mushaf-zoom-reset');
-  const mushafFontSizeLabel = document.getElementById('mushaf-font-size-label');
-  const mushafBtnPlayAudio = document.getElementById('mushaf-btn-play-audio');
-  const mushafPlayIcon = document.getElementById('mushaf-play-icon');
-  const mushafScrollArea = document.getElementById('mushaf-scroll-area');
-  const mushafBasmala = document.getElementById('mushaf-basmala');
-  const mushafContent = document.getElementById('mushaf-content');
+  let mushafSurahBadge, mushafSurahTitle, mushafRevelationBadge, mushafSurahMeta,
+    mushafSurahSelect, mushafZoomIn, mushafZoomOut, mushafZoomReset,
+    mushafFontSizeLabel, mushafBtnPlayAudio, mushafPlayIcon, mushafScrollArea,
+    mushafBasmala, mushafContent;
 
   // Mini-Player Elements
   const miniPlayer = document.getElementById('mini-player');
@@ -160,53 +122,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const miniBtnNext = document.getElementById('mini-btn-next');
   const miniBtnExpand = document.getElementById('mini-btn-expand');
 
-  // Mobile Single Pill & Modals Elements
+  // Mobile Single Pill stays in playerView; secondary modals hydrate lazily
   const btnOpenPlayerTools = document.getElementById('btn-open-player-tools');
-  const playerToolsModal = document.getElementById('player-tools-modal');
-  const btnClosePlayerTools = document.getElementById('btn-close-player-tools');
-  const mToolMemorize = document.getElementById('m-tool-memorize');
-  const mToolAbLoop = document.getElementById('m-tool-ab-loop');
-  const mToolAbLabel = document.getElementById('m-tool-ab-label');
-  const mToolSleep = document.getElementById('m-tool-sleep');
-  const mToolRadio = document.getElementById('m-tool-radio');
-  const mToolFav = document.getElementById('m-tool-fav');
-  const mToolFavIcon = document.getElementById('m-tool-fav-icon');
-  const mToolShare = document.getElementById('m-tool-share');
-  const mToolDownload = document.getElementById('m-tool-download');
-
-  const mMushafBadge = document.getElementById('m-mushaf-badge');
-  const mMushafTitle = document.getElementById('m-mushaf-title');
-  const mMushafRevelation = document.getElementById('m-mushaf-revelation');
-  const mMushafMeta = document.getElementById('m-mushaf-meta');
-  const mMushafBtnPlay = document.getElementById('m-mushaf-btn-play');
-  const mMushafPlayIcon = document.getElementById('m-mushaf-play-icon');
-  const btnOpenMushafOptions = document.getElementById('btn-open-mushaf-options');
-  const mushafOptionsModal = document.getElementById('mushaf-options-modal');
-  const btnCloseMushafOptions = document.getElementById('btn-close-mushaf-options');
-  const mOptionsSurahSelect = document.getElementById('m-options-surah-select');
-  const mOptionsBtnJumpBookmark = document.getElementById('m-options-btn-jump-bookmark');
-  const mOptionsBookmarkText = document.getElementById('m-options-bookmark-text');
-  const mOptionsFontLabel = document.getElementById('m-options-font-label');
-  const mOptionsZoomOut = document.getElementById('m-options-zoom-out');
-  const mOptionsZoomReset = document.getElementById('m-options-zoom-reset');
-  const mOptionsZoomIn = document.getElementById('m-options-zoom-in');
-  const mOptionsToggleMemorize = document.getElementById('m-options-toggle-memorize');
-  const mOptionsRepeatSelect = document.getElementById('m-options-repeat-select');
-  const mOptionsBtnBlur = document.getElementById('m-options-btn-blur');
-  const mOptionsBtnStudio = document.getElementById('m-options-btn-studio');
-
-  const mMemorialName = document.getElementById('m-memorial-name');
-  const btnOpenMemorialOptions = document.getElementById('btn-open-memorial-options');
-  const memorialOptionsModal = document.getElementById('memorial-options-modal');
-  const btnCloseMemorialOptions = document.getElementById('btn-close-memorial-options');
-  const mOptBtnEditMemorial = document.getElementById('m-opt-btn-edit-memorial');
-  const mOptBtnCopyLink = document.getElementById('m-opt-btn-copy-link');
-  const mOptBtnWhatsapp = document.getElementById('m-opt-btn-whatsapp');
-  const mOptBtnDownloadCard = document.getElementById('m-opt-btn-download-card');
-  const mOptBtnToggleSound = document.getElementById('m-opt-btn-toggle-sound');
-  const mOptSoundIcon = document.getElementById('m-opt-sound-icon');
-  const mOptSoundText = document.getElementById('m-opt-sound-text');
-  const mOptBtnResetRound = document.getElementById('m-opt-btn-reset-round');
+  let playerToolsModal, btnClosePlayerTools, mToolMemorize, mToolAbLoop, mToolAbLabel,
+    mToolSleep, mToolRadio, mToolFav, mToolFavIcon, mToolShare, mToolDownload,
+    mMushafBadge, mMushafTitle, mMushafRevelation, mMushafMeta, mMushafBtnPlay, mMushafPlayIcon,
+    btnOpenMushafOptions, mushafOptionsModal, btnCloseMushafOptions, mOptionsSurahSelect,
+    mOptionsBtnJumpBookmark, mOptionsBookmarkText, mOptionsFontLabel, mOptionsZoomOut,
+    mOptionsZoomReset, mOptionsZoomIn, mOptionsToggleMemorize, mOptionsRepeatSelect,
+    mOptionsBtnBlur, mOptionsBtnStudio, mMemorialName, btnOpenMemorialOptions,
+    memorialOptionsModal, btnCloseMemorialOptions, mOptBtnEditMemorial, mOptBtnCopyLink,
+    mOptBtnWhatsapp, mOptBtnDownloadCard, mOptBtnToggleSound, mOptSoundIcon,
+    mOptSoundText, mOptBtnResetRound;
 
   // --- State Variables ---
   let currentSurahList = [...SURAHS];
@@ -315,29 +242,196 @@ document.addEventListener('DOMContentLoaded', () => {
   let hadrPlaylistQueue = [];
   let hadrQueueIndex = 0;
 
+  // V4.0 Fast Startup, Playlist Delegation, Reciter Modal & Slow-Motion BG State
+  let reciterModalFilter = 'all';
+  let playlistDelegated = false;
+  let playlistRafId = null;
+  let secondaryReady = false;
+  let secondaryLoadPromise = null;
+  const secondaryQueue = [];
+  let quranFontsRequested = false;
+  let extraIconsRequested = false;
+  const AMBIENT_BG_SCENES = {
+    off:   { id: 'off',   label: 'خلفية هادئة', shortLabel: 'خلفية هادئة', src: null, sound: 'none' },
+    sea:   { id: 'sea',   label: 'أمواج البحر الهادئة', shortLabel: 'بحر • بطيء', src: 'assets/videos/sea_waves.webm', sound: 'sea' },
+    trees: { id: 'trees', label: 'أشجار والنسيم الأخضر', shortLabel: 'أشجار • بطيء', src: 'assets/videos/trees_calm.webm', sound: 'trees' },
+    rain:  { id: 'rain',  label: 'غيث المطر الليلي', shortLabel: 'مطر • بطيء', src: 'assets/videos/rain_calm.webm', sound: 'rain' },
+    sky:   { id: 'sky',   label: 'سماء الليل والغيوم', shortLabel: 'سماء • بطيء', src: 'assets/videos/sky_clouds.webm', sound: 'night' }
+  };
+  let activeBgSceneId = 'off';
+  let activeBgDeck = 'a';
+  let bgSpeed = parseFloat(localStorage.getItem('quran_bg_speed') || '0.55') || 0.55;
+  let bgAudioEnabled = localStorage.getItem('quran_bg_audio_enabled') !== 'false';
+  let bgAudioVol = parseInt(localStorage.getItem('quran_bg_audio_vol') || '10', 10) || 10;
+  let bgHandoffDone = false;
+  let bgSceneToken = 0;
+
   // --- Initial Setup ---
   init();
 
-  function init() {
-    // 1. Populate Dropdowns (Reciters & Mushaf Surahs) & Offline Audio Index
-    populateRecitersDropdown();
+  function cacheSecondaryDomRefs() {
+    spTabMemorial = document.getElementById('sp-tab-memorial');
+    memorialGenderBadge = document.getElementById('memorial-gender-badge');
+    memorialDeceasedName = document.getElementById('memorial-deceased-name');
+    memorialDedicatedNote = document.getElementById('memorial-dedicated-note');
+    btnOpenMemorialCreator = document.getElementById('btn-open-memorial-creator');
+    btnCopyMemorialLink = document.getElementById('btn-copy-memorial-link');
+    btnWhatsappMemorial = document.getElementById('btn-whatsapp-memorial');
+    btnDownloadMemorialCard = document.getElementById('btn-download-memorial-card');
+    memorialDhikrChips = document.getElementById('memorial-dhikr-chips');
+    memorialActiveDhikrText = document.getElementById('memorial-active-dhikr-text');
+    memorialTapBtn = document.getElementById('memorial-tap-btn');
+    memorialRoundCount = document.getElementById('memorial-round-count');
+    memorialSoundBtn = document.getElementById('memorial-sound-btn');
+    memorialSoundIcon = document.getElementById('memorial-sound-icon');
+    memorialResetRoundBtn = document.getElementById('memorial-reset-round-btn');
+    memorialDuasGrid = document.getElementById('memorial-duas-grid');
+    memorialSurahsGrid = document.getElementById('memorial-surahs-grid');
+    memorialCreatorModal = document.getElementById('memorial-creator-modal');
+    btnCloseMemorialModal = document.getElementById('btn-close-memorial-modal');
+    memorialInputName = document.getElementById('memorial-input-name');
+    memorialGenderBtnM = document.getElementById('memorial-gender-btn-m');
+    memorialGenderBtnF = document.getElementById('memorial-gender-btn-f');
+    memorialInputNote = document.getElementById('memorial-input-note');
+    memorialPreviewText = document.getElementById('memorial-preview-text');
+    btnSubmitCreateMemorial = document.getElementById('btn-submit-create-memorial');
+    memorialSavedList = document.getElementById('memorial-saved-list');
+
+    mushafBtnGotoBookmark = document.getElementById('mushaf-btn-goto-bookmark');
+    btnDockMemorize = document.getElementById('btn-dock-memorize');
+    btnToggleMemorizeMode = document.getElementById('btn-toggle-memorize-mode');
+    memorizeStatusDot = document.getElementById('memorize-status-dot');
+    memorizeModeLabel = document.getElementById('memorize-mode-label');
+    memorizeLiveAyahBadge = document.getElementById('memorize-live-ayah-badge');
+    memorizeLiveAyahText = document.getElementById('memorize-live-ayah-text');
+    memorizeRepeatSelect = document.getElementById('memorize-repeat-select');
+    btnMemorizeBlur = document.getElementById('btn-memorize-blur');
+    btnMemorizeOpenStudio = document.getElementById('btn-memorize-open-studio');
+
+    mushafSurahBadge = document.getElementById('mushaf-surah-badge');
+    mushafSurahTitle = document.getElementById('mushaf-surah-title');
+    mushafRevelationBadge = document.getElementById('mushaf-revelation-badge');
+    mushafSurahMeta = document.getElementById('mushaf-surah-meta');
+    mushafSurahSelect = document.getElementById('mushaf-surah-select');
+    mushafZoomIn = document.getElementById('mushaf-zoom-in');
+    mushafZoomOut = document.getElementById('mushaf-zoom-out');
+    mushafZoomReset = document.getElementById('mushaf-zoom-reset');
+    mushafFontSizeLabel = document.getElementById('mushaf-font-size-label');
+    mushafBtnPlayAudio = document.getElementById('mushaf-btn-play-audio');
+    mushafPlayIcon = document.getElementById('mushaf-play-icon');
+    mushafScrollArea = document.getElementById('mushaf-scroll-area');
+    mushafBasmala = document.getElementById('mushaf-basmala');
+    mushafContent = document.getElementById('mushaf-content');
+
+    playerToolsModal = document.getElementById('player-tools-modal');
+    btnClosePlayerTools = document.getElementById('btn-close-player-tools');
+    mToolMemorize = document.getElementById('m-tool-memorize');
+    mToolAbLoop = document.getElementById('m-tool-ab-loop');
+    mToolAbLabel = document.getElementById('m-tool-ab-label');
+    mToolSleep = document.getElementById('m-tool-sleep');
+    mToolRadio = document.getElementById('m-tool-radio');
+    mToolFav = document.getElementById('m-tool-fav');
+    mToolFavIcon = document.getElementById('m-tool-fav-icon');
+    mToolShare = document.getElementById('m-tool-share');
+    mToolDownload = document.getElementById('m-tool-download');
+
+    mMushafBadge = document.getElementById('m-mushaf-badge');
+    mMushafTitle = document.getElementById('m-mushaf-title');
+    mMushafRevelation = document.getElementById('m-mushaf-revelation');
+    mMushafMeta = document.getElementById('m-mushaf-meta');
+    mMushafBtnPlay = document.getElementById('m-mushaf-btn-play');
+    mMushafPlayIcon = document.getElementById('m-mushaf-play-icon');
+    btnOpenMushafOptions = document.getElementById('btn-open-mushaf-options');
+    mushafOptionsModal = document.getElementById('mushaf-options-modal');
+    btnCloseMushafOptions = document.getElementById('btn-close-mushaf-options');
+    mOptionsSurahSelect = document.getElementById('m-options-surah-select');
+    mOptionsBtnJumpBookmark = document.getElementById('m-options-btn-jump-bookmark');
+    mOptionsBookmarkText = document.getElementById('m-options-bookmark-text');
+    mOptionsFontLabel = document.getElementById('m-options-font-label');
+    mOptionsZoomOut = document.getElementById('m-options-zoom-out');
+    mOptionsZoomReset = document.getElementById('m-options-zoom-reset');
+    mOptionsZoomIn = document.getElementById('m-options-zoom-in');
+    mOptionsToggleMemorize = document.getElementById('m-options-toggle-memorize');
+    mOptionsRepeatSelect = document.getElementById('m-options-repeat-select');
+    mOptionsBtnBlur = document.getElementById('m-options-btn-blur');
+    mOptionsBtnStudio = document.getElementById('m-options-btn-studio');
+
+    mMemorialName = document.getElementById('m-memorial-name');
+    btnOpenMemorialOptions = document.getElementById('btn-open-memorial-options');
+    memorialOptionsModal = document.getElementById('memorial-options-modal');
+    btnCloseMemorialOptions = document.getElementById('btn-close-memorial-options');
+    mOptBtnEditMemorial = document.getElementById('m-opt-btn-edit-memorial');
+    mOptBtnCopyLink = document.getElementById('m-opt-btn-copy-link');
+    mOptBtnWhatsapp = document.getElementById('m-opt-btn-whatsapp');
+    mOptBtnDownloadCard = document.getElementById('m-opt-btn-download-card');
+    mOptBtnToggleSound = document.getElementById('m-opt-btn-toggle-sound');
+    mOptSoundIcon = document.getElementById('m-opt-sound-icon');
+    mOptSoundText = document.getElementById('m-opt-sound-text');
+    mOptBtnResetRound = document.getElementById('m-opt-btn-reset-round');
+  }
+
+  function hydrateSecondaryOnce() {
+    if (secondaryReady) return;
+    if (typeof window.__hydrateSecondaryDom === 'function') {
+      window.__hydrateSecondaryDom();
+    }
+    cacheSecondaryDomRefs();
     populateMushafSurahSelect();
+    applyMushafFontSize();
     initReciterPickerModal();
+    attachSecondaryListeners();
+    initV2Features();
+    secondaryReady = true;
+    while (secondaryQueue.length > 0) {
+      const fn = secondaryQueue.shift();
+      try { fn(); } catch (e) {}
+    }
+  }
+
+  function ensureSecondaryLoaded(onReady) {
+    if (secondaryReady) {
+      if (onReady) onReady();
+      return;
+    }
+    if (onReady) secondaryQueue.push(onReady);
+    if (typeof window.__hydrateSecondaryDom === 'function') {
+      hydrateSecondaryOnce();
+      return;
+    }
+    ensureSecondaryIconsLoaded();
+    ensureQuranFontsLoaded();
+    if (!secondaryLoadPromise) {
+      secondaryLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'js/secondary.min.js?v=4.0';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    }
+    secondaryLoadPromise.then(() => {
+      hydrateSecondaryOnce();
+    }).catch(() => {
+      secondaryLoadPromise = null;
+      showToast('تعذر تحميل الأدوات الإضافية، يرجى التحقق من الاتصال.', 'error');
+    });
+  }
+
+  function init() {
+    // 1. Core Header & Reciters Dropdown (zero blocking on secondary DOM/data)
+    populateRecitersDropdown();
     refreshOfflineAudioIndex();
     
     // 2. Setup Statistics
     updateStatistics();
     
-    // 3. Render Playlist
+    // 3. Fast Progressive Playlist Render (18 immediate cards + rAF tail)
     renderPlaylist();
 
     // 4. Update Playback Controls UI
     updatePlaybackControlsUI();
 
-    // 5. Apply Mushaf Font Size
-    applyMushafFontSize();
-
-    // 6. Restore Volume
+    // 5. Restore Volume
     const savedVolume = localStorage.getItem('quran_volume') || '85';
     audio.volume = savedVolume / 100;
     if (volumeSlider) {
@@ -346,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateVolumeIcon(savedVolume);
     }
 
-    // 7. Handle URL parameters (e.g. ?surah=18 or ?memorial=أم-السعد&gender=f)
+    // 6. Handle URL parameters (e.g. ?surah=18 or ?memorial=أم-السعد&gender=f)
     const urlParams = new URLSearchParams(window.location.search);
     const sharedSurahId = parseInt(urlParams.get('surah'));
     if (sharedSurahId && sharedSurahId >= 1 && sharedSurahId <= 114) {
@@ -360,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadSurah(SURAHS[currentIndex], false);
     }
 
-    // Check for Memorial query param or hash (e.g. ?memorial=ام-السعد&gender=f or #pack/ام-السعد/f)
+    // Check for Memorial query param or hash
     let sharedMemorialName = urlParams.get('memorial') || urlParams.get('pack');
     let sharedMemorialGender = urlParams.get('gender') || 'f';
     let sharedMemorialNote = urlParams.get('note') || '';
@@ -388,28 +482,35 @@ document.addEventListener('DOMContentLoaded', () => {
         savedMemorials.unshift(currentMemorial);
         try { localStorage.setItem('quran_saved_memorials', JSON.stringify(savedMemorials.slice(0, 10))); } catch (e) {}
       }
-      setTimeout(() => {
+      ensureSecondaryLoaded(() => {
         openMemorialPage(currentMemorial.name, currentMemorial.gender, currentMemorial.note, false);
-      }, 150);
+      });
     } else {
       const targetViewParam = urlParams.get('view');
       if (targetViewParam && ['player', 'mushaf', 'spiritual', 'memorial', 'video', 'playlist'].includes(targetViewParam)) {
-        setTimeout(() => switchView(targetViewParam), 100);
+        setTimeout(() => switchView(targetViewParam), 60);
       }
     }
 
-    // 8. Attach Event Listeners & Shortcuts
+    // 7. Attach Core Listeners
     attachEventListeners();
 
-    // 9. Initialize V2.0 Features (Spiritual Hub, Modals, Ambience, Radio, Studio, Memorization Hover)
-    initV2Features();
-
-    // 10. Setup Media Session for iOS/Android Lock Screen & Background Playback
+    // 8. Setup Media Session for Lock Screen & Background Playback
     setupMediaSessionHandlers();
 
-    // 11. Initial View Responsive Configuration
+    // 9. Initial View Responsive Configuration
     handleResize();
     window.addEventListener('resize', handleResize);
+
+    // 10. Preload secondary views/modals, icons & warm active Surah metadata cleanly after window load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        ensureSecondaryLoaded();
+        if (audio && audio.preload === 'none') {
+          audio.preload = 'metadata';
+        }
+      }, 280);
+    });
   }
 
   // --- Responsive View Switching Logic ---
@@ -430,6 +531,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function switchView(targetView, shouldScroll = true) {
     window.switchView = switchView;
     currentView = targetView;
+    if (targetView !== 'player' && targetView !== 'playlist') {
+      ensureQuranFontsLoaded();
+      ensureSecondaryIconsLoaded();
+      if (targetView !== 'video' && !secondaryReady) {
+        ensureSecondaryLoaded(() => switchView(targetView, shouldScroll));
+        return;
+      }
+    }
     const isDesktop = window.innerWidth >= 1024;
 
     const tabInactive = 'nav-tab-btn px-2.5 xl:px-3 py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 text-[var(--text-secondary)] hover:text-amber-400 hover:bg-emerald-500/5';
@@ -446,14 +555,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navBtnPlaylist) navBtnPlaylist.className = tabInactive + ' lg:hidden';
 
     if (btnServicesMenu) {
+      const baseBtn = 'h-7 xs:h-8 sm:h-9 px-1.5 xs:px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1 sm:gap-1.5 text-xs font-bold transition-all duration-200';
       if (targetView === 'video') {
-        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 border border-amber-500/50 bg-amber-500/20 transition-all duration-200 shadow-md shadow-amber-500/10';
+        btnServicesMenu.className = `${baseBtn} text-amber-300 border border-amber-500/50 bg-amber-500/20 shadow-md shadow-amber-500/10`;
       } else if (targetView === 'memorial') {
-        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-rose-300 border border-rose-500/50 bg-rose-500/20 transition-all duration-200 shadow-md shadow-rose-500/10';
+        btnServicesMenu.className = `${baseBtn} text-rose-300 border border-rose-500/50 bg-rose-500/20 shadow-md shadow-rose-500/10`;
       } else if (targetView === 'hadr') {
-        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-cyan-300 border border-cyan-500/50 bg-cyan-500/20 transition-all duration-200 shadow-md shadow-cyan-500/10';
+        btnServicesMenu.className = `${baseBtn} text-cyan-300 border border-cyan-500/50 bg-cyan-500/20 shadow-md shadow-cyan-500/10`;
       } else {
-        btnServicesMenu.className = 'h-8 sm:h-9 px-2 sm:px-3 rounded-xl glass-panel flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm';
+        btnServicesMenu.className = `${baseBtn} text-amber-300 hover:text-amber-200 border border-emerald-500/25 hover:border-amber-500/40 hover:scale-105 active:scale-95 shadow-sm`;
       }
     }
 
@@ -656,7 +766,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Searchable Reciter Picker Modal ---
-  let reciterModalFilter = 'all';
   function getReciterMeta(reciter) {
     const hasPartial = Array.isArray(reciter.availableSurahs) && reciter.availableSurahs.length < 114;
     const isRiwaya = /ورش|قالون|شعبة|مجود|الدوري|البزي/.test(reciter.name || '');
@@ -1072,121 +1181,110 @@ document.addEventListener('DOMContentLoaded', () => {
     return list;
   }
 
-  // --- Render Playlist ---
+  // --- Render Playlist (Optimized Single-Pass HTML + Event Delegation) ---
+  function ensurePlaylistDelegation() {
+    if (playlistDelegated || !playlistContainer) return;
+    playlistDelegated = true;
+    playlistContainer.addEventListener('click', (e) => {
+      const card = e.target.closest('.surah-card');
+      if (!card) return;
+      const sid = parseInt(card.getAttribute('data-id'), 10);
+      if (!sid) return;
+      const favBtn = e.target.closest('.btn-fav-toggle');
+      if (favBtn) {
+        e.stopPropagation();
+        toggleFavorite(sid);
+        return;
+      }
+      const readBtn = e.target.closest('.btn-card-read');
+      const mainIndex = SURAHS.findIndex(s => s.id === sid);
+      if (mainIndex === -1) return;
+      if (readBtn) {
+        e.stopPropagation();
+        currentIndex = mainIndex;
+        loadSurah(SURAHS[currentIndex], false);
+        switchView('mushaf');
+        return;
+      }
+      currentIndex = mainIndex;
+      loadSurah(SURAHS[currentIndex], true);
+      if (window.innerWidth < 1024 && currentView === 'playlist') {
+        switchView('player');
+      }
+    });
+  }
+
   function renderPlaylist() {
+    ensurePlaylistDelegation();
+    if (playlistRafId) {
+      cancelAnimationFrame(playlistRafId);
+      playlistRafId = null;
+    }
     currentSurahList = getFilteredSurahs();
-    playlistContainer.innerHTML = '';
     const activeReciter = RECITERS.find(r => r.id === currentReciterId) || RECITERS[0];
 
     if (currentSurahList.length === 0) {
-      const emptyState = document.createElement('div');
-      emptyState.className = 'flex flex-col items-center justify-center py-16 text-center text-slate-400 glass-panel rounded-2xl p-6';
-      
-      if (currentTab === 'favorites') {
-        emptyState.innerHTML = `
-          <i class="fa-regular fa-heart text-4xl mb-3 text-slate-500"></i>
-          <p class="text-sm font-semibold mb-1">قائمة المفضلة فارغة</p>
-          <p class="text-xs text-slate-400">انقر فوق أيقونة القلب على أي سورة لحفظها هنا.</p>
-        `;
-      } else {
-        emptyState.innerHTML = `
-          <i class="fa-solid fa-magnifying-glass text-4xl mb-3 text-slate-500"></i>
-          <p class="text-sm font-semibold mb-1">لا توجد نتائج مطابقة</p>
-          <p class="text-xs text-slate-400">تأكد من كتابة الاسم أو رقم السورة بشكل صحيح.</p>
-        `;
-      }
-      playlistContainer.appendChild(emptyState);
+      playlistContainer.innerHTML = currentTab === 'favorites'
+        ? `<div class="flex flex-col items-center justify-center py-16 text-center text-slate-400 glass-panel rounded-2xl p-6">
+            <i class="fa-regular fa-heart text-4xl mb-3 text-slate-500"></i>
+            <p class="text-sm font-semibold mb-1">قائمة المفضلة فارغة</p>
+            <p class="text-xs text-slate-400">انقر فوق أيقونة القلب على أي سورة لحفظها هنا.</p>
+          </div>`
+        : `<div class="flex flex-col items-center justify-center py-16 text-center text-slate-400 glass-panel rounded-2xl p-6">
+            <i class="fa-solid fa-magnifying-glass text-4xl mb-3 text-slate-500"></i>
+            <p class="text-sm font-semibold mb-1">لا توجد نتائج مطابقة</p>
+            <p class="text-xs text-slate-400">تأكد من كتابة الاسم أو رقم السورة بشكل صحيح.</p>
+          </div>`;
       return;
     }
 
-    const fragment = document.createDocumentFragment();
-    currentSurahList.forEach((surah) => {
-      const isFav = favorites.includes(surah.id);
-      const isCurrent = SURAHS[currentIndex].id === surah.id;
-      const isAvailable = !activeReciter.availableSurahs || activeReciter.availableSurahs.includes(surah.id);
+    const activeSurahId = SURAHS[currentIndex].id;
+    const availSet = activeReciter.availableSurahs ? new Set(activeReciter.availableSurahs) : null;
+    const favSet = new Set(favorites);
 
-      const card = document.createElement('div');
-      card.className = `surah-card p-3 sm:p-3.5 rounded-2xl flex items-center justify-between cursor-pointer mb-2 ${isCurrent ? 'active' : ''}`;
-      card.setAttribute('data-id', surah.id);
-      
-      card.innerHTML = `
+    const buildCardsHtml = (slice) => slice.map((surah) => {
+      const isFav = favSet.has(surah.id);
+      const isCurrent = activeSurahId === surah.id;
+      const isAvailable = !availSet || availSet.has(surah.id);
+      const revBadge = surah.revelationPlace === 'makkah'
+        ? '<i class="fa-solid fa-kaaba text-[8px] text-amber-500"></i> مكية'
+        : '<i class="fa-solid fa-mosque text-[8px] text-emerald-400"></i> مدنية';
+
+      return `<div class="surah-card p-3 sm:p-3.5 rounded-2xl flex items-center justify-between cursor-pointer mb-2 ${isCurrent ? 'active' : ''}" data-id="${surah.id}">
         <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <!-- Surah Number badge -->
-          <div class="surah-number-badge w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shadow-inner flex-shrink-0">
-            ${surah.id}
-          </div>
-          
-          <!-- Surah Info -->
+          <div class="surah-number-badge w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shadow-inner flex-shrink-0">${surah.id}</div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
               <h3 class="font-bold text-xs sm:text-sm text-[var(--text-primary)] font-quran truncate">${surah.name}</h3>
-              <span class="text-[10px] text-[var(--text-secondary)] opacity-85 flex items-center gap-0.5 flex-shrink-0">
-                ${surah.revelationPlace === 'makkah' 
-                  ? '<i class="fa-solid fa-kaaba text-[8px] text-amber-500"></i> مكية' 
-                  : '<i class="fa-solid fa-mosque text-[8px] text-emerald-400"></i> مدنية'}
-              </span>
+              <span class="text-[10px] text-[var(--text-secondary)] opacity-85 flex items-center gap-0.5 flex-shrink-0">${revBadge}</span>
               ${!isAvailable ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20" title="سورة غير مسجلة بصوت القارئ المختار - يتم تشغيل الحصري كبديل">بديل</span>' : ''}
-              ${isCurrent && isPlaying ? `
-                <div class="mini-eq mr-1">
-                  <span class="mini-eq-bar"></span>
-                  <span class="mini-eq-bar"></span>
-                  <span class="mini-eq-bar"></span>
-                </div>
-              ` : ''}
+              ${isCurrent && isPlaying ? '<div class="mini-eq mr-1"><span class="mini-eq-bar"></span><span class="mini-eq-bar"></span><span class="mini-eq-bar"></span></div>' : ''}
             </div>
             <p class="text-[10px] sm:text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">${surah.englishName} • ${surah.versesCount} آية</p>
           </div>
         </div>
-
         <div class="flex items-center gap-1.5 flex-shrink-0">
-          <!-- Quick Read in Mushaf -->
           <button class="btn-card-read w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-400 hover:bg-emerald-500/10 transition-colors" data-id="${surah.id}" title="قراءة السورة في المصحف">
             <i class="fa-solid fa-book-open text-xs"></i>
           </button>
-          
-          <!-- Favorite Toggle Button -->
           <button class="btn-fav-toggle w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors" data-id="${surah.id}" title="إضافة للمفضلة">
             <i class="${isFav ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart text-xs'}"></i>
           </button>
         </div>
-      `;
+      </div>`;
+    }).join('');
 
-      // Card click event -> Play Surah
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-fav-toggle') || e.target.closest('.btn-card-read')) return;
-        
-        const mainIndex = SURAHS.findIndex(s => s.id === surah.id);
-        if (mainIndex !== -1) {
-          currentIndex = mainIndex;
-          loadSurah(SURAHS[currentIndex], true);
-          if (window.innerWidth < 1024 && currentView === 'playlist') {
-            switchView('player');
-          }
-        }
+    if (currentSurahList.length <= 24) {
+      playlistContainer.innerHTML = buildCardsHtml(currentSurahList);
+    } else {
+      playlistContainer.innerHTML = buildCardsHtml(currentSurahList.slice(0, 18));
+      const remaining = currentSurahList.slice(18);
+      playlistRafId = requestAnimationFrame(() => {
+        playlistRafId = null;
+        if (!playlistContainer) return;
+        playlistContainer.insertAdjacentHTML('beforeend', buildCardsHtml(remaining));
       });
-
-      // Quick read button click -> Open Mushaf
-      const readBtn = card.querySelector('.btn-card-read');
-      readBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const mainIndex = SURAHS.findIndex(s => s.id === surah.id);
-        if (mainIndex !== -1) {
-          currentIndex = mainIndex;
-          loadSurah(SURAHS[currentIndex], false);
-          switchView('mushaf');
-        }
-      });
-
-      // Favorite button event
-      const favBtn = card.querySelector('.btn-fav-toggle');
-      favBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleFavorite(surah.id);
-      });
-
-      fragment.appendChild(card);
-    });
-    playlistContainer.appendChild(fragment);
+    }
   }
 
   let videoStudioLoadPromise = null;
@@ -1198,7 +1296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videoStudioLoadPromise) {
       videoStudioLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/video-studio.js?v=3.4';
+        script.src = 'js/video-studio.min.js?v=4.0';
         script.onload = resolve;
         script.onerror = reject;
         document.body.appendChild(script);
@@ -2260,9 +2358,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isPlaying) pauseAudio(); else playAudio();
     });
 
-    mushafBtnPlayAudio.addEventListener('click', () => {
-      if (isPlaying) pauseAudio(); else playAudio();
-    });
+    if (mushafBtnPlayAudio) {
+      mushafBtnPlayAudio.addEventListener('click', () => {
+        if (isPlaying) pauseAudio(); else playAudio();
+      });
+    }
 
     // 3. Next / Prev
     btnNext.addEventListener('click', nextSurah);
@@ -2678,55 +2778,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(`تم تغيير القارئ إلى ${reciter.name}`);
     });
 
-    // 16. Mushaf Surah Selector Change
-    if (mushafSurahSelect) {
-      mushafSurahSelect.addEventListener('change', () => {
-        const selectedId = parseInt(mushafSurahSelect.value);
-        const idx = SURAHS.findIndex(s => s.id === selectedId);
-        if (idx !== -1) {
-          currentIndex = idx;
-          loadSurah(SURAHS[currentIndex], isPlaying);
-        }
-      });
-    }
-
-    // 17. Mushaf Font Zoom Buttons
-    if (mushafZoomIn) {
-      mushafZoomIn.addEventListener('click', () => {
-        mushafFontSize = Math.min(220, mushafFontSize + 15);
-        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
-        applyMushafFontSize();
-      });
-    }
-
-    if (mushafZoomOut) {
-      mushafZoomOut.addEventListener('click', () => {
-        mushafFontSize = Math.max(70, mushafFontSize - 15);
-        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
-        applyMushafFontSize();
-      });
-    }
-
-    if (mushafZoomReset) {
-      mushafZoomReset.addEventListener('click', () => {
-        mushafFontSize = 100;
-        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
-        applyMushafFontSize();
-        showToast('تمت استعادة حجم الخط الافتراضي');
-      });
-    }
-
-    if (mushafBasmala) {
-      mushafBasmala.addEventListener('click', () => {
-        if (isMemorizationMode) {
-          audio.currentTime = 0;
-          if (!isPlaying) playAudio();
-          updateLiveMushafAyahHover(true);
-          showToast('تلاوة الاستفتاح: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ');
-        }
-      });
-    }
-
     // 18. Favorite Button on Player
     btnPlayerFav.addEventListener('click', () => {
       toggleFavorite(SURAHS[currentIndex].id);
@@ -2791,6 +2842,71 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
       }
     });
+
+    // Early click hydration replay if user interacts before idle load finishes
+    ['btn-open-reciter-modal', 'btn-bg-scene', 'btn-bg-scene-mobile', 'btn-sleep-ambience',
+      'btn-player-radio', 'btn-header-radio', 'btn-open-player-tools', 'btn-player-memorize', 'btn-ab-loop'].forEach(btnId => {
+      const el = document.getElementById(btnId);
+      if (!el) return;
+      el.addEventListener('click', (e) => {
+        if (!secondaryReady) {
+          e.stopImmediatePropagation();
+          ensureSecondaryLoaded(() => el.click());
+        }
+      });
+    });
+    const svcBtn = document.getElementById('btn-services-menu');
+    if (svcBtn) svcBtn.addEventListener('click', () => { if (!secondaryReady) ensureSecondaryLoaded(); });
+  }
+
+  function attachSecondaryListeners() {
+    if (mushafBtnPlayAudio) {
+      mushafBtnPlayAudio.addEventListener('click', () => {
+        if (isPlaying) pauseAudio(); else playAudio();
+      });
+    }
+    if (mushafSurahSelect) {
+      mushafSurahSelect.addEventListener('change', () => {
+        const selectedId = parseInt(mushafSurahSelect.value);
+        const idx = SURAHS.findIndex(s => s.id === selectedId);
+        if (idx !== -1) {
+          currentIndex = idx;
+          loadSurah(SURAHS[currentIndex], isPlaying);
+        }
+      });
+    }
+    if (mushafZoomIn) {
+      mushafZoomIn.addEventListener('click', () => {
+        mushafFontSize = Math.min(220, mushafFontSize + 15);
+        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
+        applyMushafFontSize();
+      });
+    }
+    if (mushafZoomOut) {
+      mushafZoomOut.addEventListener('click', () => {
+        mushafFontSize = Math.max(70, mushafFontSize - 15);
+        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
+        applyMushafFontSize();
+      });
+    }
+    if (mushafZoomReset) {
+      mushafZoomReset.addEventListener('click', () => {
+        mushafFontSize = 100;
+        localStorage.setItem('quran_mushaf_font_size', mushafFontSize);
+        applyMushafFontSize();
+        showToast('تمت استعادة حجم الخط الافتراضي');
+      });
+    }
+    if (mushafBasmala) {
+      mushafBasmala.addEventListener('click', () => {
+        if (isMemorizationMode) {
+          audio.currentTime = 0;
+          if (!isPlaying) playAudio();
+          updateLiveMushafAyahHover(true);
+          showToast('تلاوة الاستفتاح: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ');
+        }
+      });
+    }
   }
 
   // ==========================================================================
@@ -2872,6 +2988,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    // 3b. Slow-Motion Nature Video Background & Soft Audio Controller (V4.0)
+    initAmbientBgController();
 
     // 4. 24/7 Live Quran Radio Modal
     const radioModal = document.getElementById('radio-modal');
@@ -3214,6 +3333,15 @@ document.addEventListener('DOMContentLoaded', () => {
         closePlayerTools();
         const sleepModal = document.getElementById('sleep-ambience-modal');
         if (sleepModal) sleepModal.classList.remove('hidden');
+      });
+    }
+
+    const mToolBgScene = document.getElementById('m-tool-bg-scene');
+    if (mToolBgScene) {
+      mToolBgScene.addEventListener('click', () => {
+        closePlayerTools();
+        const bgModal = document.getElementById('bg-scene-modal');
+        if (bgModal) bgModal.classList.remove('hidden');
       });
     }
 
@@ -4100,6 +4228,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
+  // --- Deferred Calligraphy Fonts & Extra Icons (Zero startup blocking; loads smoothly after load or on demand) ---
+  function ensureQuranFontsLoaded() {
+    if (quranFontsRequested) return;
+    quranFontsRequested = true;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&display=swap';
+    document.head.appendChild(link);
+  }
+  function ensureSecondaryIconsLoaded() {
+    if (extraIconsRequested) return;
+    extraIconsRequested = true;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'css/icons-extra.min.css?v=4.0';
+    document.head.appendChild(link);
+  }
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      ensureSecondaryIconsLoaded();
+      ensureQuranFontsLoaded();
+    }, 450);
+  });
+
   // --- Zero-Bandwidth Procedural Web Audio API Nature Ambience Generator ---
   function stopAmbienceNodes() {
     ambienceSourceNodes.forEach(node => {
@@ -4109,7 +4261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ambienceSourceNodes = [];
   }
 
-  function setNatureAmbience(type) {
+  function setNatureAmbience(type, scale = null, silent = false) {
     ambienceMode = type;
     stopAmbienceNodes();
 
@@ -4119,18 +4271,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
-      showToast('متصفحك لا يدعم توليد أصوات الطبيعة تلقائياً', 'error');
+      if (!silent) showToast('متصفحك لا يدعم توليد أصوات الطبيعة تلقائياً', 'error');
       return;
     }
     if (!audioCtx) {
       audioCtx = new AudioContextClass();
     }
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      audioCtx.resume().catch(() => {});
     }
 
-    // Create 4-second looping pink/brown noise buffer (0 KB internet bandwidth!)
-    const bufferSize = audioCtx.sampleRate * 4;
+    // Create 6-second seamless pink/brown noise buffer (0 KB internet bandwidth)
+    const bufferSize = audioCtx.sampleRate * 6;
     const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     const output = noiseBuffer.getChannelData(0);
     let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
@@ -4152,17 +4304,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filter = audioCtx.createBiquadFilter();
     ambienceGainNode = audioCtx.createGain();
-    ambienceGainNode.gain.value = ambienceVolume * 0.25;
+    const targetGain = scale !== null ? scale : (ambienceVolume * 0.25);
+    ambienceGainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    ambienceGainNode.gain.linearRampToValueAtTime(Math.max(0.0005, targetGain), audioCtx.currentTime + 1.1);
 
     if (type === 'rain') {
       filter.type = 'bandpass';
       filter.frequency.value = 1100;
       filter.Q.value = 0.65;
-      showToast('تم تشغيل خلفية صوت المطر الهادئ (بدون استهلاك إنترنت)');
-    } else if (type === 'breeze') {
+      if (!silent) showToast('تم تشغيل خلفية صوت المطر الهادئ (بدون استهلاك إنترنت)');
+    } else if (type === 'sea') {
       filter.type = 'lowpass';
-      filter.frequency.value = 420;
-      // Slow LFO modulation for natural wind swell
+      filter.frequency.value = 340;
+      filter.Q.value = 0.7;
+      // Slow ocean tide swell (9s calm wave period)
+      const waveLfo = audioCtx.createOscillator();
+      const waveFreqGain = audioCtx.createGain();
+      const waveAmpGain = audioCtx.createGain();
+      waveLfo.frequency.value = 0.11;
+      waveFreqGain.gain.value = 210;
+      waveAmpGain.gain.value = targetGain * 0.32;
+      waveLfo.connect(waveFreqGain);
+      waveFreqGain.connect(filter.frequency);
+      waveLfo.connect(waveAmpGain);
+      waveAmpGain.connect(ambienceGainNode.gain);
+      waveLfo.start();
+      ambienceSourceNodes.push(waveLfo);
+      if (!silent) showToast('تم تشغيل صوت أمواج البحر الخفيف بالخلفية');
+    } else if (type === 'trees' || type === 'breeze') {
+      filter.type = 'lowpass';
+      filter.frequency.value = type === 'trees' ? 520 : 420;
       const lfo = audioCtx.createOscillator();
       const lfoGain = audioCtx.createGain();
       lfo.frequency.value = 0.14;
@@ -4171,11 +4342,27 @@ document.addEventListener('DOMContentLoaded', () => {
       lfoGain.connect(filter.frequency);
       lfo.start();
       ambienceSourceNodes.push(lfo);
-      showToast('تم تشغيل خلفية نسيم الفجر الهادئ');
+      if (type === 'trees') {
+        const leavesNoise = audioCtx.createBufferSource();
+        leavesNoise.buffer = noiseBuffer;
+        leavesNoise.loop = true;
+        const leafBand = audioCtx.createBiquadFilter();
+        leafBand.type = 'bandpass';
+        leafBand.frequency.value = 2200;
+        leafBand.Q.value = 1.2;
+        const leafGain = audioCtx.createGain();
+        leafGain.gain.value = 0.18;
+        leavesNoise.connect(leafBand);
+        leafBand.connect(leafGain);
+        leafGain.connect(ambienceGainNode);
+        leavesNoise.start();
+        ambienceSourceNodes.push(leavesNoise);
+      }
+      if (!silent) showToast(type === 'trees' ? 'تم تشغيل صوت نسيم الأشجار الخفيف بالخلفية' : 'تم تشغيل خلفية نسيم الفجر الهادئ');
     } else if (type === 'night') {
       filter.type = 'lowpass';
       filter.frequency.value = 240;
-      showToast('تم تشغيل خلفية سكون الليل العميق');
+      if (!silent) showToast('تم تشغيل خلفية سكون الليل العميق');
     }
 
     whiteNoise.connect(filter);
@@ -4183,6 +4370,266 @@ document.addEventListener('DOMContentLoaded', () => {
     ambienceGainNode.connect(audioCtx.destination);
     whiteNoise.start();
     ambienceSourceNodes.push(whiteNoise);
+  }
+
+  // --- V4.0 Dual-Deck Seamless Slow-Motion Background Video Controller ---
+  function applyBgAudioForScene(scene) {
+    if (!scene || scene.id === 'off' || !bgAudioEnabled) {
+      if (activeBgSceneId !== 'off' || !scene || scene.id === 'off') {
+        stopAmbienceNodes();
+        ambienceMode = 'none';
+      }
+      return;
+    }
+    const gentleScale = (bgAudioVol / 100) * 0.16;
+    setNatureAmbience(scene.sound, gentleScale, true);
+  }
+
+  function updateBgSceneUI(scene) {
+    const deskBadge = document.getElementById('bg-scene-badge');
+    const mobBadge = document.getElementById('bg-scene-mobile-badge');
+    const deskBtn = document.getElementById('btn-bg-scene');
+    const mobBtn = document.getElementById('btn-bg-scene-mobile');
+    const isActive = scene.id !== 'off';
+
+    if (deskBadge) deskBadge.innerText = scene.shortLabel;
+    if (mobBadge) mobBadge.innerText = scene.shortLabel;
+    [deskBtn, mobBtn].forEach(btn => {
+      if (!btn) return;
+      btn.classList.toggle('border-amber-400', isActive);
+      btn.classList.toggle('text-amber-300', isActive);
+      btn.classList.toggle('bg-amber-500/20', isActive);
+    });
+
+    document.querySelectorAll('.bg-scene-card').forEach(card => {
+      card.classList.toggle('active', card.getAttribute('data-bg-scene') === scene.id);
+    });
+  }
+
+  function setAmbientBackgroundScene(sceneId = 'off', { persist = true, silent = false } = {}) {
+    const scene = AMBIENT_BG_SCENES[sceneId] || AMBIENT_BG_SCENES.off;
+    const vidA = document.getElementById('ambient-bg-vid-a');
+    const vidB = document.getElementById('ambient-bg-vid-b');
+    if (!vidA || !vidB) return;
+
+    bgSceneToken++;
+    const token = bgSceneToken;
+    activeBgSceneId = scene.id;
+    bgHandoffDone = false;
+    if (persist) {
+      try { localStorage.setItem('quran_bg_scene', scene.id); } catch (e) {}
+    }
+    updateBgSceneUI(scene);
+
+    if (scene.id === 'off' || !scene.src) {
+      document.body.classList.remove('ambient-bg-active');
+      vidA.classList.remove('active');
+      vidB.classList.remove('active');
+      setTimeout(() => {
+        if (token !== bgSceneToken) return;
+        [vidA, vidB].forEach(v => {
+          v.pause();
+          v.removeAttribute('src');
+          v.load();
+        });
+      }, 1150);
+      applyBgAudioForScene(scene);
+      if (!silent) showToast('تمت العودة للخلفية الملكية الكلاسيكية');
+      return;
+    }
+
+    const incoming = activeBgDeck === 'a' ? vidB : vidA;
+    const outgoing = activeBgDeck === 'a' ? vidA : vidB;
+    activeBgDeck = activeBgDeck === 'a' ? 'b' : 'a';
+    bgHandoffDone = false;
+
+    const activateDeck = () => {
+      if (token !== bgSceneToken) return;
+      try {
+        incoming.playbackRate = bgSpeed;
+        incoming.defaultPlaybackRate = bgSpeed;
+      } catch (e) {}
+      incoming.play().catch(() => {});
+      document.body.classList.add('ambient-bg-active');
+      requestAnimationFrame(() => {
+        if (token !== bgSceneToken) return;
+        incoming.classList.add('active');
+        outgoing.classList.remove('active');
+      });
+      setTimeout(() => {
+        if (token !== bgSceneToken) return;
+        outgoing.pause();
+        if (outgoing.getAttribute('src') !== scene.src) {
+          outgoing.removeAttribute('src');
+        }
+      }, 1500);
+    };
+
+    incoming.muted = true;
+    incoming.defaultMuted = true;
+    incoming.volume = 0;
+    incoming.playsInline = true;
+    incoming.onloadeddata = null;
+    incoming.oncanplay = null;
+    incoming.src = scene.src;
+    try {
+      incoming.playbackRate = bgSpeed;
+      incoming.defaultPlaybackRate = bgSpeed;
+    } catch (e) {}
+
+    let activated = false;
+    const onceReady = () => {
+      if (activated || token !== bgSceneToken) return;
+      activated = true;
+      activateDeck();
+    };
+    incoming.addEventListener('canplay', onceReady, { once: true });
+    setTimeout(onceReady, 1600);
+
+    applyBgAudioForScene(scene);
+    if (!silent) {
+      showToast(`تم تفعيل خلفية ${scene.label} (${bgSpeed}x)${bgAudioEnabled ? ' مع صوت خفيف بالخلفية' : ''}`);
+    }
+  }
+  window.setAmbientBackgroundScene = setAmbientBackgroundScene;
+
+  function initAmbientBgController() {
+    const vidA = document.getElementById('ambient-bg-vid-a');
+    const vidB = document.getElementById('ambient-bg-vid-b');
+    const modal = document.getElementById('bg-scene-modal');
+    const btnDesk = document.getElementById('btn-bg-scene');
+    const btnMob = document.getElementById('btn-bg-scene-mobile');
+    const btnClose = document.getElementById('btn-close-bg-scene-modal');
+    const audioToggle = document.getElementById('bg-audio-enable-toggle');
+    const volSlider = document.getElementById('bg-audio-vol-slider');
+    const volLabel = document.getElementById('bg-audio-vol-label');
+    if (!vidA || !vidB) return;
+
+    const handleDeckTimeUpdate = (deckEl, deckName) => {
+      if (activeBgSceneId === 'off' || activeBgDeck !== deckName || bgHandoffDone) return;
+      const dur = deckEl.duration;
+      if (!isFinite(dur) || dur < 4) return;
+      // Seamless cross-dissolve 2.2s before clip end so background plays continuously without jump cuts
+      if (deckEl.currentTime >= dur - 2.2) {
+        bgHandoffDone = true;
+        const scene = AMBIENT_BG_SCENES[activeBgSceneId];
+        if (!scene || !scene.src) return;
+        const nextDeckEl = deckName === 'a' ? vidB : vidA;
+        const nextDeckName = deckName === 'a' ? 'b' : 'a';
+        if (nextDeckEl.getAttribute('src') !== scene.src) {
+          nextDeckEl.src = scene.src;
+        }
+        try {
+          nextDeckEl.currentTime = 0;
+          nextDeckEl.playbackRate = bgSpeed;
+        } catch (e) {}
+        activeBgDeck = nextDeckName;
+        nextDeckEl.play().catch(() => {});
+        nextDeckEl.classList.add('active');
+        deckEl.classList.remove('active');
+        const snapToken = bgSceneToken;
+        setTimeout(() => {
+          if (snapToken === bgSceneToken && activeBgDeck === nextDeckName) {
+            deckEl.pause();
+            try { deckEl.currentTime = 0; } catch (e) {}
+            bgHandoffDone = false;
+          }
+        }, 1550);
+      }
+    };
+
+    vidA.addEventListener('timeupdate', () => handleDeckTimeUpdate(vidA, 'a'));
+    vidB.addEventListener('timeupdate', () => handleDeckTimeUpdate(vidB, 'b'));
+    // Safety ended fallback if browser misses timeupdate window
+    [vidA, vidB].forEach((v, idx) => {
+      const dName = idx === 0 ? 'a' : 'b';
+      v.addEventListener('ended', () => {
+        if (activeBgSceneId !== 'off' && activeBgDeck === dName) {
+          v.currentTime = 0;
+          v.play().catch(() => {});
+        }
+      });
+    });
+
+    const openSceneModal = () => modal && modal.classList.remove('hidden');
+    const closeSceneModal = () => modal && modal.classList.add('hidden');
+    if (btnDesk) btnDesk.addEventListener('click', openSceneModal);
+    if (btnMob) btnMob.addEventListener('click', openSceneModal);
+    if (btnClose) btnClose.addEventListener('click', closeSceneModal);
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeSceneModal();
+      });
+    }
+
+    document.querySelectorAll('.bg-scene-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const sceneId = card.getAttribute('data-bg-scene') || 'off';
+        setAmbientBackgroundScene(sceneId, { persist: true, silent: false });
+      });
+    });
+
+    const speedChips = document.querySelectorAll('.bg-speed-chip');
+    speedChips.forEach(chip => {
+      const sp = parseFloat(chip.getAttribute('data-bg-speed') || '0.55');
+      const isMatch = Math.abs(sp - bgSpeed) < 0.02;
+      chip.className = isMatch
+        ? 'bg-speed-chip active px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold'
+        : 'bg-speed-chip px-2 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/20 text-[var(--text-secondary)] font-semibold';
+
+      chip.addEventListener('click', () => {
+        bgSpeed = parseFloat(chip.getAttribute('data-bg-speed') || '0.55') || 0.55;
+        try { localStorage.setItem('quran_bg_speed', String(bgSpeed)); } catch (e) {}
+        speedChips.forEach(c => {
+          const m = c === chip;
+          c.className = m
+            ? 'bg-speed-chip active px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold'
+            : 'bg-speed-chip px-2 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/20 text-[var(--text-secondary)] font-semibold';
+        });
+        [vidA, vidB].forEach(v => {
+          try { v.playbackRate = bgSpeed; v.defaultPlaybackRate = bgSpeed; } catch (e) {}
+        });
+        showToast(`سرعة عرض الخلفية: ${bgSpeed}x`);
+      });
+    });
+
+    if (audioToggle) {
+      audioToggle.checked = bgAudioEnabled;
+      audioToggle.addEventListener('change', () => {
+        bgAudioEnabled = !!audioToggle.checked;
+        try { localStorage.setItem('quran_bg_audio_enabled', String(bgAudioEnabled)); } catch (e) {}
+        applyBgAudioForScene(AMBIENT_BG_SCENES[activeBgSceneId]);
+      });
+    }
+
+    if (volSlider) {
+      volSlider.value = String(bgAudioVol);
+      if (volLabel) volLabel.innerText = `${bgAudioVol}%`;
+      volSlider.addEventListener('input', () => {
+        bgAudioVol = parseInt(volSlider.value, 10) || 10;
+        if (volLabel) volLabel.innerText = `${bgAudioVol}%`;
+        try { localStorage.setItem('quran_bg_audio_vol', String(bgAudioVol)); } catch (e) {}
+        if (ambienceGainNode && audioCtx && activeBgSceneId !== 'off' && bgAudioEnabled) {
+          ambienceGainNode.gain.setTargetAtTime((bgAudioVol / 100) * 0.16, audioCtx.currentTime, 0.12);
+        }
+      });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (activeBgSceneId === 'off') return;
+      const curDeck = activeBgDeck === 'a' ? vidA : vidB;
+      if (document.hidden) {
+        curDeck.pause();
+      } else if (curDeck.getAttribute('src')) {
+        curDeck.play().catch(() => {});
+      }
+    });
+
+    // Optional by default: only auto-restore if user explicitly kept a background scene enabled
+    const savedScene = localStorage.getItem('quran_bg_scene');
+    if (savedScene && savedScene !== 'off' && AMBIENT_BG_SCENES[savedScene]) {
+      setTimeout(() => setAmbientBackgroundScene(savedScene, { persist: false, silent: true }), 450);
+    }
   }
 
   // --- 24/7 Live Quran Radio Broadcast ---

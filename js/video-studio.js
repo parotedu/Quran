@@ -233,7 +233,7 @@
       name: 'أشجار الغابة والنسيم',
       badge: 'خضرة ونسيم عليل',
       icon: 'fa-tree',
-      videoSrc: null,
+      videoSrc: 'assets/videos/trees_calm.webm',
       fallbackType: 'forest',
       accentColor: '#34d399'
     },
@@ -437,9 +437,525 @@
 
   // --- 6. Initialization & Population ---
   let videoStudioInitialized = false;
+  const VIDEO_STUDIO_MARKUP = `<!-- View Header -->
+        <div class="flex items-center justify-between pb-2.5 mb-2 sm:mb-3 border-b border-emerald-500/15 flex-shrink-0">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-amber-500/20 border border-amber-500/35 flex items-center justify-center text-amber-400 shadow flex-shrink-0">
+              <i class="fa-solid fa-clapperboard text-sm sm:text-base"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm sm:text-base lg:text-lg font-bold text-amber-300 font-quran leading-tight">
+                  صانع فيديوهات القرآن الكريم (Story / Reels / TikTok)
+                </h2>
+                <span id="video-header-aspect-badge" class="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  9:16 طولي (Reels / Stories)
+                </span>
+              </div>
+              <p class="text-[10px] sm:text-xs text-[var(--text-secondary)] hidden xs:block">
+                توليد فيديو احترافي بالصوت والصورة لآيات القرآن مع انتقال سلس وحفظ مباشر • 100% داخل المتصفح
+              </p>
+            </div>
+          </div>
+
+          <button id="video-btn-back-player" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/20 text-xs font-semibold text-[var(--text-secondary)] hover:text-amber-400 transition-all active:scale-95" title="الرجوع إلى المشغل">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>المشغل</span>
+          </button>
+        </div>
+
+        <!-- Studio Main Body (Two Columns: Phone Preview on Left/Top, Controls on Right/Bottom) -->
+        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 overflow-y-auto playlist-scroll p-0.5">
+
+          <!-- Left Column: Smartphone Frame & Live Output Preview (lg:col-span-5 xl:col-span-5) -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-start gap-2.5">
+
+            <!-- Smartphone Mockup Chassis -->
+            <div class="phone-mockup-frame">
+              <div class="phone-island-notch"></div>
+              
+              <div class="phone-screen" id="video-phone-screen">
+                <!-- HTML5 Canvas for Real-time Rendering & Stream Capture -->
+                <canvas id="video-canvas" width="720" height="1280" class="w-full h-full object-contain"></canvas>
+
+                <!-- Hidden Motion Video Background Element for Compositing onto Canvas -->
+                <video id="video-bg-player" loop muted playsinline crossOrigin="anonymous" class="hidden"></video>
+
+                <!-- Live Preview Audio Element for Guaranteed Cross-browser Audio Output -->
+                <audio id="video-preview-audio" preload="none" class="hidden"></audio>
+
+                <!-- Video Player for Reviewing the Final Recorded Video -->
+                <video id="video-result-player" controls playsinline class="hidden w-full h-full object-contain rounded-2xl bg-black"></video>
+
+                <!-- Recording Progress Overlay -->
+                <div id="video-progress-overlay" class="absolute inset-0 bg-black/85 backdrop-blur-md z-40 hidden flex flex-col items-center justify-center p-5 text-center">
+                  <div class="w-12 h-12 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin mb-3 shadow-xl"></div>
+                  
+                  <h4 class="text-xs sm:text-sm font-bold text-amber-300 font-quran mb-1" id="video-progress-status">
+                    جاري تجهيز مقاطع التلاوة...
+                  </h4>
+                  <p class="text-[10px] sm:text-[11px] text-gray-300 mb-3" id="video-progress-time">00:00 / 00:00</p>
+
+                  <div class="w-full max-w-[210px] bg-emerald-950/80 rounded-full h-2.5 border border-amber-500/30 overflow-hidden mb-2 p-0.5">
+                    <div id="video-progress-bar" class="h-full rounded-full video-progress-shimmer transition-all duration-200" style="width: 10%;"></div>
+                  </div>
+                  <span id="video-progress-percent" class="text-xs font-bold text-amber-400 mb-3">10%</span>
+
+                  <button id="video-btn-cancel-progress" class="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 text-xs font-bold transition-all active:scale-95">
+                    <i class="fa-solid fa-xmark mr-1"></i>
+                    <span>إلغاء التوليد</span>
+                  </button>
+                </div>
+
+                <!-- Complete Overlay (Appears Over Phone When Finished) -->
+                <div id="video-complete-overlay" class="absolute inset-x-2.5 bottom-2.5 z-30 hidden animate-slide-in">
+                  <div class="glass-panel p-2.5 sm:p-3 rounded-2xl border border-amber-500/50 shadow-2xl bg-emerald-950/95 flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-bold text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                        <span>تم إنشاء الفيديو بنجاح!</span>
+                      </span>
+                      <button id="video-btn-reset" class="text-[11px] text-[var(--text-secondary)] hover:text-white" title="فيديو جديد">
+                        <i class="fa-solid fa-arrow-rotate-right"></i>
+                      </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5 text-xs">
+                      <button id="video-btn-download" class="py-2 px-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold flex items-center justify-center gap-1.5 shadow transition-all active:scale-95">
+                        <i class="fa-solid fa-download"></i>
+                        <span>تحميل الفيديو</span>
+                      </button>
+                      <button id="video-btn-share" class="py-2 px-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-bold flex items-center justify-center gap-1.5 shadow transition-all active:scale-95">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>مشاركة ستوري</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview & Export Action Bar -->
+            <div class="w-full max-w-[340px] flex flex-col gap-2">
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Live Preview Button -->
+                <button id="video-btn-preview" class="py-2 px-3 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/90 border border-emerald-500/30 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow">
+                  <i class="fa-solid fa-play text-xs text-amber-400"></i>
+                  <span>معاينة حية</span>
+                </button>
+                <button id="video-btn-stop-preview" class="py-2 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow hidden">
+                  <i class="fa-solid fa-stop text-xs"></i>
+                  <span>إيقاف المعاينة</span>
+                </button>
+
+                <!-- Audio Monitor Toggle -->
+                <label class="py-2 px-2 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-[10px] sm:text-[11px] text-[var(--text-secondary)] font-semibold flex items-center justify-center gap-1.5 cursor-pointer select-none">
+                  <input type="checkbox" id="video-monitor-audio" class="accent-amber-500 rounded" checked>
+                  <span>سماع الصوت</span>
+                </label>
+
+                <!-- TikTok & Reels Safe Zone Toggle -->
+                <label class="py-2 px-2 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-[10px] sm:text-[11px] text-[var(--text-secondary)] hover:text-amber-300 hover:border-amber-500/30 font-semibold flex items-center justify-center gap-1.5 cursor-pointer select-none transition-colors" title="إظهار حدود مناطق الأمان لتيك توك والريلز لضمان عدم حجب النص">
+                  <input type="checkbox" id="video-safezone-toggle" class="accent-amber-500 rounded">
+                  <i class="fa-solid fa-crosshairs text-[10px] text-amber-400"></i>
+                  <span>منطقة الأمان</span>
+                </label>
+              </div>
+
+              <!-- Main Generate & Export Button -->
+              <button id="video-btn-generate" class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl hover:shadow-amber-500/20 transition-all duration-300 transform active:scale-95 border border-amber-300/40">
+                <i class="fa-solid fa-wand-magic-sparkles text-sm animate-bounce"></i>
+                <span>توليد وتصدير الفيديو القرآني</span>
+              </button>
+
+              <!-- Extra Action: Instant Poster / Wallpaper Export -->
+              <button id="video-btn-export-poster" type="button" class="w-full py-1.5 px-3 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/20 text-[11px] text-amber-300/90 font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95" title="حفظ اللوحة الحالية كصورة غلاف أو بوستر عالي الدقة">
+                <i class="fa-regular fa-image text-xs"></i>
+                <span>حفظ كصورة غلاف / بوستر عالي الدقة (PNG)</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Settings & Customizer Panel (lg:col-span-7 xl:col-span-7) -->
+          <div class="lg:col-span-7 flex flex-col gap-3">
+
+            <!-- V3.0 Pro: 1-Click Viral Presets Bar (قوالب جاهزة بضغطة واحدة) -->
+            <div class="p-3 rounded-2xl bg-gradient-to-l from-amber-500/15 via-emerald-950/60 to-emerald-950/80 border border-amber-500/35 space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <i class="fa-solid fa-bolt text-amber-400"></i>
+                  <span>قوالب احترافية جاهزة بضغطة واحدة (Viral Presets):</span>
+                </h3>
+                <span class="text-[9px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full">جديد V3</span>
+              </div>
+              <div id="video-viral-presets" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[11px]">
+                <button type="button" data-preset="global_reel" class="viral-preset-btn py-1.5 px-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold flex items-center justify-center gap-1.5 hover:bg-amber-500 hover:text-slate-950 transition-all active:scale-95">
+                  <i class="fa-solid fa-globe text-[11px]"></i>
+                  <span>ريلز عالمي مترجم</span>
+                </button>
+                <button type="button" data-preset="kaaba_rain" class="viral-preset-btn py-1.5 px-2 rounded-xl bg-emerald-950/80 border border-emerald-500/25 text-slate-200 hover:border-amber-400 hover:text-amber-300 font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                  <i class="fa-solid fa-kaaba text-[11px] text-amber-400"></i>
+                  <span>خشوع الكعبة والمطر</span>
+                </button>
+                <button type="button" data-preset="sea_tafsir" class="viral-preset-btn py-1.5 px-2 rounded-xl bg-emerald-950/80 border border-emerald-500/25 text-slate-200 hover:border-amber-400 hover:text-amber-300 font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                  <i class="fa-solid fa-water text-[11px] text-cyan-400"></i>
+                  <span>سكينة البحر والتفسير</span>
+                </button>
+                <button type="button" data-preset="royal_gold" class="viral-preset-btn py-1.5 px-2 rounded-xl bg-emerald-950/80 border border-emerald-500/25 text-slate-200 hover:border-amber-400 hover:text-amber-300 font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                  <i class="fa-solid fa-crown text-[11px] text-amber-400"></i>
+                  <span>الزمرد الملكي الصافي</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Section 1: Aspect Ratio & Video Format -->
+            <div class="p-3 sm:p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 space-y-2.5">
+              <div class="flex items-center justify-between border-b border-emerald-500/15 pb-2">
+                <h3 class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-2 font-quran">
+                  <i class="fa-solid fa-crop-simple text-amber-400"></i>
+                  <span>١. أبعاد وشكل الفيديو</span>
+                </h3>
+                <span class="text-[10px] text-[var(--text-secondary)]">متوافق مع كل المنصات</span>
+              </div>
+
+              <!-- Aspect Ratio Segmented Control -->
+              <div class="grid grid-cols-3 gap-2" id="video-aspect-options">
+                <button type="button" data-ratio="vertical" class="video-ratio-btn active flex flex-col items-center justify-center py-2 px-2 rounded-xl bg-amber-500/15 border-2 border-amber-400 text-amber-300 text-xs font-bold transition-all">
+                  <i class="fa-solid fa-mobile-screen text-sm mb-1 text-amber-400"></i>
+                  <span>9:16 طولي</span>
+                  <span class="text-[9px] font-normal text-slate-300">ستوري / ريلز / تيكتوك</span>
+                </button>
+                <button type="button" data-ratio="square" class="video-ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl bg-emerald-950/70 border border-emerald-500/25 text-slate-300 hover:text-amber-300 text-xs font-bold transition-all">
+                  <i class="fa-regular fa-square text-sm mb-1 text-amber-400"></i>
+                  <span>1:1 مربع</span>
+                  <span class="text-[9px] font-normal text-slate-300">انستجرام / فيسبوك</span>
+                </button>
+                <button type="button" data-ratio="landscape" class="video-ratio-btn flex flex-col items-center justify-center py-2 px-2 rounded-xl bg-emerald-950/70 border border-emerald-500/25 text-slate-300 hover:text-amber-300 text-xs font-bold transition-all">
+                  <i class="fa-solid fa-tv text-sm mb-1 text-amber-400"></i>
+                  <span>16:9 عريض</span>
+                  <span class="text-[9px] font-normal text-slate-300">يوتيوب / شاشات</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Section 2: Surah & Verses Selection -->
+            <div class="p-3 sm:p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between border-b border-emerald-500/15 pb-2">
+                <h3 class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-2 font-quran">
+                  <i class="fa-solid fa-book-open text-amber-400"></i>
+                  <span>٢. اختيار السورة ونطاق الآيات</span>
+                </h3>
+                <span class="text-[10px] text-[var(--text-secondary)]">توليد متزامن مع التلاوة</span>
+              </div>
+
+              <!-- Surah Dropdown -->
+              <div>
+                <label class="block text-[11px] text-[var(--text-secondary)] font-semibold mb-1">السورة الكريمة:</label>
+                <div class="relative">
+                  <select id="video-surah-select" class="w-full bg-emerald-950/80 border border-amber-500/30 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 outline-none focus:border-amber-400 transition-colors cursor-pointer appearance-none">
+                    <!-- Populated via JS -->
+                  </select>
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 text-xs pointer-events-none">
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Verses Range Steppers -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <!-- From Ayah -->
+                <div class="bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/20">
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">من الآية رقم:</label>
+                  <div class="flex items-center justify-between gap-1">
+                    <button type="button" id="video-from-minus" class="video-stepper-btn" title="إنقاص">-</button>
+                    <input type="number" id="video-from-ayah" min="1" max="286" value="1" class="w-14 text-center bg-transparent text-amber-300 font-bold text-sm outline-none">
+                    <button type="button" id="video-from-plus" class="video-stepper-btn" title="زيادة">+</button>
+                  </div>
+                </div>
+
+                <!-- To Ayah -->
+                <div class="bg-emerald-950/60 p-2.5 rounded-xl border border-emerald-500/20">
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">إلى الآية رقم:</label>
+                  <div class="flex items-center justify-between gap-1">
+                    <button type="button" id="video-to-minus" class="video-stepper-btn" title="إنقاص">-</button>
+                    <input type="number" id="video-to-ayah" min="1" max="286" value="3" class="w-14 text-center bg-amber-400 text-slate-900 rounded font-bold text-sm outline-none">
+                    <button type="button" id="video-to-plus" class="video-stepper-btn" title="زيادة">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Range Selectors -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] text-[var(--text-secondary)]">تحديد سريع:</span>
+                <button type="button" id="video-quick-1" class="px-2 py-1 rounded-lg bg-emerald-950/80 hover:bg-amber-500/20 border border-emerald-500/25 text-[10px] font-bold text-amber-300 transition-all">آية واحدة</button>
+                <button type="button" id="video-quick-3" class="px-2 py-1 rounded-lg bg-emerald-950/80 hover:bg-amber-500/20 border border-emerald-500/25 text-[10px] font-bold text-amber-300 transition-all">٣ آيات</button>
+                <button type="button" id="video-quick-5" class="px-2 py-1 rounded-lg bg-emerald-950/80 hover:bg-amber-500/20 border border-emerald-500/25 text-[10px] font-bold text-amber-300 transition-all">٥ آيات</button>
+                <button type="button" id="video-quick-full" class="px-2 py-1 rounded-lg bg-emerald-950/80 hover:bg-amber-500/20 border border-emerald-500/25 text-[10px] font-bold text-amber-300 transition-all">السورة كاملة</button>
+              </div>
+
+              <!-- Selected Ayahs Range Summary Badge -->
+              <div id="video-range-summary" class="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 font-semibold flex items-center gap-2">
+                <!-- Populated via JS -->
+              </div>
+
+              <!-- Selected Ayahs Text Preview Box -->
+              <div>
+                <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">معاينة النص القرآني المختار:</label>
+                <div id="video-text-preview" class="p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/20 text-xs sm:text-sm font-quran-text leading-loose text-slate-100 max-h-24 overflow-y-auto playlist-scroll">
+                  جاري جلب الآيات الكريمة...
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: Reciter Selection (صوت الشيخ وانسيابية التلاوة) -->
+            <div class="p-3 sm:p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between border-b border-emerald-500/15 pb-2">
+                <h3 class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-2 font-quran">
+                  <i class="fa-solid fa-microphone-lines text-amber-400"></i>
+                  <span>٣. اختيار القارئ وهندسة الصوت</span>
+                </h3>
+                <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">40+ قارئ معتمد</span>
+              </div>
+
+              <div class="relative">
+                <select id="video-reciter-select" class="w-full bg-emerald-950/80 border border-amber-500/30 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 outline-none focus:border-amber-400 transition-colors cursor-pointer appearance-none">
+                  <!-- Populated via JS -->
+                </select>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 text-xs pointer-events-none">
+                  <i class="fa-solid fa-chevron-down"></i>
+                </span>
+              </div>
+
+              <!-- Audio Continuity Mode & Transitions -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-sliders text-amber-400 ml-1"></i>انسيابية انتقال الصوت بين الآيات:
+                  </label>
+                  <select id="video-continuity-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="seamless">تلاوة متصلة وسلسة (تلقائي بدون انقطاع)</option>
+                    <option value="natural">وقفة نفس طبيعية بين الآيات (~0.18 ث)</option>
+                    <option value="calm">وقفة هادئة متأنية (~0.38 ث)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-bezier-curve text-amber-400 ml-1"></i>نمط حركة وظهور الآيات:
+                  </label>
+                  <select id="video-transition-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="cinematic">انسيابي سينمائي (عمق وتكبير ناعم)</option>
+                    <option value="radiant">توهج إشعاعي وبزوغ مذهب</option>
+                    <option value="reverent">صعود وقور وثابت</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Visual Theme, Nature Motion Backgrounds & Customizer -->
+            <div class="p-3 sm:p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between border-b border-emerald-500/15 pb-2">
+                <h3 class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-2 font-quran">
+                  <i class="fa-solid fa-palette text-amber-400"></i>
+                  <span>٤. المظهر البصري وهوية الفيديو</span>
+                </h3>
+                <span class="text-[10px] text-amber-400 font-semibold" id="video-bg-mode-label">سمات ملكية وفيديوهات طبيعية</span>
+              </div>
+
+              <!-- Background Type Switcher: Royal Themes vs Motion Video Loops -->
+              <div class="space-y-2">
+                <div class="grid grid-cols-2 gap-1.5 p-1 bg-emerald-950/70 rounded-xl border border-emerald-500/20 text-xs font-bold">
+                  <button type="button" id="video-bg-tab-themes" class="py-1.5 px-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-gem text-[10px]"></i>
+                    <span>سمات ملكية (مذهبة)</span>
+                  </button>
+                  <button type="button" id="video-bg-tab-motion" class="py-1.5 px-2 rounded-lg text-[var(--text-secondary)] hover:text-amber-300 flex items-center justify-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-film text-[10px] text-amber-400"></i>
+                    <span>فيديو متحرك (طبيعة وبحر)</span>
+                  </button>
+                </div>
+
+                <!-- Themes List Container -->
+                <div id="video-theme-options-container" class="space-y-1">
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">اختر السمة الملكية:</label>
+                  <div id="video-theme-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <!-- Populated via JS -->
+                  </div>
+                </div>
+
+                <!-- Motion Videos Container -->
+                <div id="video-motion-options-container" class="hidden space-y-2">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-[10px] text-[var(--text-secondary)] font-semibold">اختر خلفية الفيديو المتحركة:</label>
+                    <span class="text-[9px] bg-emerald-900/60 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/20">مشاهد طبيعية خاشعة</span>
+                  </div>
+                  <div id="video-motion-options" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <!-- Populated via JS -->
+                  </div>
+
+                  <!-- Hidden Custom Video File Input -->
+                  <input type="file" id="video-custom-file-input" accept="video/mp4,video/webm,video/quicktime,video/*" class="hidden">
+                  <div id="video-custom-status" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                      <span class="truncate" id="video-custom-filename">تم تحميل الفيديو بنجاح</span>
+                    </div>
+                    <button type="button" id="video-btn-remove-custom" class="text-rose-400 hover:text-rose-300 text-xs px-1" title="إلغاء الفيديو المخصص">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ambient Spiritual Soundscape (مؤثرات السكينة الصوتية في خلفية الفيديو) -->
+              <div class="bg-emerald-950/50 p-2.5 rounded-2xl border border-emerald-500/20 space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="block text-[11px] font-bold text-amber-300">
+                    <i class="fa-solid fa-volume-low text-amber-400 ml-1"></i>مؤثرات السكينة بالخلفية (صوت بحر / مطر خفيف):
+                  </label>
+                  <span class="text-[9px] bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30 font-bold">اختياري</span>
+                </div>
+                
+                <div id="video-ambient-options" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+                  <button type="button" data-ambient="none" class="ambient-chip py-1.5 px-2 rounded-xl border border-amber-500/50 bg-amber-500/20 text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-microphone text-[10px]"></i>
+                    <span>تلاوة فقط</span>
+                  </button>
+                  <button type="button" data-ambient="rain" class="ambient-chip py-1.5 px-2 rounded-xl border border-emerald-500/20 bg-emerald-950/60 text-[var(--text-secondary)] hover:text-cyan-300 hover:border-cyan-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-cloud-showers-heavy text-cyan-400 text-[10px]"></i>
+                    <span>خرير مطر</span>
+                  </button>
+                  <button type="button" data-ambient="sea" class="ambient-chip py-1.5 px-2 rounded-xl border border-emerald-500/20 bg-emerald-950/60 text-[var(--text-secondary)] hover:text-sky-300 hover:border-sky-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-water text-sky-400 text-[10px]"></i>
+                    <span>أمواج بحر</span>
+                  </button>
+                  <button type="button" data-ambient="breeze" class="ambient-chip py-1.5 px-2 rounded-xl border border-emerald-500/20 bg-emerald-950/60 text-[var(--text-secondary)] hover:text-emerald-300 hover:border-emerald-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-wind text-emerald-400 text-[10px]"></i>
+                    <span>نسيم عليل</span>
+                  </button>
+                </div>
+
+                <div id="video-ambient-volume-container" class="hidden pt-1 space-y-1 bg-emerald-950/80 p-2 rounded-xl border border-emerald-500/15">
+                  <div class="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+                    <span class="flex items-center gap-1">
+                      <i class="fa-solid fa-sliders text-amber-400"></i>
+                      <span>مستوى صوت السكينة (خافت جداً للخشوع):</span>
+                    </span>
+                    <span id="video-ambient-volume-label" class="font-bold text-amber-400 text-xs">15%</span>
+                  </div>
+                  <input type="range" id="video-ambient-volume-slider" min="5" max="35" value="15" step="1" class="w-full accent-amber-400 h-1.5 bg-emerald-900 rounded-lg cursor-pointer">
+                </div>
+              </div>
+
+              <!-- Custom Dedication / Memorial Watermark Input -->
+              <div>
+                <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                  <i class="fa-solid fa-hand-holding-heart text-amber-400 ml-1"></i>إهداء أو صدقة جارية على الفيديو (اختياري):
+                </label>
+                <input type="text" id="video-dedication-input" placeholder="مثال: صدقة جارية عن روح والدي رحمه الله • إهداء لوالدتي" maxlength="60" class="w-full bg-emerald-950/80 border border-emerald-500/25 rounded-xl px-3 py-1.5 text-xs text-amber-200 placeholder-emerald-700/60 outline-none focus:border-amber-400 transition-colors">
+              </div>
+
+              <!-- Creator Options: Ayah Card Background, Subtitle/Tafsir & Visualizer Waveform Style -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-language text-amber-400 ml-1"></i>الترجمة أو التفسير بالفيديو (جديد):
+                  </label>
+                  <select id="video-subtitle-mode-select" class="w-full bg-emerald-950/80 border border-amber-500/35 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 font-bold outline-none cursor-pointer">
+                    <option value="none">الآية القرآنية فقط (بدون ترجمة)</option>
+                    <option value="en.sahih">مع الترجمة الإنجليزية (English Subtitle)</option>
+                    <option value="ar.muyassar">مع معنى الآية بالتفسير الميسر</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-square-full text-amber-400 ml-1"></i>خلفية بطاقة الآيات:
+                  </label>
+                  <select id="video-caption-style-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="frosted">صندوق زجاجي فاخر (Frosted Glass)</option>
+                    <option value="glow">وهج ذهبي روحاني (Golden Aura)</option>
+                    <option value="none">كلاسيكي حر (مباشر فوق الخلفية)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">
+                    <i class="fa-solid fa-chart-simple text-amber-400 ml-1"></i>شكل موجة الصوت التفاعلية:
+                  </label>
+                  <select id="video-visualizer-style-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="bars">أعمدة طيفية تفاعلية (Spectrum Bars)</option>
+                    <option value="wave">موجة انسيابية متصلة (Smooth Wave)</option>
+                    <option value="pulse">نبضات مركزية هادئة (Pulsing Aura)</option>
+                    <option value="hidden">إخفاء موجة الصوت</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Font Size & Quality Grid -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">حجم خط الآيات:</label>
+                  <select id="video-fontsize-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="auto">تلقائي متناسق (موصى به)</option>
+                    <option value="medium">متوسط</option>
+                    <option value="large">كبير وبارز</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[10px] text-[var(--text-secondary)] font-semibold mb-1">دقة الفيديو:</label>
+                  <select id="video-quality-select" class="w-full bg-emerald-950/80 border border-emerald-500/20 rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-primary)] font-bold outline-none cursor-pointer">
+                    <option value="720p">720p HD (سريع ومثالي للهواتف)</option>
+                    <option value="1080p">1080p Full HD (فائق الدقة)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Visual Effects Toggles -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-[var(--text-secondary)]">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="video-particles-toggle" class="accent-amber-500 rounded" checked>
+                  <span>ذرات ذهبية نورانية</span>
+                </label>
+
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="video-wave-toggle" class="accent-amber-500 rounded" checked>
+                  <span>موجة الصوت التفاعلية</span>
+                </label>
+
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="video-basmala-toggle" class="accent-amber-500 rounded" checked>
+                  <span>البسملة في الترويسة</span>
+                </label>
+              </div>
+
+              <!-- Footer Branding Notice -->
+              <div class="pt-2 border-t border-emerald-500/10 flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+                <span class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-shield-halved text-amber-400"></i>
+                  <span>شعار وهوية المنصة مدمج تلقائياً بأسفل الفيديو: <strong>quran.parotcorp.com</strong></span>
+                </span>
+                <span class="text-amber-400/80 font-bold">100% Client-Side</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>`;
   function initVideoStudio() {
     if (videoStudioInitialized) return;
+    const viewRoot = document.getElementById('video-studio-view');
+    if (viewRoot && !viewRoot.querySelector('#video-canvas')) {
+      viewRoot.innerHTML = VIDEO_STUDIO_MARKUP;
+    }
     cacheDOMElements();
+    if (els.btnBackPlayer) {
+      els.btnBackPlayer.addEventListener('click', () => {
+        if (typeof window.switchView === 'function') window.switchView('player');
+      });
+    }
     if (!els.view || !els.canvas) return;
     videoStudioInitialized = true;
 
