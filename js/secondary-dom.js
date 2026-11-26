@@ -998,6 +998,67 @@ window.__QURAN_SECONDARY_DOM = {
             <span id="bg-audio-vol-label" class="text-[11px] text-amber-400 font-bold min-w-[32px] tabular-nums">10%</span>
           </div>
         </div>
+
+        <p class="text-[10px] text-emerald-300/85 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 flex items-center gap-2">
+          <i class="fa-solid fa-tablet-screen-button text-amber-400 flex-shrink-0"></i>
+          <span>على أجهزة الآيباد والتابلت: تتحول الشاشة تلقائياً لوضع التأمل الصافي بالخلفية فقط مع زر التشغيل/الإيقاف وزر إخفاء الخلفية للعودة.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       V4.1 MODAL: SPATIAL SURROUND MOSQUE RESONANCE SETTINGS (للسماعات)
+       ====================================================================== -->
+  <div id="spatial-audio-modal" class="fixed inset-0 z-50 v2-modal-backdrop hidden flex items-center justify-center p-3 sm:p-5">
+    <div style="background-color: var(--dropdown-bg, #03221a);" class="solid-dropdown-panel rounded-3xl w-full max-w-md flex flex-col overflow-hidden border border-amber-500/35 shadow-2xl animate-slide-in">
+      <div class="px-4 py-3 border-b border-emerald-500/15 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+            <i class="fa-solid fa-headphones-simple text-sm"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm sm:text-base text-amber-300 font-quran">الصوت المحيطي الحرمي (للسماعات)</h4>
+            <p class="text-[10px] text-[var(--text-secondary)]">رنين دافئ يحيط بك من كل الاتجاهات بثبات ودون دوران مزعج</p>
+          </div>
+        </div>
+        <button id="btn-close-spatial-modal" type="button" class="w-8 h-8 rounded-xl bg-emerald-950/60 hover:bg-red-500/20 text-[var(--text-secondary)] hover:text-red-400 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-3.5 text-xs overflow-y-auto max-h-[80vh]">
+        <label class="p-3 rounded-2xl bg-emerald-950/60 border border-amber-500/25 flex items-center justify-between gap-2 cursor-pointer select-none">
+          <span class="font-bold text-amber-300 flex items-center gap-2">
+            <i class="fa-solid fa-wave-square"></i>
+            <span>تفعيل الصوت المحيطي حول الرأس</span>
+          </span>
+          <input type="checkbox" id="spatial-modal-enable-toggle" class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
+        </label>
+
+        <div>
+          <span class="block font-bold text-[var(--text-primary)] mb-2">طابع الرنين والمكان (بثبات بدون حركة يمين/يسار):</span>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-spatial-profile="gentle" class="spatial-profile-card p-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 text-center cursor-pointer transition-all">
+              <div class="font-bold text-[var(--text-primary)] text-xs mb-0.5">مسجد هادئ</div>
+              <div class="text-[10px] text-[var(--text-secondary)]">صدى خفيف ودافئ</div>
+            </button>
+            <button type="button" data-spatial-profile="haram" class="spatial-profile-card active p-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 text-center cursor-pointer transition-all">
+              <div class="font-bold text-amber-300 text-xs mb-0.5">رحاب الحرم</div>
+              <div class="text-[10px] text-[var(--text-secondary)]">محيطي متوازن</div>
+            </button>
+            <button type="button" data-spatial-profile="grand" class="spatial-profile-card p-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 text-center cursor-pointer transition-all">
+              <div class="font-bold text-[var(--text-primary)] text-xs mb-0.5">قبة واسعة</div>
+              <div class="text-[10px] text-[var(--text-secondary)]">رنين عميق ورحب</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-emerald-950/55 border border-emerald-500/20 flex items-center gap-2.5">
+          <span class="text-[11px] text-[var(--text-secondary)] flex-shrink-0">عمق الصدى:</span>
+          <input type="range" id="spatial-wet-slider" class="range-slider flex-1 cursor-pointer" value="56" min="25" max="85" step="1">
+          <span id="spatial-wet-label" class="text-[11px] text-amber-400 font-bold min-w-[34px] tabular-nums">56%</span>
+        </div>
       </div>
     </div>
   </div>
@@ -1229,6 +1290,23 @@ window.__QURAN_SECONDARY_DOM = {
             <div class="text-right">
               <div class="font-bold text-emerald-300">خلفية فيديو بحر / أشجار</div>
               <div class="text-[10px] text-[var(--text-secondary)]">عرض بطيء طويل + صوت طبيعة خفيف بالخلفية</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-left text-gray-500 text-[10px]"></i>
+        </button>
+
+        <!-- Tool 3c: Spatial Mosque Surround Sound for Headphones -->
+        <button id="m-tool-spatial" class="w-full py-2.5 px-3 rounded-2xl bg-emerald-950/60 hover:bg-amber-500/20 border border-emerald-500/20 text-[var(--text-primary)] font-bold flex items-center justify-between transition-all active:scale-95">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <i class="fa-solid fa-headphones-simple"></i>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                <span>الصوت المحيطي الحرمي (للسماعات)</span>
+                <span id="m-tool-spatial-badge" class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-[var(--text-secondary)] border border-emerald-500/25">معطل</span>
+              </div>
+              <div class="text-[10px] text-[var(--text-secondary)]">رنين دافئ يحيط بك بثبات كأنك داخل الحرم</div>
             </div>
           </div>
           <i class="fa-solid fa-chevron-left text-gray-500 text-[10px]"></i>

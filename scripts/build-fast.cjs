@@ -52,7 +52,8 @@ function buildIconsCss() {
     'list-ol', 'circle-notch', 'circle-dot', 'circle-down', 'check-double',
     'graduation-cap', 'arrows-spin', 'forward-step', 'backward-step',
     'rotate-left', 'rotate-right', 'repeat', 'shuffle',
-    'volume-high', 'share-nodes', 'headphones-simple', 'film', 'sliders', 'moon'
+    'volume-high', 'share-nodes', 'headphones-simple', 'film', 'sliders', 'moon',
+    'eye-slash'
   ]);
 
   const baseRules = [
@@ -90,10 +91,14 @@ function buildIconsCss() {
     }
   }
   const coreCss = coreChunks.join('');
-  const extraCss = extraChunks.join('');
+  const secCss = fs.existsSync(path.join(ROOT, 'css/secondary.css'))
+    ? fs.readFileSync(path.join(ROOT, 'css/secondary.css'), 'utf8')
+    : '';
+  const extraRaw = extraChunks.join('') + '\n' + secCss;
+  fs.writeFileSync('/tmp/extra_app.css', extraRaw);
+  execSync('npx --yes esbuild /tmp/extra_app.css --minify --outfile="' + path.join(ROOT, 'css/icons-extra.min.css') + '"', { stdio: 'inherit' });
   fs.writeFileSync(path.join(ROOT, 'css/icons.min.css'), coreCss);
-  fs.writeFileSync(path.join(ROOT, 'css/icons-extra.min.css'), extraCss);
-  console.log(`Generated core icons (${coreChunks.length - 2} icons, ${(coreCss.length / 1024).toFixed(1)} KB) + extra icons (${extraChunks.length} rules, ${(extraCss.length / 1024).toFixed(1)} KB)`);
+  console.log(`Generated core icons (${coreChunks.length - 2} icons, ${(coreCss.length / 1024).toFixed(1)} KB) + deferred css/icons-extra.min.css`);
   return coreCss;
 }
 
@@ -130,7 +135,8 @@ execSync(`npx --yes esbuild /tmp/app_bundle_src.js --minify --charset=utf8 --out
 
 const secBundleSrc = [
   fs.readFileSync(path.join(ROOT, 'js/v2-data.js'), 'utf8'),
-  fs.readFileSync(path.join(ROOT, 'js/secondary-dom.js'), 'utf8')
+  fs.readFileSync(path.join(ROOT, 'js/secondary-dom.js'), 'utf8'),
+  fs.readFileSync(path.join(ROOT, 'js/secondary-logic.js'), 'utf8')
 ].join('\n;\n');
 fs.writeFileSync('/tmp/secondary_bundle_src.js', secBundleSrc);
 execSync(`npx --yes esbuild /tmp/secondary_bundle_src.js --minify --charset=utf8 --outfile="${path.join(ROOT, 'js/secondary.min.js')}"`, { stdio: 'inherit' });

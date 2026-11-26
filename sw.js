@@ -1,16 +1,16 @@
 // Service Worker for منصة القرآن الكريم
 // Enables instant offline loading, asset caching, and resilience on poor connections.
 
-const CACHE_NAME = 'quran-platform-v4.0';
+const CACHE_NAME = 'quran-platform-v4.1';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './favicon.ico?v=4.0',
   './assets/logo.svg?v=4.0',
-  './js/app.min.js?v=4.0',
-  './js/secondary.min.js?v=4.0',
-  './css/icons-extra.min.css?v=4.0',
+  './js/app.min.js?v=4.1',
+  './js/secondary.min.js?v=4.1',
+  './css/icons-extra.min.css?v=4.1',
   './assets/fonts/tajawal-400-ar.woff2',
   './assets/fonts/tajawal-700-ar.woff2',
   './assets/favicon-32.png?v=4.0',

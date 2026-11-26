@@ -215,32 +215,19 @@ document.addEventListener('DOMContentLoaded', () => {
     note: "اللهم اغفر لموتانا وموتى المسلمين واجعل قبورهم روضات من رياض الجنة وأسكنهم الفردوس الأعلى"
   };
   let memorialRoundCounter = 0;
-  let activeMemorialDhikrIdx = 0;
   let isTasbeehSoundEnabled = localStorage.getItem('quran_tasbeeh_sound') !== 'false';
-  let tasbeehAudioCtx = null;
-  let modalSelectedGender = 'm';
   let savedMemorials = safeJsonParse('quran_saved_memorials', []);
-  let currentMemorialCardBlob = null;
-  let currentMemorialCardFile = null;
 
   // V3.0 Golden Edition State Variables (Declared before init() to avoid TDZ)
   let mushafInlineTafsirEdition = localStorage.getItem('quran_inline_tafsir') || 'none';
   let mushafHifzMode = 'off';
   let hifzRevealedCount = 0;
   const surahTafsirCache = {};
-  let prayerCountdownTimer = null;
-  let currentPrayerTimings = null;
-
-  // Hadr Revision Hub State Variables
-  let hadrInitialized = false;
+  // Hadr Revision Shared Stubs (Full engine mounted lazily in secondary-logic.js)
   let currentHadrReciterId = 'ahmed_deiban';
   let currentHadrSurahId = 1;
-  let currentHadrMode = 'surahs';
   let hadrPlaybackSpeed = 1.0;
-  let hadrRepeatMode = '1';
-  let hadrRepeatCountLeft = 1;
-  let hadrPlaylistQueue = [];
-  let hadrQueueIndex = 0;
+  let secApi = {};
 
   // V4.0 Fast Startup, Playlist Delegation, Reciter Modal & Slow-Motion BG State
   let reciterModalFilter = 'all';
@@ -265,6 +252,31 @@ document.addEventListener('DOMContentLoaded', () => {
   let bgAudioVol = parseInt(localStorage.getItem('quran_bg_audio_vol') || '10', 10) || 10;
   let bgHandoffDone = false;
   let bgSceneToken = 0;
+
+  // V4.1 Tablet / iPad Cinema Immersion & Spatial Haram Surround Audio State
+  let tabletImmersionActive = false;
+  let tabletRestoreTimer = null;
+  let spatialEnabled = false; // Strictly OFF by default as requested
+  let spatialProfile = localStorage.getItem('quran_spatial_profile') || 'haram';
+  let spatialWetLevel = parseInt(localStorage.getItem('quran_spatial_wet') || '56', 10) || 56;
+  const spatialSourceMap = new WeakMap();
+  const spatialCorsCache = new Map();
+  let spatialGraphReady = false;
+  let spatialInputBus = null;
+  let spatialDryGain = null;
+  let spatialWetGain = null;
+  let spatialHaloGain = null;
+  let spatialConvolver = null;
+  let spatialMasterLimiter = null;
+  const CORS_SAFE_AUDIO_HOSTS = [
+    'cdn.mp3quran.net',
+    'server11.mp3quran.net',
+    'download.quranicaudio.com',
+    'media.way2quran.com',
+    'everyayah.com',
+    'archive.org',
+    'qurango.net'
+  ];
 
   // --- Initial Setup ---
   init();
@@ -376,6 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.__hydrateSecondaryDom();
     }
     cacheSecondaryDomRefs();
+    if (typeof window.__mountSecondaryLogic === 'function') {
+      secApi = window.__mountSecondaryLogic(__secBridge) || {};
+    }
     populateMushafSurahSelect();
     applyMushafFontSize();
     initReciterPickerModal();
@@ -403,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!secondaryLoadPromise) {
       secondaryLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/secondary.min.js?v=4.0';
+        script.src = 'js/secondary.min.js?v=4.1';
         script.onload = resolve;
         script.onerror = reject;
         document.body.appendChild(script);
@@ -524,6 +539,13 @@ document.addEventListener('DOMContentLoaded', () => {
       switchView(currentView, false);
     } else {
       switchView(currentView, false);
+    }
+    if (activeBgSceneId !== 'off') {
+      if (isTabletDevice()) {
+        if (!tabletImmersionActive) enterTabletImmersion();
+      } else if (tabletImmersionActive) {
+        exitTabletImmersionWithTransition(false);
+      }
     }
   }
 
@@ -743,6 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (miniTimeDisplay) miniTimeDisplay.innerText = `${formatTime(cur)} / ${formatTime(dur)}`;
       if (miniProgressFill) miniProgressFill.style.width = `${pct}%`;
     }
+    syncTabletImmersionPlayState();
   }
 
   function syncMiniPlayerVisibility(targetView = currentView) {
@@ -1296,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!videoStudioLoadPromise) {
       videoStudioLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/video-studio.min.js?v=4.0';
+        script.src = 'js/video-studio.min.js?v=4.1';
         script.onload = resolve;
         script.onerror = reject;
         document.body.appendChild(script);
@@ -1406,6 +1429,7 @@ document.addEventListener('DOMContentLoaded', () => {
       radioCandidateIndex++;
       if (radioCandidateIndex < radioUrls.length) {
         currentAudioLoadToken++;
+        prepareElementCorsForSpatial(audio, radioUrls[radioCandidateIndex]);
         audio.src = radioUrls[radioCandidateIndex];
         audio.playbackRate = 1.0;
         if (isPlaying) {
@@ -1425,6 +1449,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (audio.currentTime > 2 && isFinite(audio.currentTime)) {
         pendingResumeTime = audio.currentTime;
       }
+      prepareElementCorsForSpatial(audio, nextCand.url);
       audio.src = nextCand.url;
       audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
 
@@ -1479,17 +1504,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (offlineBlob) {
           const objUrl = URL.createObjectURL(offlineBlob);
           activeOfflineObjectUrl = objUrl;
+          prepareElementCorsForSpatial(audio, objUrl);
           audio.src = objUrl;
           audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
           if (shouldPlay) playAudio();
         } else {
           offlineAudioIndex.delete(getOfflineCacheKey(effReciter.id, surah.id));
+          prepareElementCorsForSpatial(audio, audioInfo.url);
           audio.src = audioInfo.url;
           audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
           if (shouldPlay) playAudio(); else pauseAudio();
         }
       });
     } else {
+      prepareElementCorsForSpatial(audio, audioInfo.url);
       audio.src = audioInfo.url;
       audio.playbackRate = parseFloat(speedSelect ? speedSelect.value : 1.0);
     }
@@ -1658,6 +1686,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (spatialGraphReady && audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
     isPlaying = true;
     const token = currentAudioLoadToken;
     if (audio.readyState < 3) {
@@ -1691,6 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Equalizer inside Active Playlist Card
         updatePlaylistHighlight();
+        syncTabletImmersionPlayState();
 
         // Update Media Session State for Lock Screen
         if ('mediaSession' in navigator) {
@@ -1737,6 +1769,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Equalizer inside Active Playlist Card
     updatePlaylistHighlight();
+    syncTabletImmersionPlayState();
 
     // Update Media Session State for Lock Screen
     if ('mediaSession' in navigator) {
@@ -2845,7 +2878,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Early click hydration replay if user interacts before idle load finishes
     ['btn-open-reciter-modal', 'btn-bg-scene', 'btn-bg-scene-mobile', 'btn-sleep-ambience',
-      'btn-player-radio', 'btn-header-radio', 'btn-open-player-tools', 'btn-player-memorize', 'btn-ab-loop'].forEach(btnId => {
+      'btn-player-radio', 'btn-header-radio', 'btn-open-player-tools', 'btn-player-memorize', 'btn-ab-loop',
+      'btn-spatial-settings'].forEach(btnId => {
       const el = document.getElementById(btnId);
       if (!el) return;
       el.addEventListener('click', (e) => {
@@ -2857,6 +2891,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const svcBtn = document.getElementById('btn-services-menu');
     if (svcBtn) svcBtn.addEventListener('click', () => { if (!secondaryReady) ensureSecondaryLoaded(); });
+
+    // V4.1 Instant Core Controls (Work immediately at first paint without waiting for secondary DOM)
+    initSpatialAudioQuickControls();
+    initTabletImmersionController();
   }
 
   function attachSecondaryListeners() {
@@ -2991,6 +3029,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3b. Slow-Motion Nature Video Background & Soft Audio Controller (V4.0)
     initAmbientBgController();
+    initSpatialAudioModalControls();
 
     // 4. 24/7 Live Quran Radio Modal
     const radioModal = document.getElementById('radio-modal');
@@ -3342,6 +3381,20 @@ document.addEventListener('DOMContentLoaded', () => {
         closePlayerTools();
         const bgModal = document.getElementById('bg-scene-modal');
         if (bgModal) bgModal.classList.remove('hidden');
+      });
+    }
+
+    const mToolSpatial = document.getElementById('m-tool-spatial');
+    if (mToolSpatial) {
+      mToolSpatial.addEventListener('click', () => {
+        closePlayerTools();
+        const spModal = document.getElementById('spatial-audio-modal');
+        if (spModal) {
+          syncSpatialAudioUI();
+          spModal.classList.remove('hidden');
+        } else {
+          toggleSpatialAudio();
+        }
       });
     }
 
@@ -4242,7 +4295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     extraIconsRequested = true;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'css/icons-extra.min.css?v=4.0';
+    link.href = 'css/icons-extra.min.css?v=4.1';
     document.head.appendChild(link);
   }
   window.addEventListener('load', () => {
@@ -4372,6 +4425,471 @@ document.addEventListener('DOMContentLoaded', () => {
     ambienceSourceNodes.push(whiteNoise);
   }
 
+  // --- V4.1 Tablet / iPad Immersion Mode & Spatial Haram Surround Engine ---
+  function isTabletDevice() {
+    const ua = navigator.userAgent || '';
+    const isIpadUA = /iPad|Tablet|PlayBook|Silk/i.test(ua);
+    const isIpadOS = /Macintosh/i.test(ua) && (navigator.maxTouchPoints || 0) > 1;
+    const isAndroidTablet = /Android/i.test(ua) && !/Mobile/i.test(ua);
+    const w = window.innerWidth || 0;
+    const h = window.innerHeight || 0;
+    const minSide = Math.min(w, h);
+    const maxSide = Math.max(w, h);
+    const isCoarseTouch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 1;
+    const isTouchTabletScreen = isCoarseTouch && minSide >= 580 && maxSide >= 800 && w >= 600 && w <= 1400;
+    return Boolean(isIpadUA || isIpadOS || isAndroidTablet || isTouchTabletScreen);
+  }
+  window.isTabletDevice = isTabletDevice;
+
+  function syncTabletImmersionPlayState() {
+    const iconEl = document.getElementById('immersion-play-icon');
+    const labelEl = document.getElementById('immersion-play-label');
+    if (!iconEl || !labelEl) return;
+    const hadrAudioEl = getActiveHadrAudio();
+    const activePlaying = activeMiniEngine === 'hadr'
+      ? Boolean(hadrAudioEl && !hadrAudioEl.paused)
+      : Boolean(isPlaying || (audio && !audio.paused));
+    iconEl.className = activePlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+    labelEl.innerText = activePlaying ? 'إيقاف' : 'تشغيل';
+  }
+
+  function enterTabletImmersion() {
+    if (activeBgSceneId === 'off' || !isTabletDevice()) return;
+    clearTimeout(tabletRestoreTimer);
+    document.body.classList.remove('tablet-immersion-restoring');
+    document.body.classList.add('tablet-bg-immersion');
+    tabletImmersionActive = true;
+    const hud = document.getElementById('tablet-immersion-hud');
+    if (hud) hud.setAttribute('aria-hidden', 'false');
+    syncTabletImmersionPlayState();
+  }
+  window.enterTabletImmersion = enterTabletImmersion;
+
+  function exitTabletImmersionWithTransition(hideBgAlso = true) {
+    if (!tabletImmersionActive && !document.body.classList.contains('tablet-bg-immersion')) {
+      if (hideBgAlso && activeBgSceneId !== 'off') {
+        setAmbientBackgroundScene('off', { persist: true, silent: true });
+      }
+      return;
+    }
+    clearTimeout(tabletRestoreTimer);
+    tabletImmersionActive = false;
+    const hud = document.getElementById('tablet-immersion-hud');
+    if (hud) hud.setAttribute('aria-hidden', 'true');
+    // Staggered one-by-one smooth restore transition back to player view and controls
+    document.body.classList.add('tablet-immersion-restoring');
+    document.body.classList.remove('tablet-bg-immersion');
+    if (hideBgAlso && activeBgSceneId !== 'off') {
+      setTimeout(() => {
+        setAmbientBackgroundScene('off', { persist: true, silent: false });
+      }, 140);
+    }
+    tabletRestoreTimer = setTimeout(() => {
+      document.body.classList.remove('tablet-immersion-restoring');
+    }, 1350);
+  }
+  window.exitTabletImmersionWithTransition = exitTabletImmersionWithTransition;
+
+  function initTabletImmersionController() {
+    const btnPlay = document.getElementById('btn-immersion-play');
+    const btnHideBg = document.getElementById('btn-immersion-hide-bg');
+    if (btnPlay) {
+      btnPlay.addEventListener('click', () => {
+        if (activeMiniEngine === 'hadr') {
+          const hadrAudioEl = getActiveHadrAudio();
+          if (!hadrAudioEl || !hadrAudioEl.getAttribute('src')) {
+            playHadrSurah(currentHadrSurahId, true);
+          } else if (hadrAudioEl.paused) {
+            if (spatialGraphReady && audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+            hadrAudioEl.play().catch(() => {});
+          } else {
+            hadrAudioEl.pause();
+          }
+        } else {
+          togglePlayPause();
+        }
+        syncTabletImmersionPlayState();
+      });
+    }
+    if (btnHideBg) {
+      btnHideBg.addEventListener('click', () => {
+        exitTabletImmersionWithTransition(true);
+      });
+    }
+    syncTabletImmersionPlayState();
+  }
+
+  function ensureSharedAudioCtx() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function isCorsAudioUrlKnownSafe(url) {
+    if (!url) return false;
+    if (url.startsWith('blob:') || url.startsWith('data:')) return true;
+    try {
+      const u = new URL(url, window.location.href);
+      if (u.origin === window.location.origin) return true;
+      return CORS_SAFE_AUDIO_HOSTS.some(h => u.hostname === h || u.hostname.endsWith('.' + h));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function probeCorsAudioSupport(url) {
+    if (!url) return false;
+    if (spatialCorsCache.has(url)) return spatialCorsCache.get(url);
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const tid = controller ? setTimeout(() => controller.abort(), 2400) : null;
+    try {
+      const resp = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        headers: { Range: 'bytes=0-1' },
+        signal: controller ? controller.signal : undefined
+      });
+      const ok = resp.ok || resp.status === 206;
+      spatialCorsCache.set(url, ok);
+      return ok;
+    } catch (e) {
+      spatialCorsCache.set(url, false);
+      return false;
+    } finally {
+      if (tid) clearTimeout(tid);
+    }
+  }
+
+  function prepareElementCorsForSpatial(el, url) {
+    if (!el || !url) return;
+    if (spatialEnabled || spatialSourceMap.has(el)) {
+      el.crossOrigin = 'anonymous';
+    } else if (el.hasAttribute('crossorigin')) {
+      el.removeAttribute('crossorigin');
+    }
+  }
+
+  const SPATIAL_PROFILE_CFG = {
+    gentle: { label: 'مسجد هادئ',  duration: 1.75, decay: 3.1, preDelayMs: 18, wetMult: 0.62, haloMult: 0.24 },
+    haram:  { label: 'رحاب الحرم', duration: 2.75, decay: 2.4, preDelayMs: 22, wetMult: 0.96, haloMult: 0.36 },
+    grand:  { label: 'قبة واسعة',  duration: 3.60, decay: 1.9, preDelayMs: 28, wetMult: 1.24, haloMult: 0.44 }
+  };
+
+  function createSpatialImpulseBuffer(ctx, profileKey = 'haram') {
+    const cfg = SPATIAL_PROFILE_CFG[profileKey] || SPATIAL_PROFILE_CFG.haram;
+    const rate = ctx.sampleRate || 44100;
+    const length = Math.max(rate, Math.floor(rate * cfg.duration));
+    const buffer = ctx.createBuffer(2, length, rate);
+    const preDelaySamples = Math.floor(rate * (cfg.preDelayMs / 1000));
+
+    // Stereo decorrelated early reflection timings (non-rotating stationary acoustic chamber)
+    const earlyL = [19, 27, 37, 48, 61, 74, 89, 105];
+    const earlyR = [23, 31, 42, 54, 67, 81, 96, 112];
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      const reflections = ch === 0 ? earlyL : earlyR;
+      reflections.forEach((ms, idx) => {
+        const tapPos = Math.floor(rate * (ms / 1000));
+        if (tapPos < length) {
+          const sign = (idx + ch) % 2 === 0 ? 1 : -1;
+          data[tapPos] += sign * (0.28 * Math.pow(0.84, idx));
+        }
+      });
+
+      let lp = 0;
+      const tailLen = Math.max(1, length - preDelaySamples);
+      for (let i = preDelaySamples; i < length; i++) {
+        const progress = (i - preDelaySamples) / tailLen;
+        const env = Math.pow(1 - progress, cfg.decay);
+        const smoothAttack = Math.min(1, (i - preDelaySamples) / Math.max(1, rate * 0.045));
+        const dampCoeff = 0.62 + progress * 0.28; // Progressively warmer tail like marble/domes
+        const white = (Math.random() * 2 - 1) * 0.11;
+        lp = lp * dampCoeff + white * (1 - dampCoeff);
+        data[i] += lp * env * smoothAttack;
+      }
+    }
+    return buffer;
+  }
+
+  function ensureSpatialGraphReady() {
+    const ctx = ensureSharedAudioCtx();
+    if (!ctx) return false;
+    if (!spatialGraphReady) {
+      spatialInputBus = ctx.createGain();
+      spatialDryGain = ctx.createGain();
+      spatialWetGain = ctx.createGain();
+      spatialHaloGain = ctx.createGain();
+      spatialDryGain.gain.value = 1.0;
+      spatialWetGain.gain.value = 0.0001;
+      spatialHaloGain.gain.value = 0.0001;
+
+      const wetHP = ctx.createBiquadFilter();
+      wetHP.type = 'highpass';
+      wetHP.frequency.value = 150;
+
+      const wetLP = ctx.createBiquadFilter();
+      wetLP.type = 'lowpass';
+      wetLP.frequency.value = 4600;
+
+      spatialConvolver = ctx.createConvolver();
+      spatialConvolver.normalize = true;
+      spatialConvolver.buffer = createSpatialImpulseBuffer(ctx, spatialProfile);
+
+      // Stationary Stereo Haas Envelopment (no left-right spinning)
+      const splitter = ctx.createChannelSplitter(2);
+      const merger = ctx.createChannelMerger(2);
+      const delayL = ctx.createDelay(0.1);
+      const delayR = ctx.createDelay(0.1);
+      delayL.delayTime.value = 0.013;
+      delayR.delayTime.value = 0.019;
+      const crossLP = ctx.createBiquadFilter();
+      crossLP.type = 'lowpass';
+      crossLP.frequency.value = 2800;
+
+      spatialMasterLimiter = ctx.createDynamicsCompressor();
+      spatialMasterLimiter.threshold.value = -2.0;
+      spatialMasterLimiter.knee.value = 8.0;
+      spatialMasterLimiter.ratio.value = 4.0;
+      spatialMasterLimiter.attack.value = 0.004;
+      spatialMasterLimiter.release.value = 0.14;
+
+      spatialInputBus.connect(spatialDryGain);
+      spatialDryGain.connect(spatialMasterLimiter);
+
+      spatialInputBus.connect(wetHP);
+      wetHP.connect(wetLP);
+      wetLP.connect(spatialConvolver);
+      spatialConvolver.connect(spatialWetGain);
+      spatialWetGain.connect(spatialMasterLimiter);
+
+      wetLP.connect(splitter);
+      splitter.connect(delayL, 0);
+      splitter.connect(delayR, 1);
+      delayR.connect(merger, 0, 0);
+      delayL.connect(merger, 0, 1);
+      merger.connect(crossLP);
+      crossLP.connect(spatialHaloGain);
+      spatialHaloGain.connect(spatialMasterLimiter);
+
+      spatialMasterLimiter.connect(ctx.destination);
+      spatialGraphReady = true;
+    }
+    return true;
+  }
+
+  function applySpatialGains(enabled) {
+    if (!spatialGraphReady || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const cfg = SPATIAL_PROFILE_CFG[spatialProfile] || SPATIAL_PROFILE_CFG.haram;
+    const depth = Math.max(0.2, Math.min(0.9, spatialWetLevel / 100));
+    const dryTarget = enabled ? 0.85 : 1.0;
+    const wetTarget = enabled ? Math.max(0.05, depth * cfg.wetMult) : 0.0001;
+    const haloTarget = enabled ? Math.max(0.02, depth * cfg.haloMult) : 0.0001;
+
+    spatialDryGain.gain.cancelScheduledValues(now);
+    spatialWetGain.gain.cancelScheduledValues(now);
+    spatialHaloGain.gain.cancelScheduledValues(now);
+    spatialDryGain.gain.setValueAtTime(spatialDryGain.gain.value, now);
+    spatialWetGain.gain.setValueAtTime(spatialWetGain.gain.value, now);
+    spatialHaloGain.gain.setValueAtTime(spatialHaloGain.gain.value, now);
+    spatialDryGain.gain.linearRampToValueAtTime(dryTarget, now + 0.34);
+    spatialWetGain.gain.linearRampToValueAtTime(wetTarget, now + 0.38);
+    spatialHaloGain.gain.linearRampToValueAtTime(haloTarget, now + 0.38);
+  }
+
+  async function attachMediaElementToSpatialGraph(el) {
+    if (!el) return false;
+    const curSrc = el.getAttribute('src') || '';
+    if (curSrc && !curSrc.startsWith('blob:') && !curSrc.startsWith('data:')) {
+      let corsOk = isCorsAudioUrlKnownSafe(curSrc);
+      if (!corsOk) corsOk = await probeCorsAudioSupport(curSrc);
+      if (!corsOk) return false;
+      if (el.crossOrigin !== 'anonymous') {
+        const wasPlaying = !el.paused;
+        const savedPos = (isFinite(el.currentTime) && el.currentTime > 0.2) ? el.currentTime : 0;
+        const savedRate = el.playbackRate || 1.0;
+        el.crossOrigin = 'anonymous';
+        if (savedPos > 0) {
+          if (el === audio) pendingResumeTime = savedPos;
+          const onMeta = () => {
+            try { el.currentTime = savedPos; } catch (e) {}
+          };
+          el.addEventListener('loadedmetadata', onMeta, { once: true });
+        }
+        el.src = curSrc;
+        el.playbackRate = savedRate;
+        if (wasPlaying) el.play().catch(() => {});
+      }
+    } else if (curSrc && curSrc.startsWith('blob:') && el.crossOrigin !== 'anonymous') {
+      el.crossOrigin = 'anonymous';
+    }
+
+    if (!ensureSpatialGraphReady()) return false;
+    if (!spatialSourceMap.has(el)) {
+      try {
+        const srcNode = audioCtx.createMediaElementSource(el);
+        srcNode.connect(spatialInputBus);
+        spatialSourceMap.set(el, srcNode);
+      } catch (e) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function syncSpatialAudioUI() {
+    const btn = document.getElementById('btn-spatial-audio');
+    const lbl = document.getElementById('spatial-btn-label');
+    const gear = document.getElementById('btn-spatial-settings');
+    const mBadge = document.getElementById('m-tool-spatial-badge');
+    const mToggle = document.getElementById('spatial-modal-enable-toggle');
+    const wetSlider = document.getElementById('spatial-wet-slider');
+    const wetLabel = document.getElementById('spatial-wet-label');
+
+    if (btn) {
+      btn.setAttribute('aria-pressed', spatialEnabled ? 'true' : 'false');
+      btn.classList.toggle('spatial-active', spatialEnabled);
+    }
+    if (lbl) lbl.innerText = spatialEnabled ? 'محيطي • مفعل' : 'صوت محيطي';
+    if (gear) {
+      gear.classList.toggle('hidden', !spatialEnabled);
+      gear.classList.toggle('inline-flex', spatialEnabled);
+    }
+    if (mBadge) {
+      mBadge.innerText = spatialEnabled ? 'مفعل' : 'معطل';
+      mBadge.className = spatialEnabled
+        ? 'text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/35'
+        : 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-[var(--text-secondary)] border border-emerald-500/25';
+    }
+    if (mToggle) mToggle.checked = spatialEnabled;
+    if (wetSlider) wetSlider.value = String(spatialWetLevel);
+    if (wetLabel) wetLabel.innerText = `${spatialWetLevel}%`;
+
+    document.querySelectorAll('.spatial-profile-card').forEach(card => {
+      card.classList.toggle('active', card.getAttribute('data-spatial-profile') === spatialProfile);
+    });
+  }
+
+  async function setSpatialAudioEnabled(enable, { silent = false } = {}) {
+    if (!enable) {
+      spatialEnabled = false;
+      syncSpatialAudioUI();
+      applySpatialGains(false);
+      if (!silent) showToast('تم إيقاف الصوت المحيطي والعودة للصوت المباشر');
+      return;
+    }
+
+    const hadrEl = getActiveHadrAudio();
+    const targets = [];
+    if (audio && audio.getAttribute('src')) targets.push(audio);
+    if (hadrEl && hadrEl.getAttribute('src')) targets.push(hadrEl);
+
+    if (!ensureSpatialGraphReady()) {
+      if (!silent) showToast('متصفحك لا يدعم معالجة الصوت المحيطي', 'error');
+      return;
+    }
+
+    let attachedCount = 0;
+    for (const el of targets) {
+      if (await attachMediaElementToSpatialGraph(el)) attachedCount++;
+    }
+    if (targets.length === 0) {
+      await attachMediaElementToSpatialGraph(audio);
+      attachedCount = 1;
+    }
+
+    if (attachedCount === 0) {
+      spatialEnabled = false;
+      syncSpatialAudioUI();
+      if (!silent) showToast('هذا البث المباشر لا يسمح بالمعالجة المحيطية وسيستمر بالصوت النقي العادي', 'info');
+      return;
+    }
+
+    spatialEnabled = true;
+    syncSpatialAudioUI();
+    applySpatialGains(true);
+    if (!silent) {
+      const profName = (SPATIAL_PROFILE_CFG[spatialProfile] || SPATIAL_PROFILE_CFG.haram).label;
+      showToast(`تم تفعيل الصوت المحيطي (${profName}) — استماع خاشع بالسماعات`);
+    }
+  }
+  window.setSpatialAudioEnabled = setSpatialAudioEnabled;
+
+  function toggleSpatialAudio() {
+    return setSpatialAudioEnabled(!spatialEnabled);
+  }
+  window.toggleSpatialAudio = toggleSpatialAudio;
+
+  function setSpatialAudioProfile(profileKey = 'haram') {
+    if (!SPATIAL_PROFILE_CFG[profileKey]) return;
+    spatialProfile = profileKey;
+    try { localStorage.setItem('quran_spatial_profile', spatialProfile); } catch (e) {}
+    if (spatialGraphReady && spatialConvolver && audioCtx) {
+      spatialConvolver.buffer = createSpatialImpulseBuffer(audioCtx, spatialProfile);
+      if (spatialEnabled) applySpatialGains(true);
+    }
+    syncSpatialAudioUI();
+    showToast(`طابع الصدى المحيطي: ${SPATIAL_PROFILE_CFG[spatialProfile].label}`);
+  }
+
+  function initSpatialAudioQuickControls() {
+    const btnSpatial = document.getElementById('btn-spatial-audio');
+    if (btnSpatial && !btnSpatial.dataset.boundSpatial) {
+      btnSpatial.dataset.boundSpatial = '1';
+      btnSpatial.addEventListener('click', () => {
+        toggleSpatialAudio();
+      });
+    }
+    syncSpatialAudioUI();
+  }
+
+  function initSpatialAudioModalControls() {
+    const modal = document.getElementById('spatial-audio-modal');
+    const btnSettings = document.getElementById('btn-spatial-settings');
+    const btnClose = document.getElementById('btn-close-spatial-modal');
+    const toggleInput = document.getElementById('spatial-modal-enable-toggle');
+    const wetSlider = document.getElementById('spatial-wet-slider');
+    const wetLabel = document.getElementById('spatial-wet-label');
+
+    if (btnSettings && modal) {
+      btnSettings.addEventListener('click', () => {
+        syncSpatialAudioUI();
+        modal.classList.remove('hidden');
+      });
+    }
+    if (btnClose && modal) {
+      btnClose.addEventListener('click', () => modal.classList.add('hidden'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+    }
+    if (toggleInput) {
+      toggleInput.addEventListener('change', () => {
+        setSpatialAudioEnabled(!!toggleInput.checked);
+      });
+    }
+    document.querySelectorAll('.spatial-profile-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const prof = card.getAttribute('data-spatial-profile') || 'haram';
+        setSpatialAudioProfile(prof);
+      });
+    });
+    if (wetSlider) {
+      wetSlider.addEventListener('input', () => {
+        spatialWetLevel = parseInt(wetSlider.value, 10) || 56;
+        if (wetLabel) wetLabel.innerText = `${spatialWetLevel}%`;
+        try { localStorage.setItem('quran_spatial_wet', String(spatialWetLevel)); } catch (e) {}
+        if (spatialEnabled) applySpatialGains(true);
+      });
+    }
+    syncSpatialAudioUI();
+  }
+
   // --- V4.0 Dual-Deck Seamless Slow-Motion Background Video Controller ---
   function applyBgAudioForScene(scene) {
     if (!scene || scene.id === 'off' || !bgAudioEnabled) {
@@ -4423,6 +4941,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (scene.id === 'off' || !scene.src) {
       document.body.classList.remove('ambient-bg-active');
+      if (tabletImmersionActive || document.body.classList.contains('tablet-bg-immersion')) {
+        exitTabletImmersionWithTransition(false);
+      }
       vidA.classList.remove('active');
       vidB.classList.remove('active');
       setTimeout(() => {
@@ -4455,6 +4976,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (token !== bgSceneToken) return;
         incoming.classList.add('active');
         outgoing.classList.remove('active');
+        if (isTabletDevice()) {
+          const bgModal = document.getElementById('bg-scene-modal');
+          if (bgModal) bgModal.classList.add('hidden');
+          setTimeout(() => {
+            if (token === bgSceneToken && activeBgSceneId !== 'off') {
+              enterTabletImmersion();
+            }
+          }, 90);
+        }
       });
       setTimeout(() => {
         if (token !== bgSceneToken) return;
@@ -4678,6 +5208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetAbLoop(false);
 
     currentAudioLoadToken++;
+    prepareElementCorsForSpatial(audio, station.url);
     audio.src = station.url;
     audio.playbackRate = 1.0;
 
@@ -4719,1936 +5250,86 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Spiritual Companion Hub (Khatma, Mood Compass, Azkar, Sebha, Prayer & Qibla) ---
-  function initSpiritualCompanionHub() {
-    updateDailyStreak();
-    updateKhatmaDashboard();
+  const __secBridge = {
+    get audio() { return audio; },
+    get audioCtx() { return audioCtx; },
+    set audioCtx(v) { audioCtx = v; },
+    get currentIndex() { return currentIndex; },
+    set currentIndex(v) { currentIndex = v; },
+    get isPlaying() { return isPlaying; },
+    get currentView() { return currentView; },
+    get activeMiniEngine() { return activeMiniEngine; },
+    set activeMiniEngine(v) { activeMiniEngine = v; },
+    get listenedSurahs() { return listenedSurahs; },
+    get khatmaBookmark() { return khatmaBookmark; },
+    set khatmaBookmark(v) { khatmaBookmark = v; },
+    get listeningSeconds() { return listeningSeconds; },
+    get spatialEnabled() { return spatialEnabled; },
+    get spatialGraphReady() { return spatialGraphReady; },
+    get currentMemorial() { return currentMemorial; },
+    set currentMemorial(v) { currentMemorial = v; },
+    get savedMemorials() { return savedMemorials; },
+    set savedMemorials(v) { savedMemorials = v; },
+    get isTasbeehSoundEnabled() { return isTasbeehSoundEnabled; },
+    set isTasbeehSoundEnabled(v) { isTasbeehSoundEnabled = v; },
+    get memorialRoundCounter() { return memorialRoundCounter; },
+    set memorialRoundCounter(v) { memorialRoundCounter = v; },
+    get currentHadrReciterId() { return currentHadrReciterId; },
+    set currentHadrReciterId(v) { currentHadrReciterId = v; },
+    get currentHadrSurahId() { return currentHadrSurahId; },
+    set currentHadrSurahId(v) { currentHadrSurahId = v; },
+    get hadrPlaybackSpeed() { return hadrPlaybackSpeed; },
+    set hadrPlaybackSpeed(v) { hadrPlaybackSpeed = v; },
+    get miniProgressFill() { return miniProgressFill; },
+    get miniTimeDisplay() { return miniTimeDisplay; },
+    get miniCurrentTime() { return miniCurrentTime; },
+    get miniTotalDuration() { return miniTotalDuration; },
+    get miniSeekSlider() { return miniSeekSlider; },
+    get memorialView() { return memorialView; },
+    get spTabMemorial() { return spTabMemorial; },
+    get memorialGenderBadge() { return memorialGenderBadge; },
+    get memorialDeceasedName() { return memorialDeceasedName; },
+    get memorialDedicatedNote() { return memorialDedicatedNote; },
+    get btnOpenMemorialCreator() { return btnOpenMemorialCreator; },
+    get btnCopyMemorialLink() { return btnCopyMemorialLink; },
+    get btnWhatsappMemorial() { return btnWhatsappMemorial; },
+    get btnDownloadMemorialCard() { return btnDownloadMemorialCard; },
+    get memorialDhikrChips() { return memorialDhikrChips; },
+    get memorialActiveDhikrText() { return memorialActiveDhikrText; },
+    get memorialTapBtn() { return memorialTapBtn; },
+    get memorialRoundCount() { return memorialRoundCount; },
+    get memorialSoundBtn() { return memorialSoundBtn; },
+    get memorialSoundIcon() { return memorialSoundIcon; },
+    get memorialResetRoundBtn() { return memorialResetRoundBtn; },
+    get memorialDuasGrid() { return memorialDuasGrid; },
+    get memorialSurahsGrid() { return memorialSurahsGrid; },
+    get memorialCreatorModal() { return memorialCreatorModal; },
+    get btnCloseMemorialModal() { return btnCloseMemorialModal; },
+    get memorialInputName() { return memorialInputName; },
+    get memorialGenderBtnM() { return memorialGenderBtnM; },
+    get memorialGenderBtnF() { return memorialGenderBtnF; },
+    get memorialInputNote() { return memorialInputNote; },
+    get memorialPreviewText() { return memorialPreviewText; },
+    get btnSubmitCreateMemorial() { return btnSubmitCreateMemorial; },
+    get memorialSavedList() { return memorialSavedList; },
+    get mMemorialName() { return mMemorialName; },
+    switchView, syncHadrToMiniPlayer, syncMiniPlayerVisibility, loadSurah, pauseAudio,
+    loadSurahMushaf, formatTime, toggleSingleAyahAudio, generateAyahImageCard,
+    prepareElementCorsForSpatial, attachMediaElementToSpatialGraph, showToast, safeJsonParse
+  };
+  const initSpiritualCompanionHub = (...a) => secApi.initSpiritualCompanionHub && secApi.initSpiritualCompanionHub(...a);
+  const updateKhatmaDashboard = (...a) => secApi.updateKhatmaDashboard && secApi.updateKhatmaDashboard(...a);
+  const initMemorialEngine = (...a) => secApi.initMemorialEngine && secApi.initMemorialEngine(...a);
+  const toggleMemorialSound = (...a) => secApi.toggleMemorialSound && secApi.toggleMemorialSound(...a);
+  const triggerHapticFeedback = (...a) => secApi.triggerHapticFeedback && secApi.triggerHapticFeedback(...a);
+  const openMemorialPage = (...a) => secApi.openMemorialPage && secApi.openMemorialPage(...a);
+  const updateMemorialViewUI = (...a) => secApi.updateMemorialViewUI && secApi.updateMemorialViewUI(...a);
+  const shareMemorialLink = (...a) => secApi.shareMemorialLink && secApi.shareMemorialLink(...a);
+  const generateMemorialCard = (...a) => secApi.generateMemorialCard && secApi.generateMemorialCard(...a);
+  const openMemorialModal = (...a) => secApi.openMemorialModal && secApi.openMemorialModal(...a);
+  const initHadrView = (...a) => secApi.initHadrView && secApi.initHadrView(...a);
+  const playHadrSurah = (...a) => secApi.playHadrSurah && secApi.playHadrSurah(...a);
 
-    // Sub-tabs navigation inside #spiritual-view
-    const khatmaCard = document.getElementById('khatma-dashboard-card');
-    const spTabs = [
-      { id: 'sebha', btn: document.getElementById('sp-tab-sebha'), panel: document.getElementById('sp-panel-sebha') },
-      { id: 'azkar', btn: document.getElementById('sp-tab-azkar'), panel: document.getElementById('sp-panel-azkar') },
-      { id: 'prayer', btn: document.getElementById('sp-tab-prayer'), panel: document.getElementById('sp-panel-prayer') },
-      { id: 'compass', btn: document.getElementById('sp-tab-compass'), panel: document.getElementById('sp-panel-compass') }
-    ];
-
-    function openSpiritualSubTab(id) {
-      spTabs.forEach(t => {
-        if (!t.btn || !t.panel) return;
-        const isTarget = t.id === id;
-        t.panel.classList.toggle('hidden', !isTarget);
-        t.btn.className = isTarget
-          ? 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0'
-          : 'sp-subtab px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-[var(--text-secondary)] hover:text-amber-400 bg-emerald-950/40 border border-emerald-500/15 flex-shrink-0';
-      });
-      if (khatmaCard) {
-        if (id === 'sebha' && window.innerWidth < 1024) {
-          khatmaCard.classList.add('hidden');
-        } else {
-          khatmaCard.classList.remove('hidden');
-        }
-      }
-    }
-    window.openSpiritualSubTab = openSpiritualSubTab;
-
-    spTabs.forEach(({ id, btn }) => {
-      if (!btn) return;
-      btn.addEventListener('click', () => openSpiritualSubTab(id));
-    });
-
-    // Jump to Memorial Page from Spiritual Companion Hub Tab
-    if (spTabMemorial) {
-      spTabMemorial.addEventListener('click', () => {
-        switchView('memorial');
-      });
-    }
-
-    // 1. Render Mood Compass
-    if (typeof MOOD_COMPASS !== 'undefined') {
-      const moodGrid = document.getElementById('mood-buttons-grid');
-      if (moodGrid) {
-        moodGrid.innerHTML = '';
-        MOOD_COMPASS.forEach((mood, idx) => {
-          const btn = document.createElement('button');
-          btn.className = `mood-pill-btn p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all ${
-            idx === 0
-              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow'
-              : 'bg-emerald-950/40 text-[var(--text-secondary)] border-emerald-500/15 hover:text-amber-400'
-          }`;
-          btn.innerHTML = `<i class="${mood.icon} text-base"></i><span class="truncate">${mood.title}</span>`;
-          btn.addEventListener('click', () => {
-            document.querySelectorAll('.mood-pill-btn').forEach(b => {
-              b.className = 'mood-pill-btn p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all bg-emerald-950/40 text-[var(--text-secondary)] border-emerald-500/15 hover:text-amber-400';
-            });
-            btn.className = 'mood-pill-btn p-2.5 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all bg-amber-500/20 text-amber-400 border-amber-500/40 shadow';
-            renderMoodVerses(mood);
-          });
-          moodGrid.appendChild(btn);
-        });
-        renderMoodVerses(MOOD_COMPASS[0]);
-      }
-    }
-
-    // 2. Render Interactive Azkar
-    if (typeof AZKAR_DATA !== 'undefined') {
-      let currentAzkarCat = 'morning';
-      document.querySelectorAll('.azkar-cat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          currentAzkarCat = btn.getAttribute('data-azkar-cat');
-          document.querySelectorAll('.azkar-cat-btn').forEach(b => {
-            if (b.getAttribute('data-azkar-cat') === currentAzkarCat) {
-              b.className = 'azkar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
-            } else {
-              b.className = 'azkar-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold text-[var(--text-secondary)] bg-emerald-950/50 border border-emerald-500/15';
-            }
-          });
-          renderAzkarList(currentAzkarCat);
-        });
-      });
-
-      const resetAzkarBtn = document.getElementById('btn-reset-azkar');
-      if (resetAzkarBtn) {
-        resetAzkarBtn.addEventListener('click', () => {
-          renderAzkarList(currentAzkarCat);
-          showToast('تمت إعادة ضبط عدادات الأذكار');
-        });
-      }
-      renderAzkarList('morning');
-    }
-
-    // 3. Initialize Digital Sebha
-    initDigitalSebha();
-
-    // 4. Initialize V3.0 Prayer Times & Qibla Compass Hub
-    initPrayerAndQiblaHub();
-  }
-
-  function updateDailyStreak() {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      let data = { streak: 1, lastDate: today };
-      const raw = localStorage.getItem('quran_streak_data');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.lastDate === today) {
-          data = parsed;
-        } else {
-          const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-          if (parsed.lastDate === yesterday) {
-            data = { streak: (parsed.streak || 1) + 1, lastDate: today };
-          } else {
-            data = { streak: 1, lastDate: today };
-          }
-        }
-      }
-      localStorage.setItem('quran_streak_data', JSON.stringify(data));
-      const labelText = `${data.streak} ${data.streak >= 3 && data.streak <= 10 ? 'أيام' : 'يوم'}`;
-      const headerStreak = document.getElementById('header-streak-label');
-      const khatmaStreak = document.getElementById('khatma-streak-count');
-      if (headerStreak) headerStreak.innerText = labelText;
-      if (khatmaStreak) khatmaStreak.innerText = labelText;
-    } catch (e) {}
-  }
-
-  // ==========================================================================
-  // V3.0 PRAYER TIMES, LIVE COUNTDOWN & QIBLA COMPASS ENGINE
-  // ==========================================================================
-  function calculateQiblaAngle(lat, lng) {
-    const kaabaLat = 21.4225 * (Math.PI / 180);
-    const kaabaLng = 39.8262 * (Math.PI / 180);
-    const phi = lat * (Math.PI / 180);
-    const dLng = kaabaLng - (lng * (Math.PI / 180));
-    const y = Math.sin(dLng);
-    const x = Math.cos(phi) * Math.tan(kaabaLat) - Math.sin(phi) * Math.cos(dLng);
-    let brng = Math.atan2(y, x) * (180 / Math.PI);
-    return Math.round((brng + 360) % 360);
-  }
-
-  function calculateDistanceToMakkahKm(lat, lng) {
-    const mLat = 21.4225 * Math.PI / 180;
-    const mLng = 39.8262 * Math.PI / 180;
-    const pLat = lat * Math.PI / 180;
-    const pLng = lng * Math.PI / 180;
-    const dLat = mLat - pLat;
-    const dLng = mLng - pLng;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(pLat) * Math.cos(mLat) * (Math.sin(dLng / 2) ** 2);
-    return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-  }
-
-  function initPrayerAndQiblaHub() {
-    const citySelect = document.getElementById('prayer-city-select');
-    const btnGps = document.getElementById('btn-prayer-gps');
-    const btnLiveQibla = document.getElementById('btn-live-qibla');
-    const liveStatusEl = document.getElementById('qibla-live-status');
-    if (!citySelect || typeof ISLAMIC_CITIES === 'undefined') return;
-
-    let currentQiblaDeg = 136;
-    let isLiveCompassActive = false;
-    let liveCompassHandler = null;
-
-    const updateQiblaVisual = (deviceHeadingDeg = null) => {
-      const needle = document.getElementById('qibla-compass-needle');
-      const dial = document.getElementById('qibla-compass-dial');
-      if (deviceHeadingDeg !== null && isFinite(deviceHeadingDeg)) {
-        if (dial) dial.style.transform = `rotate(${-deviceHeadingDeg}deg)`;
-        if (needle) needle.style.transform = `rotate(${currentQiblaDeg - deviceHeadingDeg}deg)`;
-      } else {
-        if (dial) dial.style.transform = 'rotate(0deg)';
-        if (needle) needle.style.transform = `rotate(${currentQiblaDeg}deg)`;
-      }
-    };
-
-    const stopLiveCompass = () => {
-      isLiveCompassActive = false;
-      if (liveCompassHandler) {
-        window.removeEventListener('deviceorientationabsolute', liveCompassHandler);
-        window.removeEventListener('deviceorientation', liveCompassHandler);
-        liveCompassHandler = null;
-      }
-      if (btnLiveQibla) {
-        btnLiveQibla.innerHTML = '<i class="fa-solid fa-compass"></i> <span>البوصلة الحية</span>';
-      }
-      if (liveStatusEl) liveStatusEl.classList.add('hidden');
-      updateQiblaVisual(null);
-    };
-
-    if (btnLiveQibla) {
-      btnLiveQibla.addEventListener('click', async () => {
-        if (isLiveCompassActive) {
-          stopLiveCompass();
-          return;
-        }
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          try {
-            const perm = await DeviceOrientationEvent.requestPermission();
-            if (perm !== 'granted') {
-              showToast('يرجى السماح بصلاحية مستشعر الحركة لتشغيل البوصلة الحية', 'info');
-              return;
-            }
-          } catch (err) {
-            showToast('تعذر تفعيل مستشعر البوصلة على هذا المتصفح', 'info');
-            return;
-          }
-        }
-        isLiveCompassActive = true;
-        let receivedReading = false;
-        btnLiveQibla.innerHTML = '<i class="fa-solid fa-compass fa-spin text-emerald-300"></i> <span>إيقاف البوصلة</span>';
-        if (liveStatusEl) {
-          liveStatusEl.innerText = 'حرّك الهاتف أفقياً';
-          liveStatusEl.classList.remove('hidden');
-        }
-        liveCompassHandler = (ev) => {
-          let heading = null;
-          if (typeof ev.webkitCompassHeading === 'number' && !isNaN(ev.webkitCompassHeading)) {
-            heading = ev.webkitCompassHeading;
-          } else if (ev.alpha !== null && ev.alpha !== undefined) {
-            heading = (360 - ev.alpha) % 360;
-          }
-          if (heading === null) return;
-          receivedReading = true;
-          if (liveStatusEl) liveStatusEl.innerText = `شمال: ${Math.round(heading)}°`;
-          updateQiblaVisual(heading);
-        };
-        window.addEventListener('deviceorientationabsolute', liveCompassHandler);
-        window.addEventListener('deviceorientation', liveCompassHandler);
-        setTimeout(() => {
-          if (isLiveCompassActive && !receivedReading) {
-            showToast('جهازك لا يرسل قراءة البوصلة المغناطيسية — يتم عرض الزاوية من الشمال الحقيقي', 'info');
-          }
-        }, 1800);
-      });
-    }
-
-    const savedCityId = localStorage.getItem('quran_prayer_city') || 'cairo';
-    citySelect.innerHTML = ISLAMIC_CITIES.map(c => `<option value="${c.id}" class="bg-emerald-950 text-white">${c.name}</option>`).join('');
-    if (ISLAMIC_CITIES.some(c => c.id === savedCityId)) {
-      citySelect.value = savedCityId;
-    }
-
-    function loadCityPrayerData(cityObj) {
-      if (!cityObj) return;
-      const titleEl = document.getElementById('prayer-city-title');
-      if (titleEl) titleEl.innerText = `مواقيت الصلاة • ${cityObj.name}`;
-
-      // Update Qibla Compass & Distance immediately
-      currentQiblaDeg = cityObj.qibla !== undefined ? cityObj.qibla : calculateQiblaAngle(cityObj.lat, cityObj.lng);
-      const degLabel = document.getElementById('qibla-degree-label');
-      const distLabel = document.getElementById('qibla-distance-label');
-      if (degLabel) degLabel.innerText = `${currentQiblaDeg}°`;
-      if (distLabel && typeof cityObj.lat === 'number' && typeof cityObj.lng === 'number') {
-        const km = calculateDistanceToMakkahKm(cityObj.lat, cityObj.lng);
-        distLabel.innerText = km < 15 ? 'أنت في رحاب مكة المكرمة' : `نحو ${km.toLocaleString('en-US')} كم لمكة`;
-      }
-      if (!isLiveCompassActive) {
-        updateQiblaVisual(null);
-      }
-
-      // Render fallback/cached timings immediately for 0ms latency
-      currentPrayerTimings = { ...(cityObj.fallback || ISLAMIC_CITIES[0].fallback) };
-      const cachedKey = `quran_prayer_timings_${cityObj.id}_${new Date().toISOString().slice(0, 10)}`;
-      let hasFreshCache = false;
-      try {
-        const cached = localStorage.getItem(cachedKey);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.timings) {
-            currentPrayerTimings = parsed.timings;
-            hasFreshCache = true;
-          }
-          if (parsed.hijriText) {
-            const hijriEl = document.getElementById('prayer-hijri-date');
-            if (hijriEl) hijriEl.innerText = parsed.hijriText;
-          }
-        }
-      } catch (e) {}
-
-      renderPrayerTimesGrid(currentPrayerTimings);
-      if (hasFreshCache) return;
-
-      // Fetch live astronomical timings from AlAdhan API only if not cached today
-      fetch(`https://api.aladhan.com/v1/timings?latitude=${cityObj.lat}&longitude=${cityObj.lng}&method=${cityObj.method || 5}`)
-        .then(r => r.json())
-        .then(json => {
-          if (json && json.data && json.data.timings) {
-            const t = json.data.timings;
-            currentPrayerTimings = {
-              Fajr: (t.Fajr || '').slice(0, 5),
-              Sunrise: (t.Sunrise || '').slice(0, 5),
-              Dhuhr: (t.Dhuhr || '').slice(0, 5),
-              Asr: (t.Asr || '').slice(0, 5),
-              Maghrib: (t.Maghrib || '').slice(0, 5),
-              Isha: (t.Isha || '').slice(0, 5)
-            };
-            let hijriText = '';
-            if (json.data.date && json.data.date.hijri) {
-              const h = json.data.date.hijri;
-              hijriText = `${h.weekday?.ar || ''} • ${h.day} ${h.month?.ar || ''} ${h.year} هـ`;
-              const hijriEl = document.getElementById('prayer-hijri-date');
-              if (hijriEl) hijriEl.innerText = hijriText;
-            }
-            try {
-              localStorage.setItem(cachedKey, JSON.stringify({ timings: currentPrayerTimings, hijriText }));
-            } catch (e) {}
-            renderPrayerTimesGrid(currentPrayerTimings);
-          }
-        })
-        .catch(() => {});
-    }
-
-    citySelect.addEventListener('change', () => {
-      const selected = ISLAMIC_CITIES.find(c => c.id === citySelect.value) || ISLAMIC_CITIES[0];
-      localStorage.setItem('quran_prayer_city', selected.id);
-      loadCityPrayerData(selected);
-      showToast(`تم تحديث مواقيت الصلاة واتجاه القبلة لمدينة: ${selected.name}`);
-    });
-
-    if (btnGps) {
-      btnGps.addEventListener('click', () => {
-        if (!navigator.geolocation) {
-          showToast('المتصفح لا يدعم تحديد الموقع الجغرافي', 'info');
-          return;
-        }
-        showToast('جاري تحديد موقعك الجغرافي وحساب المواقيت والقبلة...');
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const customCity = {
-              id: 'gps_custom',
-              name: 'موقعك الحالي (GPS)',
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              method: 5,
-              qibla: calculateQiblaAngle(pos.coords.latitude, pos.coords.longitude),
-              fallback: ISLAMIC_CITIES[0].fallback
-            };
-            loadCityPrayerData(customCity);
-            showToast('تم تحديد مواقيت الصلاة واتجاه القبلة حسب موقعك بدقة');
-          },
-          () => {
-            showToast('تعذر الوصول للموقع، يمكنك اختيار مدينتك من القائمة مباشرة', 'info');
-          }
-        );
-      });
-    }
-
-    let prayerHubLoaded = false;
-    window.ensurePrayerHubLoaded = () => {
-      if (prayerHubLoaded) return;
-      prayerHubLoaded = true;
-      const initialCity = ISLAMIC_CITIES.find(c => c.id === savedCityId) || ISLAMIC_CITIES[0];
-      loadCityPrayerData(initialCity);
-      if (prayerCountdownTimer) clearInterval(prayerCountdownTimer);
-      prayerCountdownTimer = setInterval(() => {
-        if (currentPrayerTimings) updateNextPrayerCountdown(currentPrayerTimings);
-      }, 1000);
-    };
-  }
-
-  function formatTime12Ar(hm) {
-    if (!hm) return '--:--';
-    const [hStr, mStr] = hm.split(':');
-    let h = parseInt(hStr, 10);
-    const suffix = h >= 12 ? 'م' : 'ص';
-    h = h % 12 || 12;
-    return `${String(h).padStart(2, '0')}:${mStr} ${suffix}`;
-  }
-
-  function renderPrayerTimesGrid(timings) {
-    const grid = document.getElementById('prayer-times-grid');
-    if (!grid || !timings) return;
-
-    const prayers = [
-      { key: 'Fajr', name: 'الفجر', icon: 'fa-cloud-moon' },
-      { key: 'Sunrise', name: 'الشروق', icon: 'fa-sun-plant-wilt' },
-      { key: 'Dhuhr', name: 'الظهر', icon: 'fa-sun' },
-      { key: 'Asr', name: 'العصر', icon: 'fa-cloud-sun' },
-      { key: 'Maghrib', name: 'المغرب', icon: 'fa-mountain-sun' },
-      { key: 'Isha', name: 'العشاء', icon: 'fa-moon' }
-    ];
-
-    grid.innerHTML = prayers.map(p => `
-      <div class="prayer-time-card p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 text-center flex flex-col items-center justify-center gap-1" data-prayer-key="${p.key}">
-        <i class="fa-solid ${p.icon} text-amber-400 text-sm"></i>
-        <span class="text-xs font-bold text-slate-200">${p.name}</span>
-        <span class="text-xs sm:text-sm font-black text-amber-300 font-mono">${formatTime12Ar(timings[p.key])}</span>
-      </div>
-    `).join('');
-
-    updateNextPrayerCountdown(timings);
-  }
-
-  function updateNextPrayerCountdown(timings) {
-    const now = new Date();
-    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const order = [
-      { key: 'Fajr', name: 'صلاة الفجر' },
-      { key: 'Dhuhr', name: 'صلاة الظهر' },
-      { key: 'Asr', name: 'صلاة العصر' },
-      { key: 'Maghrib', name: 'صلاة المغرب' },
-      { key: 'Isha', name: 'صلاة العشاء' }
-    ];
-
-    let nextPrayer = null;
-    let nextIdx = -1;
-    let diffSec = 0;
-
-    for (let i = 0; i < order.length; i++) {
-      const p = order[i];
-      const hm = timings[p.key];
-      if (!hm) continue;
-      const [h, m] = hm.split(':').map(Number);
-      const targetSec = h * 3600 + m * 60;
-      if (targetSec > nowSec) {
-        nextPrayer = p;
-        nextIdx = i;
-        diffSec = targetSec - nowSec;
-        break;
-      }
-    }
-
-    if (!nextPrayer) {
-      nextPrayer = order[0];
-      nextIdx = 0;
-      const [h, m] = (timings.Fajr || '04:58').split(':').map(Number);
-      diffSec = (24 * 3600 - nowSec) + (h * 3600 + m * 60);
-    }
-
-    // Window elapsed progress between previous prayer & upcoming prayer
-    const prevObj = order[(nextIdx - 1 + order.length) % order.length];
-    const [pH, pM] = (timings[prevObj.key] || '04:58').split(':').map(Number);
-    const prevSec = pH * 3600 + pM * 60;
-    const [nH, nM] = (timings[nextPrayer.key] || '04:58').split(':').map(Number);
-    const nextSec = nH * 3600 + nM * 60;
-    const totalWindowSec = nextSec > prevSec ? (nextSec - prevSec) : (24 * 3600 - prevSec + nextSec);
-    const progressPct = totalWindowSec > 0
-      ? Math.max(0, Math.min(100, Math.round(((totalWindowSec - diffSec) / totalWindowSec) * 100)))
-      : 0;
-
-    const progressEl = document.getElementById('next-prayer-progress');
-    const progressLabelEl = document.getElementById('next-prayer-progress-label');
-    if (progressEl) progressEl.style.width = `${progressPct}%`;
-    if (progressLabelEl) progressLabelEl.innerText = `${progressPct}%`;
-
-    const hrs = String(Math.floor(diffSec / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
-    const secs = String(diffSec % 60).padStart(2, '0');
-
-    const nameEl = document.getElementById('next-prayer-name');
-    const timeLabelEl = document.getElementById('next-prayer-time-label');
-    const countdownEl = document.getElementById('next-prayer-countdown');
-    if (nameEl) nameEl.innerText = nextPrayer.name;
-    if (timeLabelEl) timeLabelEl.innerText = `موعد الأذان: ${formatTime12Ar(timings[nextPrayer.key])}`;
-    if (countdownEl) countdownEl.innerText = `${hrs}:${mins}:${secs}`;
-
-    document.querySelectorAll('.prayer-time-card').forEach(card => {
-      card.classList.toggle('next-prayer-active', card.getAttribute('data-prayer-key') === nextPrayer.key);
-    });
-  }
-
-  function updateKhatmaDashboard() {
-    const surahsCountEl = document.getElementById('khatma-surahs-count');
-    const minutesCountEl = document.getElementById('khatma-minutes-count');
-    const bookmarkEl = document.getElementById('khatma-bookmark-display');
-    const progressFill = document.getElementById('khatma-progress-fill');
-    const mushafBookmarkBtnText = document.getElementById('mushaf-bookmark-btn-text');
-
-    if (surahsCountEl) surahsCountEl.innerText = `${listenedSurahs.length} / 114`;
-    if (minutesCountEl) minutesCountEl.innerText = `${Math.max(1, Math.floor(listeningSeconds / 60))} دقيقة`;
-
-    if (khatmaBookmark) {
-      if (bookmarkEl) {
-        bookmarkEl.innerText = `فاصل الختمة المحفوظ: سورة ${khatmaBookmark.surahName} • الآية ${khatmaBookmark.ayahNum}`;
-      }
-      if (mushafBookmarkBtnText) {
-        mushafBookmarkBtnText.innerText = `${khatmaBookmark.surahName}: ${khatmaBookmark.ayahNum}`;
-      }
-    }
-
-    if (progressFill) {
-      const pct = Math.max(2, Math.min(100, Math.round((listenedSurahs.length / 114) * 100)));
-      progressFill.style.width = `${pct}%`;
-    }
-  }
-
-  function renderMoodVerses(mood) {
-    const container = document.getElementById('mood-verses-container');
-    if (!container || !mood) return;
-    container.innerHTML = '';
-
-    mood.verses.forEach(v => {
-      const card = document.createElement('div');
-      card.className = 'surah-frame rounded-2xl p-4 space-y-2.5';
-      card.innerHTML = `
-        <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="text-xs font-bold text-amber-400">سورة ${v.surahName} • الآية ${v.ayahNum}</span>
-          <div class="flex items-center gap-1.5">
-            <button class="btn-mood-play px-2.5 py-1 rounded-xl bg-amber-500 text-slate-900 font-bold text-[11px] flex items-center gap-1 hover:bg-amber-400 transition-all">
-              <i class="fa-solid fa-play text-[10px]"></i> استماع للآية
-            </button>
-            <button class="btn-mood-mushaf px-2.5 py-1 rounded-xl bg-emerald-950/60 border border-emerald-500/25 text-emerald-300 text-[11px] font-semibold hover:bg-emerald-500/20 transition-all">
-              فتح في المصحف
-            </button>
-            <button class="btn-mood-card px-2.5 py-1 rounded-xl bg-emerald-950/60 border border-amber-500/25 text-amber-300 text-[11px] font-semibold hover:bg-amber-500/20 transition-all" title="تحميل بطاقة مصورة">
-              <i class="fa-solid fa-image"></i>
-            </button>
-          </div>
-        </div>
-        <p class="font-quran-text text-lg sm:text-xl text-[var(--text-primary)] leading-loose">﴿ ${v.text} ﴾</p>
-        <p class="text-xs text-[var(--text-secondary)] bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/15">
-          <i class="fa-solid fa-lightbulb text-amber-400 ml-1"></i> ${v.reflection}
-        </p>
-      `;
-
-      card.querySelector('.btn-mood-play').addEventListener('click', () => {
-        toggleSingleAyahAudio(v.globalAyah);
-        showToast(`استماع للآية ${v.ayahNum} من سورة ${v.surahName}`);
-      });
-
-      card.querySelector('.btn-mood-mushaf').addEventListener('click', () => {
-        const idx = SURAHS.findIndex(s => s.id === v.surahId);
-        if (idx !== -1) {
-          currentIndex = idx;
-          loadSurah(SURAHS[currentIndex], isPlaying);
-        }
-        switchView('mushaf');
-        loadSurahMushaf(v.surahId, v.ayahNum);
-      });
-
-      card.querySelector('.btn-mood-card').addEventListener('click', () => {
-        generateAyahImageCard(v.surahName, v.ayahNum, v.text);
-      });
-
-      container.appendChild(card);
-    });
-  }
-
-  function renderAzkarList(category) {
-    const container = document.getElementById('azkar-cards-container');
-    if (!container || !AZKAR_DATA[category]) return;
-    container.innerHTML = '';
-
-    AZKAR_DATA[category].forEach(z => {
-      let remaining = z.count;
-      const card = document.createElement('div');
-      card.className = 'surah-card p-3.5 sm:p-4 rounded-2xl cursor-pointer select-none transition-all space-y-2';
-      card.innerHTML = `
-        <p class="font-quran-text text-base sm:text-lg text-[var(--text-primary)] leading-relaxed">${z.text}</p>
-        <div class="flex items-center justify-between pt-2 border-t border-emerald-500/10 text-xs">
-          <span class="text-[11px] text-[var(--text-secondary)]"><i class="fa-solid fa-star text-amber-400 ml-1"></i>${z.virtue}</span>
-          <span class="azkar-counter-badge px-3 py-1 rounded-xl bg-amber-500 text-slate-900 font-bold text-xs min-w-[75px] text-center">
-            التكرار: ${remaining}
-          </span>
-        </div>
-      `;
-
-      card.addEventListener('click', () => {
-        if (remaining <= 0) return;
-        remaining--;
-        const badge = card.querySelector('.azkar-counter-badge');
-        if (remaining === 0) {
-          card.classList.add('azkar-card-completed');
-          badge.className = 'azkar-counter-badge px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-xs min-w-[75px] text-center';
-          badge.innerHTML = '<i class="fa-solid fa-check ml-1"></i> اكتمل';
-        } else {
-          badge.innerText = `المتبقي: ${remaining}`;
-        }
-      });
-
-      container.appendChild(card);
-    });
-  }
-
-  function initDigitalSebha() {
-    const select = document.getElementById('sebha-phrase-select');
-    const tapBtn = document.getElementById('sebha-tap-btn');
-    const curEl = document.getElementById('sebha-current-count');
-    const totEl = document.getElementById('sebha-total-count');
-    const resetBtn = document.getElementById('sebha-reset-btn');
-    if (!select || !tapBtn || typeof TASBEEH_PHRASES === 'undefined') return;
-
-    select.innerHTML = '';
-    TASBEEH_PHRASES.forEach((p, idx) => {
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.innerText = p;
-      opt.className = 'bg-emerald-950 text-white';
-      select.appendChild(opt);
-    });
-
-    let currentCount = 0;
-    let totalCount = parseInt(localStorage.getItem('quran_sebha_total')) || 0;
-    if (totEl) totEl.innerText = totalCount;
-
-    // Quick dhikr pills handler
-    const quickPills = document.querySelectorAll('.sebha-quick-pill');
-    quickPills.forEach(pill => {
-      pill.addEventListener('click', () => {
-        const pIdx = parseInt(pill.getAttribute('data-phrase-idx'));
-        if (select) {
-          select.value = pIdx;
-          currentCount = 0;
-          if (curEl) curEl.innerText = '0';
-          quickPills.forEach(p => {
-            p.className = 'sebha-quick-pill px-2.5 py-1 rounded-xl text-[11px] font-bold text-[var(--text-secondary)] bg-emerald-950/60 border border-emerald-500/15 flex-shrink-0 transition-all';
-          });
-          pill.className = 'sebha-quick-pill active px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0 transition-all';
-          if (navigator.vibrate) navigator.vibrate(25);
-          showToast(`تم اختيار: ${TASBEEH_PHRASES[pIdx] || ''}`);
-        }
-      });
-    });
-
-    select.addEventListener('change', () => {
-      currentCount = 0;
-      if (curEl) curEl.innerText = '0';
-      const curIdx = parseInt(select.value);
-      quickPills.forEach(p => {
-        if (parseInt(p.getAttribute('data-phrase-idx')) === curIdx) {
-          p.className = 'sebha-quick-pill active px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0 transition-all';
-        } else {
-          p.className = 'sebha-quick-pill px-2.5 py-1 rounded-xl text-[11px] font-bold text-[var(--text-secondary)] bg-emerald-950/60 border border-emerald-500/15 flex-shrink-0 transition-all';
-        }
-      });
-    });
-
-    tapBtn.addEventListener('click', () => {
-      currentCount++;
-      totalCount++;
-      if (curEl) curEl.innerText = currentCount;
-      if (totEl) totEl.innerText = totalCount;
-      localStorage.setItem('quran_sebha_total', totalCount);
-      if (navigator.vibrate) {
-        navigator.vibrate(currentCount % 33 === 0 ? [40, 60, 40] : 20);
-      }
-      if (currentCount % 33 === 0) {
-        showToast(`ما شاء الله! أتممت ${currentCount} تسبيحة في هذه الدورة`);
-      }
-    });
-
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        currentCount = 0;
-        if (curEl) curEl.innerText = '0';
-        if (navigator.vibrate) navigator.vibrate(15);
-        showToast('تم تصفير عداد الدورة الحالية');
-      });
-    }
-  }
-
-  // ==========================================================================
-  // Memorial Engine: Ongoing Charity & Supplications for the Deceased (V2.5)
-  // ==========================================================================
-  function initMemorialEngine() {
-    if (!memorialView) return;
-
-    // Attach Tasbeeh Click & Counter Handlers
-    if (memorialTapBtn) {
-      memorialTapBtn.addEventListener('click', handleMemorialTasbeehTap);
-    }
-
-    if (memorialResetRoundBtn) {
-      memorialResetRoundBtn.addEventListener('click', () => {
-        memorialRoundCounter = 0;
-        if (memorialRoundCount) memorialRoundCount.innerText = '0';
-        triggerHapticFeedback(15);
-        showToast('تم تصفير عداد الدورة الحالية للتسبيح');
-      });
-    }
-
-    if (memorialSoundBtn) {
-      memorialSoundBtn.addEventListener('click', toggleMemorialSound);
-    }
-
-    // Modal Opening & Closing
-    const memorialHeaderTitleBox = document.getElementById('memorial-header-title-box');
-    if (memorialHeaderTitleBox) {
-      memorialHeaderTitleBox.addEventListener('click', openMemorialModal);
-    }
-    if (btnOpenMemorialCreator) {
-      btnOpenMemorialCreator.addEventListener('click', openMemorialModal);
-    }
-    if (btnCloseMemorialModal) {
-      btnCloseMemorialModal.addEventListener('click', closeMemorialModal);
-    }
-    if (memorialCreatorModal) {
-      memorialCreatorModal.addEventListener('click', (e) => {
-        if (e.target === memorialCreatorModal) closeMemorialModal();
-      });
-    }
-
-    // Image Preview Modal Listeners (Mobile & Tablet)
-    const memorialImageModal = document.getElementById('memorial-image-modal');
-    const btnCloseImageModal = document.getElementById('btn-close-image-modal');
-    if (btnCloseImageModal && memorialImageModal) {
-      btnCloseImageModal.addEventListener('click', () => memorialImageModal.classList.add('hidden'));
-      memorialImageModal.addEventListener('click', (e) => {
-        if (e.target === memorialImageModal) memorialImageModal.classList.add('hidden');
-      });
-    }
-
-    // Modal Gender Selectors
-    if (memorialGenderBtnM) {
-      memorialGenderBtnM.addEventListener('click', () => setModalGender('m'));
-    }
-    if (memorialGenderBtnF) {
-      memorialGenderBtnF.addEventListener('click', () => setModalGender('f'));
-    }
-
-    // Modal Inputs Live Preview
-    if (memorialInputName) {
-      memorialInputName.addEventListener('input', updateModalPreview);
-    }
-    if (memorialInputNote) {
-      memorialInputNote.addEventListener('input', updateModalPreview);
-    }
-
-    // Modal Form Submission
-    if (btnSubmitCreateMemorial) {
-      btnSubmitCreateMemorial.addEventListener('click', submitCreateMemorial);
-    }
-
-    // Share Actions
-    if (btnCopyMemorialLink) {
-      btnCopyMemorialLink.addEventListener('click', () => shareMemorialLink('copy'));
-    }
-    if (btnWhatsappMemorial) {
-      btnWhatsappMemorial.addEventListener('click', () => shareMemorialLink('whatsapp'));
-    }
-    if (btnDownloadMemorialCard) {
-      btnDownloadMemorialCard.addEventListener('click', generateMemorialCard);
-    }
-
-    // Render Initial UI
-    updateMemorialViewUI();
-  }
-
-  function toggleMemorialSound() {
-    isTasbeehSoundEnabled = !isTasbeehSoundEnabled;
-    localStorage.setItem('quran_tasbeeh_sound', isTasbeehSoundEnabled);
-    if (memorialSoundIcon) {
-      memorialSoundIcon.className = isTasbeehSoundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
-    }
-    showToast(isTasbeehSoundEnabled ? 'تم تفعيل صوت التسبيح' : 'تم كتم صوت التسبيح', 'info');
-  }
-
-  function playTasbeehClickSound() {
-    if (!isTasbeehSoundEnabled) return;
-    try {
-      if (!tasbeehAudioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) tasbeehAudioCtx = new AudioContextClass();
-      }
-      if (tasbeehAudioCtx && tasbeehAudioCtx.state === 'suspended') {
-        tasbeehAudioCtx.resume();
-      }
-      if (tasbeehAudioCtx) {
-        const osc = tasbeehAudioCtx.createOscillator();
-        const gain = tasbeehAudioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, tasbeehAudioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(320, tasbeehAudioCtx.currentTime + 0.035);
-        gain.gain.setValueAtTime(0.2, tasbeehAudioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, tasbeehAudioCtx.currentTime + 0.035);
-        osc.connect(gain);
-        gain.connect(tasbeehAudioCtx.destination);
-        osc.start();
-        osc.stop(tasbeehAudioCtx.currentTime + 0.04);
-      }
-    } catch (e) {
-      // AudioContext fallback
-    }
-  }
-
-  function triggerHapticFeedback(pattern = 18) {
-    if (navigator.vibrate) {
-      try { navigator.vibrate(pattern); } catch (e) {}
-    }
-  }
-
-  function handleMemorialTasbeehTap() {
-    memorialRoundCounter++;
-    if (memorialRoundCount) {
-      memorialRoundCount.innerText = memorialRoundCounter.toLocaleString('ar-EG');
-    }
-
-    playTasbeehClickSound();
-
-    if (memorialRoundCounter % 33 === 0) {
-      triggerHapticFeedback([40, 70, 40]);
-      const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
-      showToast(`ما شاء الله! أتممت ${memorialRoundCounter} تسبيحة مهداة لروح ${targetName}`);
-    } else {
-      triggerHapticFeedback(15);
-    }
-
-    if (memorialTapBtn) {
-      memorialTapBtn.classList.remove('ripple-active');
-      void memorialTapBtn.offsetWidth; // trigger reflow
-      memorialTapBtn.classList.add('ripple-active');
-    }
-  }
-
-  function openMemorialPage(name, gender, note, updateUrl = true) {
-    const isGeneric = !name || name.trim() === 'مَنْ تُحِبّونَ (فقيدكم الغالي)' || name.trim() === 'صدقة جارية لمن تُحبّون';
-    currentMemorial = {
-      name: isGeneric ? "مَنْ تُحِبّونَ (فقيدكم الغالي)" : name.trim(),
-      gender: gender === 'm' ? 'm' : 'f',
-      isGeneric: isGeneric,
-      note: note ? note.trim() : (gender === 'm' ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى برفقة الصالحين' : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين')
-    };
-    memorialRoundCounter = 0;
-    activeMemorialDhikrIdx = 0;
-
-    if (updateUrl && !isGeneric) {
-      try {
-        const url = new URL(window.location);
-        url.searchParams.set('memorial', currentMemorial.name);
-        url.searchParams.set('gender', currentMemorial.gender);
-        if (note) url.searchParams.set('note', note);
-        else url.searchParams.delete('note');
-        window.history.pushState({ memorial: currentMemorial.name, gender: currentMemorial.gender }, '', url.toString());
-      } catch (e) {}
-    }
-
-    switchView('memorial');
-  }
-
-  function updateMemorialViewUI() {
-    if (!memorialView) return;
-
-    if (mMemorialName) {
-      mMemorialName.innerText = currentMemorial.isGeneric ? 'صدقة جارية لمن تُحبّون' : currentMemorial.name;
-    }
-
-    if (memorialDeceasedName) {
-      if (currentMemorial.isGeneric) {
-        memorialDeceasedName.innerHTML = `
-          <span class="flex items-center gap-2">
-            <span>صدقة جارية لمن تُحبّون</span>
-            <i class="fa-solid fa-pen-to-square text-xs text-amber-400"></i>
-          </span>
-        `;
-      } else {
-        memorialDeceasedName.innerText = currentMemorial.name;
-      }
-    }
-
-    if (memorialGenderBadge) {
-      if (currentMemorial.isGeneric) {
-        memorialGenderBadge.innerHTML = '<i class="fa-solid fa-heart text-amber-400 ml-1"></i> إهداء ثواب وتسبيح للمتوفى';
-        memorialGenderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
-      } else if (currentMemorial.gender === 'm') {
-        memorialGenderBadge.innerHTML = '<i class="fa-solid fa-mars ml-1 text-sky-400"></i> ذكر (المرحوم له)';
-        memorialGenderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30';
-      } else {
-        memorialGenderBadge.innerHTML = '<i class="fa-solid fa-venus ml-1 text-pink-400"></i> أنثى (المرحومة لها)';
-        memorialGenderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30';
-      }
-    }
-
-    if (memorialDedicatedNote) {
-      if (currentMemorial.isGeneric) {
-        memorialDedicatedNote.innerHTML = `
-          <span class="text-amber-300 font-semibold underline cursor-pointer hover:text-amber-200" id="btn-prompt-custom-name">
-            انقر هنا لكتابة اسم فقيدكم وتخصيص الصفحة باسمه
-          </span> ومشاركتها مع الأحباب بالدعاء
-        `;
-        const promptBtn = document.getElementById('btn-prompt-custom-name');
-        if (promptBtn) promptBtn.addEventListener('click', (e) => { e.stopPropagation(); openMemorialModal(); });
-      } else {
-        memorialDedicatedNote.innerText = currentMemorial.note || (currentMemorial.gender === 'm' ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى' : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى');
-      }
-    }
-
-    if (memorialRoundCount) {
-      memorialRoundCount.innerText = memorialRoundCounter.toLocaleString('ar-EG');
-    }
-
-    if (memorialSoundIcon) {
-      memorialSoundIcon.className = isTasbeehSoundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
-    }
-
-    renderMemorialDhikrChips();
-    renderMemorialDuas();
-    renderMemorialSurahs();
-  }
-
-  function renderMemorialDhikrChips() {
-    if (!memorialDhikrChips || typeof MEMORIAL_DATA === 'undefined' || !MEMORIAL_DATA.phrases) return;
-    memorialDhikrChips.innerHTML = '';
-
-    MEMORIAL_DATA.phrases.forEach((phrase, idx) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      const isActive = idx === activeMemorialDhikrIdx;
-      btn.className = `memorial-dhikr-pill px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
-        isActive 
-          ? 'active bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm' 
-          : 'bg-emerald-950/60 text-[var(--text-secondary)] hover:text-amber-400 border border-emerald-500/15'
-      }`;
-      btn.innerHTML = `<i class="fa-solid fa-seedling text-[10px] text-amber-400/80"></i> <span>${phrase.name}</span>`;
-      btn.addEventListener('click', () => {
-        activeMemorialDhikrIdx = idx;
-        memorialRoundCounter = 0;
-        if (memorialRoundCount) memorialRoundCount.innerText = '0';
-        renderMemorialDhikrChips();
-        updateMemorialActiveDhikrText();
-      });
-      memorialDhikrChips.appendChild(btn);
-    });
-
-    updateMemorialActiveDhikrText();
-  }
-
-  function updateMemorialActiveDhikrText() {
-    if (!memorialActiveDhikrText || typeof MEMORIAL_DATA === 'undefined') return;
-    const phrase = MEMORIAL_DATA.phrases[activeMemorialDhikrIdx] || MEMORIAL_DATA.phrases[0];
-    if (currentMemorial.gender === 'f' && phrase.femaleText) {
-      memorialActiveDhikrText.innerText = phrase.femaleText;
-    } else {
-      memorialActiveDhikrText.innerText = phrase.text;
-    }
-  }
-
-  function renderMemorialDuas() {
-    if (!memorialDuasGrid || typeof MEMORIAL_DATA === 'undefined' || !MEMORIAL_DATA.duas) return;
-    memorialDuasGrid.innerHTML = '';
-
-    MEMORIAL_DATA.duas.forEach((dua) => {
-      const isFemale = currentMemorial.gender === 'f';
-      const duaText = isFemale ? dua.femaleText : dua.maleText;
-
-      const card = document.createElement('div');
-      card.className = 'memorial-dua-card glass-panel p-3.5 rounded-2xl border border-emerald-500/20 hover:border-amber-500/30 flex flex-col justify-between transition-all space-y-2.5';
-      card.innerHTML = `
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-bold text-xs sm:text-sm text-amber-300 flex items-center gap-1.5">
-              <i class="fa-solid fa-hands-praying text-amber-400 text-xs"></i>
-              ${dua.title}
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/70 text-[var(--text-secondary)] border border-emerald-500/15">
-              ${dua.source}
-            </span>
-          </div>
-          <p class="font-quran text-xs sm:text-sm text-[var(--text-primary)] leading-relaxed select-text py-1">
-            ${duaText}
-          </p>
-          <div class="text-[11px] text-[var(--text-secondary)] italic flex items-center gap-1">
-            <i class="fa-solid fa-circle-info text-[10px] text-amber-400/80"></i>
-            <span>${dua.virtue}</span>
-          </div>
-        </div>
-        <div class="flex items-center justify-between pt-2 border-t border-emerald-500/15 gap-2">
-          <button class="btn-pray-dua flex-1 py-1.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
-            <i class="fa-solid fa-hands-praying text-amber-300"></i>
-            <span>آمين، دعوتُ ${isFemale ? 'لها' : 'له'}</span>
-          </button>
-          <button class="btn-copy-dua py-1.5 px-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-[var(--text-secondary)] hover:text-amber-400 border border-emerald-500/20 text-xs flex items-center justify-center gap-1 transition-all active:scale-95" title="نسخ الدعاء">
-            <i class="fa-regular fa-copy"></i>
-            <span class="hidden xs:inline">نسخ</span>
-          </button>
-        </div>
-      `;
-
-      const btnPray = card.querySelector('.btn-pray-dua');
-      const btnCopy = card.querySelector('.btn-copy-dua');
-
-      btnPray.addEventListener('click', () => {
-        triggerHapticFeedback([25, 40]);
-        btnPray.className = 'btn-pray-dua flex-1 py-1.5 px-3 rounded-xl bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all';
-        btnPray.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>تقبّل الله، تم الدعاء وإهداء الثواب</span>';
-        card.classList.add('border-emerald-500/50');
-        const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
-        showToast(`تقبل الله منا ومنكم صالح الدعاء لروح ${targetName}`);
-      });
-
-      btnCopy.addEventListener('click', () => {
-        const fullShareText = `دعاء لروح المغفور ${isFemale ? 'لها' : 'له'} بإذن الله: ${currentMemorial.name}\n\n«${duaText}»\n\n- المصدر: ${dua.source}\n- منصة القرآن الكريم`;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(fullShareText);
-          showToast('تم نسخ الدعاء إلى الحافظة بنجاح');
-        }
-      });
-
-      memorialDuasGrid.appendChild(card);
-    });
-  }
-
-  function renderMemorialSurahs() {
-    if (!memorialSurahsGrid || typeof MEMORIAL_DATA === 'undefined' || !MEMORIAL_DATA.surahs) return;
-    memorialSurahsGrid.innerHTML = '';
-
-    MEMORIAL_DATA.surahs.forEach((s) => {
-      const card = document.createElement('div');
-      card.className = 'glass-panel p-3 rounded-2xl border border-emerald-500/20 hover:border-amber-500/35 flex flex-col justify-between transition-all space-y-2';
-      card.innerHTML = `
-        <div>
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-sm text-[var(--text-accent)] font-quran">سورة ${s.name}</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">${s.title}</span>
-          </div>
-          <p class="text-[11px] text-[var(--text-secondary)] mt-1.5 leading-snug line-clamp-2">${s.reason}</p>
-        </div>
-        <button class="btn-play-memorial-surah w-full py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
-          <i class="fa-solid fa-headphones-simple text-[11px]"></i>
-          <span>تلاوة وإهداء الثواب</span>
-        </button>
-      `;
-
-      const btnPlay = card.querySelector('.btn-play-memorial-surah');
-      btnPlay.addEventListener('click', () => {
-        const idx = SURAHS.findIndex(item => item.id === s.id);
-        if (idx !== -1) {
-          currentIndex = idx;
-          loadSurah(SURAHS[currentIndex], true);
-        }
-        triggerHapticFeedback([30, 50]);
-        const targetName = currentMemorial.isGeneric ? 'المتوفى' : currentMemorial.name;
-        showToast(`بدأت تلاوة سورة ${s.name} بنية إهداء ثواب الاستماع لروح ${targetName}`);
-      });
-
-      memorialSurahsGrid.appendChild(card);
-    });
-  }
-
-  function shareMemorialLink(channel = 'copy') {
-    const isGeneric = currentMemorial.isGeneric;
-    const url = isGeneric 
-      ? `${window.location.origin}${window.location.pathname}`
-      : `${window.location.origin}${window.location.pathname}?memorial=${encodeURIComponent(currentMemorial.name)}&gender=${currentMemorial.gender}`;
-    const pronoun = currentMemorial.gender === 'm' ? 'له' : 'لها';
-    const targetName = isGeneric ? 'موتانا وموتى المسلمين' : `المغفور ${pronoun} بإذن الله: *${currentMemorial.name}*`;
-    const message = `صدقة جارية وإهداء ثواب على روح ${targetName}\n\nقال رسول الله ﷺ: «إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، وَعِلْمٍ يُنْتَفَعُ بِهِ، وَوَلَدٍ صَالِحٍ يَدْعُو لَهُ».\n\nشاركونا الأجر بقراءة سورة من القرآن، أو التسبيح والدعاء عبر الرابط التالي:\n${url}`;
-
-    if (channel === 'whatsapp') {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
-      showToast('تم فتح واتساب لمشاركة صفحة الصدقة الجارية');
-    } else {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url);
-        showToast('تم نسخ رابط صفحة الصدقة الجارية بنجاح');
-      } else if (navigator.share) {
-        navigator.share({
-          title: `صدقة جارية لروح ${currentMemorial.name}`,
-          text: message,
-          url: url
-        }).catch(() => {});
-      }
-    }
-  }
-
-  function showImagePreviewModal(blob, fileName) {
-    const modal = document.getElementById('memorial-image-modal');
-    const img = document.getElementById('memorial-preview-image');
-    const btnShare = document.getElementById('btn-share-preview-card');
-    const btnDownload = document.getElementById('btn-download-preview-card');
-    if (!modal || !img) return;
-
-    currentMemorialCardBlob = blob;
-    currentMemorialCardFile = new File([blob], fileName, { type: 'image/png' });
-    const url = URL.createObjectURL(blob);
-    img.src = url;
-
-    modal.classList.remove('hidden');
-
-    if (btnShare) {
-      btnShare.onclick = async () => {
-        if (navigator.canShare && navigator.canShare({ files: [currentMemorialCardFile] })) {
-          try {
-            await navigator.share({
-              files: [currentMemorialCardFile],
-              title: `صدقة جارية لروح ${currentMemorial.name}`,
-              text: `صدقة جارية وإهداء ثواب لروح ${currentMemorial.name}`
-            });
-            showToast('تمت مشاركة البطاقة بنجاح');
-          } catch (e) {
-            if (e.name !== 'AbortError') showToast('تعذرت المشاركة المباشرة', 'info');
-          }
-        } else {
-          window.open(url, '_blank');
-        }
-      };
-    }
-
-    if (btnDownload) {
-      btnDownload.onclick = () => {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('جاري حفظ الصورة على جهازك...');
-      };
-    }
-  }
-
-  function generateMemorialCard() {
-    try {
-      showToast('جاري توليد البطاقة المصورة...', 'info');
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1080;
-      const ctx = canvas.getContext('2d');
-
-      // 1. Background Gradient
-      const grad = ctx.createRadialGradient(540, 540, 50, 540, 540, 720);
-      grad.addColorStop(0, '#064e3b');
-      grad.addColorStop(0.55, '#022c22');
-      grad.addColorStop(1, '#01150f');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1080, 1080);
-
-      // 2. Subtle Starry/Dot pattern
-      ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
-      for (let i = 0; i < 40; i++) {
-        const x = (i * 97) % 1080;
-        const y = (i * 123) % 1080;
-        ctx.beginPath();
-        ctx.arc(x, y, (i % 3) + 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 3. Golden Ornamental Border
-      ctx.strokeStyle = '#d97706';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(45, 45, 990, 990);
-
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(55, 55, 970, 970);
-
-      // Corner Accents
-      const drawCorner = (cx, cy) => {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        ctx.arc(0, 0, 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#fbbf24';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-18, 0); ctx.lineTo(18, 0);
-        ctx.moveTo(0, -18); ctx.lineTo(0, 18);
-        ctx.stroke();
-        ctx.restore();
-      };
-      drawCorner(70, 70);
-      drawCorner(1010, 70);
-      drawCorner(70, 1010);
-      drawCorner(1010, 1010);
-
-      // 4. Header: Basmala & Title
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#fef08a';
-      ctx.font = 'bold 36px "Amiri Quran", "Amiri", "Cairo", serif';
-      ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', 540, 140);
-
-      // Decorative divider
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(340, 165); ctx.lineTo(740, 165);
-      ctx.stroke();
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 22px "Cairo", sans-serif';
-      ctx.fillText('صَدَقَةٌ جَارِيَةٌ وَإِهْدَاءُ ثَوَابٍ', 540, 205);
-
-      // 5. Dedication Heading & Name
-      const isFemale = currentMemorial.gender === 'f';
-      const pronoun = isFemale ? 'لَهَا' : 'لَهُ';
-      const isGeneric = currentMemorial.isGeneric;
-
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 26px "Amiri", "Cairo", sans-serif';
-      if (isGeneric) {
-        ctx.fillText('عَلَى نِيَّةِ مَوْتَانَا وَمَوْتَى المُسْلِمِينَ جَمِيعاً:', 540, 275);
-      } else {
-        ctx.fillText(`عَلَى رُوحِ المَغْفُورِ ${pronoun} بِإِذْنِ اللَّهِ تَعَالَى:`, 540, 275);
-      }
-
-      // 6. Big Glowing Deceased Name
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 60px "Amiri", "Cairo", serif';
-      ctx.shadowColor = 'rgba(251, 191, 36, 0.7)';
-      ctx.shadowBlur = 18;
-      const displayName = isGeneric ? 'فقيدكم الغالي' : currentMemorial.name;
-      ctx.fillText(displayName, 540, 360);
-      ctx.shadowBlur = 0; // reset shadow
-
-      // 7. Dedication Dua Note or Featured Dua
-      const defaultDua = isFemale
-        ? 'اللَّهُمَّ اغْفِرْ لَهَا وَارْحَمْهَا وَعَافِهَا وَاعْفُ عَنْهَا وَأَكْرِمْ نُزُلَهَا وَوَسِّعْ مُدْخَلَهَا، وَاجْعَلْ قَبْرَهَا رَوْضَةً مِنْ رِيَاضِ الْجَنَّةِ.'
-        : 'اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ وَعَافِهِ وَاعْفُ عَنْهُ وَأَكْرِمْ نُزُلَهُ وَوَسِّعْ مُدْخَلَهُ، وَاجْعَلْ قَبْرَهُ رَوْضَةً مِنْ رِيَاضِ الْجَنَّةِ.';
-      const noteToRender = (currentMemorial.note && !isGeneric) ? currentMemorial.note : defaultDua;
-
-      // Rounded container for Dua
-      ctx.fillStyle = 'rgba(3, 38, 29, 0.65)';
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
-      ctx.lineWidth = 1.5;
-      const boxX = 110, boxY = 415, boxW = 860, boxH = 260, radius = 24;
-      ctx.beginPath();
-      ctx.roundRect(boxX, boxY, boxW, boxH, radius);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = '28px "Amiri", "Cairo", serif';
-      wrapCanvasText(ctx, noteToRender, 540, 480, 780, 48);
-
-      // 8. Quranic Noble Ayah Box
-      ctx.fillStyle = 'rgba(251, 191, 36, 0.12)';
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
-      ctx.beginPath();
-      ctx.roundRect(140, 715, 800, 115, 20);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#fef08a';
-      ctx.font = 'bold 28px "Amiri Quran", "Amiri", serif';
-      ctx.fillText('«رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالإِيمَانِ»', 540, 762);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 18px "Cairo", sans-serif';
-      ctx.fillText('سورة الحشر - آية 10', 540, 804);
-
-      // 9. Prophetic Hadith & Footer
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '19px "Cairo", sans-serif';
-      ctx.fillText('«إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، وَعِلْمٍ يُنْتَفَعُ بِهِ، وَوَلَدٍ صَالِحٍ يَدْعُو لَهُ»', 540, 895);
-
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 18px "Cairo", sans-serif';
-      ctx.fillText('مَنْصَةُ القُرآنِ الكَرِيمِ | شاركونا الدعاء والتسبيح', 540, 970);
-
-      // Export Blob & Handle Mobile / Desktop download
-      const cleanFileName = isGeneric ? 'فقيدكم_الغالي' : currentMemorial.name.replace(/\s+/g, '_');
-      const fileName = `صدقة_جارية_${cleanFileName}.png`;
-
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          showToast('تعذر تصدير البطاقة', 'error');
-          return;
-        }
-
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 1024;
-        if (isMobile) {
-          showImagePreviewModal(blob, fileName);
-          showToast('تم تجهيز البطاقة المصورة للموبايل');
-        } else {
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = fileName;
-          link.href = blobUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
-          showToast('تم توليد وتنزيل بطاقة الصدقة الجارية بنجاح');
-        }
-      }, 'image/png');
-
-    } catch (e) {
-      console.error(e);
-      showToast('حدث خطأ أثناء إنشاء البطاقة المصورة', 'error');
-    }
-  }
-
-  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
-    const words = text.split(' ');
-    let line = '';
-    let curY = y;
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + (line ? ' ' : '') + words[n];
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxWidth && n > 0) {
-        ctx.fillText(line, x, curY);
-        line = words[n];
-        curY += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line, x, curY);
-    return curY + lineHeight;
-  }
-
-  // Modal Creator Handlers
-  function openMemorialModal() {
-    if (!memorialCreatorModal) return;
-    if (memorialInputName) {
-      memorialInputName.value = currentMemorial.isGeneric ? '' : currentMemorial.name;
-    }
-    if (memorialInputNote) {
-      memorialInputNote.value = currentMemorial.isGeneric ? '' : (currentMemorial.note || '');
-    }
-    setModalGender(currentMemorial.gender || 'm');
-    renderSavedMemorials();
-    updateModalPreview();
-    memorialCreatorModal.classList.remove('hidden');
-    setTimeout(() => {
-      if (memorialInputName) memorialInputName.focus();
-    }, 120);
-  }
-
-  function closeMemorialModal() {
-    if (!memorialCreatorModal) return;
-    memorialCreatorModal.classList.add('hidden');
-  }
-
-  function setModalGender(gender) {
-    modalSelectedGender = gender;
-    if (memorialGenderBtnM && memorialGenderBtnF) {
-      if (gender === 'm') {
-        memorialGenderBtnM.className = 'memorial-gender-opt active py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm';
-        memorialGenderBtnF.className = 'memorial-gender-opt py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-emerald-950/60 text-[var(--text-secondary)] border-emerald-500/20';
-      } else {
-        memorialGenderBtnF.className = 'memorial-gender-opt active py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-pink-500/20 text-pink-300 border-pink-500/40 shadow-sm';
-        memorialGenderBtnM.className = 'memorial-gender-opt py-2.5 px-3 rounded-xl border font-bold flex items-center justify-center gap-2 transition-all bg-emerald-950/60 text-[var(--text-secondary)] border-emerald-500/20';
-      }
-    }
-    updateModalPreview();
-  }
-
-  function updateModalPreview() {
-    if (!memorialPreviewText) return;
-    const name = (memorialInputName?.value || '').trim() || (modalSelectedGender === 'm' ? 'فقيدكم الغالي' : 'فقيدتكم الغالية');
-    const note = (memorialInputNote?.value || '').trim();
-    const pronoun = modalSelectedGender === 'm' ? 'له' : 'لها';
-    const defaultDua = modalSelectedGender === 'm' 
-      ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى برفقة الصالحين.' 
-      : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين.';
-
-    memorialPreviewText.innerHTML = `
-      <i class="fa-solid fa-seedling text-emerald-400 ml-1"></i> صدقة جارية وإهداء ثواب على روح المغفور ${pronoun} بإذن الله: <strong class="text-amber-400">${name}</strong>.<br>
-      <span class="text-emerald-300 italic">«${note || defaultDua}»</span>
-    `;
-  }
-
-  function submitCreateMemorial() {
-    const name = (memorialInputName?.value || '').trim();
-    if (!name || name.length < 2) {
-      showToast('يرجى إدخال اسم الفقيد أو الفقيدة (حرفين على الأقل)', 'error');
-      if (memorialInputName) memorialInputName.focus();
-      return;
-    }
-
-    const note = (memorialInputNote?.value || '').trim();
-    const newMemorial = {
-      name: name,
-      gender: modalSelectedGender,
-      isGeneric: false,
-      note: note || (modalSelectedGender === 'm' ? 'اللهم اجعل قبره روضة من رياض الجنة وأسكنه الفردوس الأعلى برفقة الصالحين' : 'اللهم اجعل قبرها روضة من رياض الجنة وأسكنها الفردوس الأعلى برفقة الصالحين')
-    };
-
-    // Save to localStorage
-    savedMemorials = savedMemorials.filter(m => !(m.name === newMemorial.name && m.gender === newMemorial.gender));
-    savedMemorials.unshift(newMemorial);
-    try {
-      localStorage.setItem('quran_saved_memorials', JSON.stringify(savedMemorials.slice(0, 10)));
-    } catch (e) {}
-
-    closeMemorialModal();
-    openMemorialPage(newMemorial.name, newMemorial.gender, newMemorial.note, true);
-    showToast(`تم إنشاء وتفعيل صفحة الصدقة الجارية لروح ${name} بنجاح`);
-  }
-
-  function renderSavedMemorials() {
-    if (!memorialSavedList) return;
-    memorialSavedList.innerHTML = '';
-
-    if (!savedMemorials || savedMemorials.length === 0) {
-      memorialSavedList.innerHTML = '<p class="text-[11px] text-[var(--text-secondary)] text-center py-2">لا توجد صفحات سابقة محفوظة</p>';
-      return;
-    }
-
-    savedMemorials.forEach((m, idx) => {
-      const isFemale = m.gender === 'f';
-      const item = document.createElement('div');
-      item.className = 'flex items-center justify-between p-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/15 text-xs transition-colors';
-      item.innerHTML = `
-        <button type="button" class="btn-load-saved-memorial flex-1 flex items-center gap-2 text-right">
-          <i class="fa-solid ${isFemale ? 'fa-venus text-pink-400' : 'fa-mars text-sky-400'} text-xs"></i>
-          <span class="font-bold text-[var(--text-primary)] hover:text-amber-300">${m.name}</span>
-          <span class="text-[10px] text-[var(--text-secondary)]">(${isFemale ? 'أنثى' : 'ذكر'})</span>
-        </button>
-        <button type="button" class="btn-delete-saved-memorial text-[var(--text-secondary)] hover:text-red-400 p-1 rounded-lg transition-colors" title="حذف من السجل">
-          <i class="fa-regular fa-trash-can text-xs"></i>
-        </button>
-      `;
-
-      item.querySelector('.btn-load-saved-memorial').addEventListener('click', () => {
-        closeMemorialModal();
-        openMemorialPage(m.name, m.gender, m.note, true);
-      });
-
-      item.querySelector('.btn-delete-saved-memorial').addEventListener('click', (e) => {
-        e.stopPropagation();
-        savedMemorials.splice(idx, 1);
-        try {
-          localStorage.setItem('quran_saved_memorials', JSON.stringify(savedMemorials));
-        } catch (err) {}
-        renderSavedMemorials();
-        showToast(`تم حذف ${m.name} من السجل`);
-      });
-
-      memorialSavedList.appendChild(item);
-    });
-  }
-
-  // ==========================================================================
-  // HADR MEMORIZATION & FAST REVISION ENGINE (مصحف الحدر لمراجعة وتثبيت الحُفّاظ)
-  // ==========================================================================
-  window.initHadrView = initHadrView;
-  function initHadrView() {
-    window.initHadrView = initHadrView;
-    const hadrView = document.getElementById('hadr-view');
-    if (!hadrView) return;
-
-    const hadrAudio = document.getElementById('hadr-audio');
-    const reciterSelect = document.getElementById('hadr-reciter-select');
-    const btnBack = document.getElementById('hadr-btn-back');
-    const tabSurahs = document.getElementById('hadr-tab-surahs');
-    const tabAjza = document.getElementById('hadr-tab-ajza');
-    const tabTehzeeb = document.getElementById('hadr-tab-tehzeeb');
-    const searchBar = document.getElementById('hadr-search-bar');
-    const searchInput = document.getElementById('hadr-search-input');
-    const panelSurahs = document.getElementById('hadr-panel-surahs');
-    const panelAjza = document.getElementById('hadr-panel-ajza');
-    const panelTehzeeb = document.getElementById('hadr-panel-tehzeeb');
-
-    const playBtn = document.getElementById('hadr-btn-play');
-    const playIcon = document.getElementById('hadr-play-icon');
-    const prevBtn = document.getElementById('hadr-btn-prev');
-    const nextBtn = document.getElementById('hadr-btn-next');
-    const back10Btn = document.getElementById('hadr-btn-backward-10');
-    const fwd10Btn = document.getElementById('hadr-btn-forward-10');
-    const seekBar = document.getElementById('hadr-seek-bar');
-    const currentTimeEl = document.getElementById('hadr-current-time');
-    const totalTimeEl = document.getElementById('hadr-total-time');
-    const syncMushafBtn = document.getElementById('hadr-btn-sync-mushaf');
-
-    if (!hadrInitialized) {
-      hadrInitialized = true;
-
-      // 1. Populate Reciters Select
-      if (reciterSelect && typeof HADR_RECITERS !== 'undefined') {
-        reciterSelect.innerHTML = HADR_RECITERS.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-        reciterSelect.value = currentHadrReciterId;
-        reciterSelect.addEventListener('change', () => {
-          currentHadrReciterId = reciterSelect.value;
-          updateHadrNowPlayingUI();
-          if (hadrAudio && !hadrAudio.paused) {
-            playHadrSurah(currentHadrSurahId, true);
-          }
-        });
-      }
-
-      // 2. Return Button
-      if (btnBack) {
-        btnBack.addEventListener('click', () => switchView('player'));
-      }
-
-      // 3. Tabs
-      function switchHadrTab(mode) {
-        currentHadrMode = mode;
-        const activeClass = 'flex-1 py-1.5 px-2 rounded-xl text-amber-300 bg-amber-500/20 border border-amber-500/30 transition-all text-center flex items-center justify-center gap-1.5 shadow-sm';
-        const inactiveClass = 'flex-1 py-1.5 px-2 rounded-xl text-[var(--text-secondary)] hover:text-amber-300 transition-all text-center flex items-center justify-center gap-1.5';
-
-        if (tabSurahs) tabSurahs.className = mode === 'surahs' ? activeClass : inactiveClass;
-        if (tabAjza) tabAjza.className = mode === 'ajza' ? activeClass : inactiveClass;
-        if (tabTehzeeb) tabTehzeeb.className = mode === 'tehzeeb' ? activeClass : inactiveClass;
-
-        if (panelSurahs) panelSurahs.classList.toggle('hidden', mode !== 'surahs');
-        if (panelAjza) panelAjza.classList.toggle('hidden', mode !== 'ajza');
-        if (panelTehzeeb) panelTehzeeb.classList.toggle('hidden', mode !== 'tehzeeb');
-        if (searchBar) searchBar.classList.toggle('hidden', mode !== 'surahs');
-      }
-
-      if (tabSurahs) tabSurahs.addEventListener('click', () => switchHadrTab('surahs'));
-      if (tabAjza) tabAjza.addEventListener('click', () => switchHadrTab('ajza'));
-      if (tabTehzeeb) tabTehzeeb.addEventListener('click', () => switchHadrTab('tehzeeb'));
-
-      // 4. Search Filter
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          const q = e.target.value.trim().toLowerCase();
-          const cards = panelSurahs ? panelSurahs.querySelectorAll('.hadr-surah-card') : [];
-          cards.forEach(card => {
-            const name = card.getAttribute('data-name') || '';
-            const num = card.getAttribute('data-id') || '';
-            const match = !q || name.includes(q) || num === q;
-            card.classList.toggle('hidden', !match);
-          });
-        });
-      }
-
-      // 5. Speed chips
-      const speedChips = hadrView.querySelectorAll('.hadr-speed-chip');
-      speedChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-          speedChips.forEach(c => {
-            c.classList.remove('bg-amber-500/20', 'text-amber-300', 'font-bold');
-            c.classList.add('text-slate-300');
-          });
-          chip.classList.add('bg-amber-500/20', 'text-amber-300', 'font-bold');
-          chip.classList.remove('text-slate-300');
-          hadrPlaybackSpeed = parseFloat(chip.getAttribute('data-speed')) || 1.0;
-          if (hadrAudio) hadrAudio.playbackRate = hadrPlaybackSpeed;
-          showToast(`سرعة تلاوة الحدر: ${hadrPlaybackSpeed}x`);
-        });
-      });
-
-      // 6. Repeat chips
-      const repeatChips = hadrView.querySelectorAll('.hadr-repeat-chip');
-      repeatChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-          repeatChips.forEach(c => {
-            c.classList.remove('bg-amber-500/20', 'text-amber-300', 'font-bold');
-            c.classList.add('text-slate-300');
-          });
-          chip.classList.add('bg-amber-500/20', 'text-amber-300', 'font-bold');
-          chip.classList.remove('text-slate-300');
-          hadrRepeatMode = chip.getAttribute('data-repeat');
-          hadrRepeatCountLeft = hadrRepeatMode === 'loop' ? Infinity : (parseInt(hadrRepeatMode, 10) || 1);
-          const repLabel = hadrRepeatMode === 'loop' ? 'تكرار لا نهائي' : `${hadrRepeatMode} مرات`;
-          showToast(`تكرار الحدر للحفظ والتثبيت: ${repLabel}`);
-        });
-      });
-
-      // 7. Dock controls
-      if (playBtn) {
-        playBtn.addEventListener('click', () => {
-          if (!hadrAudio.src) {
-            playHadrSurah(currentHadrSurahId, true);
-          } else if (hadrAudio.paused) {
-            hadrAudio.play().then(() => {
-              if (playIcon) playIcon.className = 'fa-solid fa-pause';
-            }).catch(() => {});
-          } else {
-            hadrAudio.pause();
-            if (playIcon) playIcon.className = 'fa-solid fa-play';
-          }
-        });
-      }
-
-      if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-          if (currentHadrSurahId > 1) {
-            playHadrSurah(currentHadrSurahId - 1, true);
-          }
-        });
-      }
-
-      if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-          if (currentHadrSurahId < 114) {
-            playHadrSurah(currentHadrSurahId + 1, true);
-          }
-        });
-      }
-
-      if (back10Btn) {
-        back10Btn.addEventListener('click', () => {
-          if (hadrAudio) hadrAudio.currentTime = Math.max(0, hadrAudio.currentTime - 10);
-        });
-      }
-
-      if (fwd10Btn) {
-        fwd10Btn.addEventListener('click', () => {
-          if (hadrAudio) hadrAudio.currentTime = Math.min(hadrAudio.duration || 0, hadrAudio.currentTime + 10);
-        });
-      }
-
-      if (seekBar) {
-        seekBar.addEventListener('input', () => {
-          if (hadrAudio && hadrAudio.duration) {
-            hadrAudio.currentTime = (seekBar.value / 100) * hadrAudio.duration;
-          }
-        });
-      }
-
-      if (syncMushafBtn) {
-        syncMushafBtn.addEventListener('click', () => {
-          switchView('mushaf');
-          if (typeof loadSurahMushaf === 'function') {
-            loadSurahMushaf(currentHadrSurahId);
-          }
-          const sName = (typeof SURAHS !== 'undefined' && SURAHS.find(s => s.id === currentHadrSurahId)?.name) || '';
-          showToast(`تم فتح سورة ${sName} في المصحف للقراءة مع تلاوة الحدر`);
-        });
-      }
-
-      if (hadrAudio) {
-        hadrAudio.addEventListener('timeupdate', () => {
-          if (!hadrAudio.duration) return;
-          const pct = (hadrAudio.currentTime / hadrAudio.duration) * 100;
-          if (seekBar) seekBar.value = pct;
-          if (currentTimeEl) currentTimeEl.innerText = formatTime(hadrAudio.currentTime);
-          if (totalTimeEl) totalTimeEl.innerText = formatTime(hadrAudio.duration);
-
-          if (activeMiniEngine === 'hadr') {
-            const cur = Math.floor(hadrAudio.currentTime);
-            const dur = Math.floor(hadrAudio.duration);
-            if (miniSeekSlider && !miniSeekSlider.classList.contains('user-dragging')) {
-              miniSeekSlider.max = dur;
-              miniSeekSlider.disabled = false;
-              miniSeekSlider.value = cur;
-            }
-            if (miniCurrentTime) miniCurrentTime.innerText = formatTime(cur);
-            if (miniTotalDuration) miniTotalDuration.innerText = formatTime(dur);
-            if (miniTimeDisplay) miniTimeDisplay.innerText = `${formatTime(cur)} / ${formatTime(dur)}`;
-            if (miniProgressFill) miniProgressFill.style.width = `${pct}%`;
-          }
-        });
-
-        hadrAudio.addEventListener('play', () => {
-          activeMiniEngine = 'hadr';
-          if (playIcon) playIcon.className = 'fa-solid fa-pause';
-          // Sync-pause main player cleanly so isPlaying stays false and main mini-player never hijacks Hadr
-          if (isPlaying || (audio && !audio.paused)) {
-            pauseAudio();
-          }
-          syncHadrToMiniPlayer();
-          syncMiniPlayerVisibility(currentView);
-        });
-
-        hadrAudio.addEventListener('pause', () => {
-          if (playIcon) playIcon.className = 'fa-solid fa-play';
-          if (activeMiniEngine === 'hadr') {
-            syncHadrToMiniPlayer();
-          }
-        });
-
-        hadrAudio.addEventListener('ended', () => {
-          if (hadrRepeatMode === 'loop') {
-            hadrAudio.currentTime = 0;
-            hadrAudio.play().catch(() => {});
-            return;
-          }
-          hadrRepeatCountLeft--;
-          if (hadrRepeatCountLeft > 0) {
-            hadrAudio.currentTime = 0;
-            hadrAudio.play().catch(() => {});
-            showToast(`تكرار السورة للحفظ: متبقي ${hadrRepeatCountLeft} مرة`);
-            return;
-          }
-
-          hadrRepeatCountLeft = parseInt(hadrRepeatMode, 10) || 1;
-
-          if (hadrPlaylistQueue.length > 0 && hadrQueueIndex < hadrPlaylistQueue.length - 1) {
-            hadrQueueIndex++;
-            playHadrSurah(hadrPlaylistQueue[hadrQueueIndex], true);
-            return;
-          }
-
-          if (currentHadrSurahId < 114) {
-            playHadrSurah(currentHadrSurahId + 1, true);
-          }
-        });
-      }
-
-      // Initial Panel Renders
-      renderHadrSurahsPanel();
-      renderHadrAjzaPanel();
-      renderHadrTehzeebPanel();
-    }
-
-    updateHadrNowPlayingUI();
-  }
-
-  let hadrAudioCandidates = [];
-  let hadrAudioCandidateIdx = 0;
-  let hadrStallTimer = null;
-
-  function tryNextHadrCandidate(hadrAudio) {
-    if (hadrStallTimer) { clearTimeout(hadrStallTimer); hadrStallTimer = null; }
-    hadrAudioCandidateIdx++;
-    if (hadrAudioCandidateIdx < hadrAudioCandidates.length && hadrAudio) {
-      hadrAudio.src = hadrAudioCandidates[hadrAudioCandidateIdx];
-      hadrAudio.playbackRate = hadrPlaybackSpeed;
-      hadrAudio.play().catch(() => {});
-      return true;
-    }
-    showToast('تعذر تحميل تلاوة الحدر حالياً، يرجى التحقق من الإنترنت.', 'error');
-    const playIcon = document.getElementById('hadr-play-icon');
-    if (playIcon) playIcon.className = 'fa-solid fa-play';
-    return false;
-  }
-
-  function playHadrSurah(surahId, autoPlay = true) {
-    currentHadrSurahId = surahId;
-    if (autoPlay) {
-      if (isPlaying || (audio && !audio.paused)) {
-        pauseAudio();
-      }
-      activeMiniEngine = 'hadr';
-    }
-    const hadrAudio = document.getElementById('hadr-audio');
-    const reciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
-    const reciter = reciters.find(r => r.id === currentHadrReciterId) || reciters[0];
-    const padded = String(surahId).padStart(3, '0');
-    hadrAudioCandidates = [
-      reciter && reciter.serverUrl ? `${reciter.serverUrl}${padded}.mp3` : null,
-      reciter && reciter.fallbackServerUrl ? `${reciter.fallbackServerUrl}${padded}.mp3` : null,
-      reciter && reciter.cdnFallbackUrl ? `${reciter.cdnFallbackUrl}${padded}.mp3` : null,
-      `https://cdn.mp3quran.net/audio/mahmoud-husary/r1/${padded}.mp3`
-    ].filter((u, idx, arr) => u && arr.indexOf(u) === idx);
-    hadrAudioCandidateIdx = 0;
-
-    if (hadrAudio && hadrAudioCandidates.length > 0) {
-      if (hadrStallTimer) clearTimeout(hadrStallTimer);
-      hadrAudio.onerror = () => {
-        if (!hadrAudio.getAttribute('src')) return;
-        tryNextHadrCandidate(hadrAudio);
-      };
-      hadrAudio.onplaying = () => {
-        if (hadrStallTimer) { clearTimeout(hadrStallTimer); hadrStallTimer = null; }
-      };
-      hadrAudio.src = hadrAudioCandidates[0];
-      hadrAudio.playbackRate = hadrPlaybackSpeed;
-      if (autoPlay) {
-        hadrStallTimer = setTimeout(() => {
-          if (!hadrAudio.paused && hadrAudio.readyState < 3) {
-            tryNextHadrCandidate(hadrAudio);
-          }
-        }, 10000);
-        hadrAudio.play().then(() => {
-          if (hadrStallTimer) { clearTimeout(hadrStallTimer); hadrStallTimer = null; }
-          const playIcon = document.getElementById('hadr-play-icon');
-          if (playIcon) playIcon.className = 'fa-solid fa-pause';
-        }).catch(err => {
-          if (err && err.name === 'AbortError') return;
-          console.warn('Hadr autoplay prevented:', err);
-          if (err && err.name !== 'NotAllowedError') {
-            tryNextHadrCandidate(hadrAudio);
-          }
-        });
-      }
-    }
-
-    updateHadrNowPlayingUI();
-    highlightHadrCard(surahId);
-  }
-
-  function updateHadrNowPlayingUI() {
-    const surah = (typeof SURAHS !== 'undefined' && SURAHS.find(s => s.id === currentHadrSurahId)) || { id: 1, name: 'الفاتحة', versesCount: 7 };
-    const reciters = typeof HADR_RECITERS !== 'undefined' ? HADR_RECITERS : [];
-    const reciter = reciters.find(r => r.id === currentHadrReciterId) || reciters[0];
-
-    const nowSurahNum = document.getElementById('hadr-now-surah-num');
-    const nowSurahName = document.getElementById('hadr-now-surah-name');
-    const nowReciterName = document.getElementById('hadr-now-reciter-name');
-    const nowMeta = document.getElementById('hadr-now-meta');
-
-    if (nowSurahNum) nowSurahNum.innerText = surah.id;
-    if (nowSurahName) nowSurahName.innerText = `سُورَةُ ${surah.name}`;
-    if (nowReciterName) nowReciterName.innerText = `• ${reciter.name}`;
-    if (nowMeta) nowMeta.innerText = `${surah.versesCount} آية • ${surah.revelationPlace === 'makkah' ? 'مكية' : 'مدنية'} • ${reciter.badge}`;
-    if (activeMiniEngine === 'hadr') syncHadrToMiniPlayer();
-  }
-
-  function highlightHadrCard(surahId) {
-    const panelSurahs = document.getElementById('hadr-panel-surahs');
-    if (!panelSurahs) return;
-    const cards = panelSurahs.querySelectorAll('.hadr-surah-card');
-    cards.forEach(card => {
-      const id = parseInt(card.getAttribute('data-id'), 10);
-      card.classList.toggle('active-hadr', id === surahId);
-      const icon = card.querySelector('.hadr-card-play-icon');
-      if (icon) {
-        icon.className = id === surahId ? 'fa-solid fa-volume-high text-amber-400' : 'fa-solid fa-play text-slate-400';
-      }
-    });
-  }
-
-  function renderHadrSurahsPanel() {
-    const panel = document.getElementById('hadr-panel-surahs');
-    if (!panel || typeof SURAHS === 'undefined') return;
-
-    panel.innerHTML = SURAHS.map(s => {
-      const isMakkah = s.revelationPlace === 'makkah';
-      return `
-        <div class="hadr-surah-card p-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 hover:border-amber-500/40 cursor-pointer flex items-center justify-between gap-2.5 transition-all group" data-id="${s.id}" data-name="${s.name}">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span class="w-7 h-7 rounded-xl bg-emerald-900/60 text-amber-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs flex-shrink-0 group-hover:bg-amber-500/20 group-hover:border-amber-500/40 transition-colors">
-              ${s.id}
-            </span>
-            <div class="min-w-0">
-              <div class="font-bold text-xs sm:text-sm text-slate-100 group-hover:text-amber-300 truncate">
-                سورة ${s.name}
-              </div>
-              <div class="text-[10px] text-[var(--text-secondary)] flex items-center gap-1.5 mt-0.5">
-                <span>${s.versesCount} آية</span>
-                <span>•</span>
-                <span class="${isMakkah ? 'text-amber-400/80' : 'text-emerald-400/80'}">${isMakkah ? 'مكية' : 'مدنية'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-1.5 flex-shrink-0">
-            <button type="button" class="btn-read-mushaf-from-hadr p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-emerald-500/10 text-xs transition-colors" title="قراءة في المصحف">
-              <i class="fa-solid fa-book-open"></i>
-            </button>
-            <div class="w-8 h-8 rounded-xl bg-amber-500/15 group-hover:bg-amber-500 group-hover:text-slate-950 text-amber-300 border border-amber-500/30 flex items-center justify-center text-xs transition-all shadow-sm">
-              <i class="fa-solid fa-play hadr-card-play-icon"></i>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Attach Click Handlers
-    panel.querySelectorAll('.hadr-surah-card').forEach(card => {
-      const id = parseInt(card.getAttribute('data-id'), 10);
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-read-mushaf-from-hadr')) {
-          e.stopPropagation();
-          switchView('mushaf');
-          if (typeof loadSurahMushaf === 'function') loadSurahMushaf(id);
-          return;
-        }
-        hadrPlaylistQueue = [];
-        playHadrSurah(id, true);
-      });
-    });
-  }
-
-  function renderHadrAjzaPanel() {
-    const panel = document.getElementById('hadr-panel-ajza');
-    if (!panel || typeof HADR_AJZA === 'undefined') return;
-
-    panel.innerHTML = HADR_AJZA.map(j => {
-      return `
-        <div class="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/20 hover:border-amber-500/40 transition-all flex flex-col justify-between gap-2.5">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center">
-                ${j.juz}
-              </span>
-              <div>
-                <h4 class="font-bold text-xs sm:text-sm text-slate-100">${j.name}</h4>
-                <p class="text-[10px] text-slate-400 mt-0.5">${j.desc}</p>
-              </div>
-            </div>
-            <span class="text-[9px] bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              ${j.surahIds.length} ${j.surahIds.length === 1 ? 'سورة' : 'سور'}
-            </span>
-          </div>
-
-          <div class="flex items-center justify-between pt-2 border-t border-emerald-500/10">
-            <span class="text-[10px] text-[var(--text-secondary)]">تسميع ومراجعة متصلة</span>
-            <button type="button" class="btn-play-juz py-1.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold text-xs flex items-center gap-1.5 border border-amber-500/30 transition-all active:scale-95" data-juz="${j.juz}">
-              <i class="fa-solid fa-play text-[10px]"></i>
-              <span>تشغيل الجزء بالحدر</span>
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    panel.querySelectorAll('.btn-play-juz').forEach(btn => {
-      const juzNum = parseInt(btn.getAttribute('data-juz'), 10);
-      const juzObj = HADR_AJZA.find(j => j.juz === juzNum);
-      if (juzObj) {
-        btn.addEventListener('click', () => {
-          hadrPlaylistQueue = [...juzObj.surahIds];
-          hadrQueueIndex = 0;
-          playHadrSurah(hadrPlaylistQueue[0], true);
-          showToast(`بدء تلاوة ${juzObj.name} بالحدر السريع`);
-        });
-      }
-    });
-  }
-
-  function renderHadrTehzeebPanel() {
-    const panel = document.getElementById('hadr-panel-tehzeeb');
-    if (!panel || typeof HADR_TEHZEEB === 'undefined') return;
-
-    panel.innerHTML = HADR_TEHZEEB.map(w => {
-      return `
-        <div class="p-3 sm:p-3.5 rounded-2xl bg-emerald-950/60 border border-cyan-500/20 hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex flex-col items-center justify-center flex-shrink-0">
-              <span class="text-[10px] font-bold text-amber-300">اليوم</span>
-              <span class="text-xs font-black">${w.day}</span>
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <h4 class="font-bold text-xs sm:text-sm text-slate-100">${w.title}</h4>
-                <span class="text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold px-1.5 py-0.2 rounded border border-amber-500/30">${w.symbol}</span>
-              </div>
-              <p class="text-[10px] text-slate-400 mt-0.5 truncate">${w.desc}</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button type="button" class="btn-play-wird py-1.5 px-3.5 rounded-xl bg-cyan-500/20 hover:bg-amber-500 text-cyan-300 hover:text-slate-950 font-bold text-xs flex items-center gap-1.5 border border-cyan-500/30 hover:border-amber-400 transition-all active:scale-95 shadow-sm" data-day="${w.day}">
-              <i class="fa-solid fa-play text-[10px]"></i>
-              <span>تشغيل الورد كاملاً (${w.surahs.length} سورة)</span>
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    panel.querySelectorAll('.btn-play-wird').forEach(btn => {
-      const day = parseInt(btn.getAttribute('data-day'), 10);
-      const wirdObj = HADR_TEHZEEB.find(w => w.day === day);
-      if (wirdObj) {
-        btn.addEventListener('click', () => {
-          hadrPlaylistQueue = [...wirdObj.surahs];
-          hadrQueueIndex = 0;
-          playHadrSurah(hadrPlaylistQueue[0], true);
-          showToast(`بدء مراجعة ${wirdObj.title} - ${wirdObj.rangeName}`);
-        });
-      }
-    });
-  }
-
-  // --- Toast Notification Helper ---
   function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
